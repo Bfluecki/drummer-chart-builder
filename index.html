@@ -1339,6 +1339,7 @@
   <div class="tabs no-print">
     <button id="tabEditor" class="btn-tab active" type="button">Editor</button>
     <button id="tabPreview" class="btn-tab" type="button">Preview</button>
+    <button id="tabGrooves" class="btn-tab" type="button">🥁 Grooves</button>
   </div>
 
   <!-- ════════════════════════════════════════════ -->
@@ -1473,6 +1474,23 @@
   <!-- ════════════════════════════════════════════ -->
   <!-- PREVIEW VIEW  — A4 optimiert                -->
   <!-- ════════════════════════════════════════════ -->
+
+  <!-- ════════════════════════════════════════════ -->
+  <!-- GROOVE PRESETS VIEW                          -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="grooveView" class="hide" style="max-width:900px;margin:0 auto;padding:20px 0;">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="panel-title" style="margin:0;">🥁 Groove-Presets</div>
+        <button id="addGrooveBtn" class="btn btn-dark btn-sm" type="button">+ Neues Preset</button>
+      </div>
+      <p style="font-size:12px;color:var(--ink3);margin-bottom:16px;">
+        Erstelle eigene Groove-Vorlagen. ● = Schlag gesetzt, leer = kein Schlag. Klicke auf die Zellen um zu toggeln. Die Presets stehen dann im Section-Editor unter "Preset laden" zur Verfügung.
+      </p>
+      <div id="grooveList"></div>
+    </div>
+  </div>
+
   <div id="previewView" class="hide">
     <div class="a4-wrap no-print-margin">
 
@@ -1643,6 +1661,7 @@ const INSTRUMENTS = [
   { key: "tom", label: "TOM" },
   { key: "cr",  label: "CR" }
 ];
+const GROOVE_ROWS = ["hh","sn","bd","tom","cr"];
 
 // Paint mode per section: sectionId → "a" | "b" | "off"
 const sectionPaintMode = {};
@@ -1651,7 +1670,7 @@ function getPaintMode(sectionId) {
 }
 
 const PRESET_TO_GROOVE = {
-  "Straight 8":    "HH auf 2 und 4",
+  "Straight 8":    "Straight 8",
   "Straight 16":   "Straight 16",
   "Shuffle":       "Shuffle",
   "Bossa":         "Bossa",
@@ -1661,6 +1680,14 @@ const PRESET_TO_GROOVE = {
 };
 
 // ── HELPERS ─────────────────────────────────────────
+window.onerror = function(msg, src, line, col, err) {
+  alert("JS FEHLER:\n" + msg + "\nZeile: " + line + "\n" + (err ? err.stack : ""));
+  return true;
+};
+window.addEventListener("unhandledrejection", function(e) {
+  alert("PROMISE FEHLER: " + e.reason);
+});
+
 function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
 }
@@ -1709,68 +1736,65 @@ function emptyPattern(n) {
   };
 }
 
-// Gibt ein Pattern für EINEN Takt zurück, immer mit steps = beats*2
-// Beat 1 = Step 0, "+" = Step 1, Beat 2 = Step 2, "+" = Step 3, usw.
+// ── DRUM GROOVE TEMPLATES (1-basierte Indices → 0-basiert beim Laden) ──
+// ── DEFAULT GROOVE TEMPLATES ────────────────────────────────────────────────
+const DEFAULT_GROOVE_TEMPLATES = [
+  { id:"g-straight8",  name:"Straight 8",  timeSignature:"4/4", pattern:{ hh:[2,4,6,8],         sn:[3,7],   bd:[1,5],     tom:[], cr:[] } },
+  { id:"g-straight16", name:"Straight 16", timeSignature:"4/4", pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7],   bd:[1,5],     tom:[], cr:[] } },
+  { id:"g-bossa",      name:"Bossa",       timeSignature:"4/4", pattern:{ hh:[1,3,5,7],          sn:[4,8],   bd:[1,5],     tom:[], cr:[1] } },
+  { id:"g-shuffle",    name:"Shuffle",     timeSignature:"4/4", pattern:{ hh:[1,3,5,7],          sn:[3,7],   bd:[1,5],     tom:[], cr:[1] } },
+  { id:"g-swing",      name:"Swing Ride",  timeSignature:"4/4", pattern:{ hh:[1,3,5,7],          sn:[3,7],   bd:[1,3,5,7], tom:[], cr:[1] } },
+  { id:"g-jazzwaltz",  name:"Jazz Waltz",  timeSignature:"3/4", pattern:{ hh:[1,3,5],            sn:[3,5],   bd:[1],       tom:[], cr:[1] } },
+  { id:"g-funk",       name:"Funk",        timeSignature:"4/4", pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7],   bd:[1,4,6],   tom:[], cr:[1] } }
+];
+
+const GROOVE_STORAGE_KEY = "drumchart_grooves_v1";
+
+function loadGrooveTemplates() {
+  try {
+    const raw = localStorage.getItem(GROOVE_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_GROOVE_TEMPLATES));
+}
+
+function saveGrooveTemplates(templates) {
+  localStorage.setItem(GROOVE_STORAGE_KEY, JSON.stringify(templates));
+}
+
+let drumGrooveTemplates = loadGrooveTemplates();
+
+function getStepsForTs(ts) {
+  return getBeatsPerBar(ts) * 2;
+}
+
+function getGrooveTemplate(groove) {
+  const g = String(groove).toLowerCase().trim();
+  return drumGrooveTemplates.find(t => t.name.toLowerCase() === g) || null;
+}
+
 function createBaseBarPattern(ts, groove = "") {
   const beats = getBeatsPerBar(ts);
   const steps = beats * 2;
-  const g     = String(groove).toLowerCase();
-  const r     = emptyPattern(steps);
+  const r = emptyPattern(steps);
 
-  // Hilfsfunktion: Beat-Index (1-basiert) → Step-Index
-  const B = beat => (beat - 1) * 2;      // z.B. Beat 1 → 0, Beat 2 → 2
-  const P = beat => (beat - 1) * 2 + 1;  // "+" nach Beat → 1, 3, 5, 7
-
-  if (ts === "3/4" || g.includes("waltz")) {
-    // Jazz Waltz: HH auf allen Beats (1,2,3), BD auf 1, SN auf 2
-    for (let i = 0; i < beats; i++) r.hh[B(i+1)] = true;
-    r.bd[B(1)] = true;
-    if (beats >= 2) r.sn[B(2)] = true;
+  const tpl = getGrooveTemplate(groove);
+  if (tpl) {
+    // Convert 1-based indices to 0-based booleans
+    ["hh","sn","bd","tom","cr"].forEach(key => {
+      (tpl.pattern[key] || []).forEach(idx => {
+        const i = idx - 1; // 1-based → 0-based
+        if (i >= 0 && i < steps) r[key][i] = true;
+      });
+    });
     return r;
   }
 
-  if (g.includes("bossa")) {
-    // HH auf Beat 1,2,3,4, BD auf 1+3, SN auf 2+4
-    for (let i = 0; i < beats; i++) r.hh[B(i+1)] = true;
-    r.bd[B(1)]=true; if (beats>=3) r.bd[B(3)]=true;
-    if (beats>=2) r.sn[B(2)]=true; if (beats>=4) r.sn[B(4)]=true;
-    return r;
-  }
-
-  if (g.includes("straight 16")) {
-    // HH auf allen 8 Sub-Steps (alle Steps), BD auf 1+3, SN auf 2+4
-    for (let i = 0; i < steps; i++) r.hh[i] = true;
-    r.bd[B(1)]=true; if (beats>=3) r.bd[B(3)]=true;
-    if (beats>=2) r.sn[B(2)]=true; if (beats>=4) r.sn[B(4)]=true;
-    return r;
-  }
-
-  if (g.includes("swing")) {
-    // Ride auf Beat 2+4, BD auf 1
-    r.hh[B(2)]=true; if (beats>=4) r.hh[B(4)]=true;
-    r.bd[B(1)]=true;
-    return r;
-  }
-
-  if (g.includes("shuffle")) {
-    // HH auf 2+4, BD auf 1+3
-    r.hh[B(2)]=true; if (beats>=4) r.hh[B(4)]=true;
-    r.bd[B(1)]=true; if (beats>=3) r.bd[B(3)]=true;
-    return r;
-  }
-
-  if (g.includes("funk")) {
-    // HH auf Beat 2+4, SN auf 2+4, BD auf 1+3
-    r.hh[B(2)]=true; if (beats>=4) r.hh[B(4)]=true;
-    r.bd[B(1)]=true; if (beats>=3) r.bd[B(3)]=true;
-    if (beats>=2) r.sn[B(2)]=true; if (beats>=4) r.sn[B(4)]=true;
-    return r;
-  }
-
-  // Default – Straight 8: HH auf Beat 2+4
-  if (beats===2) { r.hh[B(1)]=true; return r; }
-  r.hh[B(2)]=true;
-  if (beats>=4) r.hh[B(4)]=true;
+  // Fallback: Straight 8 — HH auf 2+4, SN auf 2+4, BD auf 1+3
+  const B = beat => (beat - 1) * 2;
+  r.hh[B(2)] = true; if (beats >= 4) r.hh[B(4)] = true;
+  r.sn[B(2)] = true; if (beats >= 4) r.sn[B(4)] = true;
+  r.bd[B(1)] = true; if (beats >= 3) r.bd[B(3)] = true;
   return r;
 }
 
@@ -1779,8 +1803,36 @@ function createPatternForSection(ts, bars, groove = "") {
   const stepsPer = getStepsPerBar(ts);
   const total    = stepsPer * barCount;
   const pat      = emptyPattern(total);
-  const base     = createBaseBarPattern(ts, groove);
 
+  const tpl = getGrooveTemplate(groove);
+  if (tpl) {
+    // Template stores 2 bars of steps (1-based indices)
+    const tplBeats   = getBeatsPerBar(tpl.timeSignature || ts);
+    const tplSteps   = tplBeats * 2; // steps per bar in template
+    const tplTotal   = tplSteps * 2; // 2 bars in template
+
+    // Build 2-bar boolean array from template
+    const base2 = emptyPattern(tplTotal);
+    GROOVE_ROWS.forEach(key => {
+      (tpl.pattern[key] || []).forEach(idx1 => {
+        const i = idx1 - 1;
+        if (i >= 0 && i < tplTotal) base2[key][i] = true;
+      });
+    });
+
+    // Tile template over section bars
+    for (let bar = 0; bar < barCount; bar++) {
+      for (let step = 0; step < stepsPer; step++) {
+        const srcStep = (bar * stepsPer + step) % tplTotal;
+        const dstIdx  = bar * stepsPer + step;
+        INSTRUMENTS.forEach(({ key }) => { pat[key][dstIdx] = base2[key][srcStep] || false; });
+      }
+    }
+    return pat;
+  }
+
+  // Fallback: use createBaseBarPattern (1-bar) and tile
+  const base = createBaseBarPattern(ts, groove);
   for (let bar = 0; bar < barCount; bar++) {
     for (let step = 0; step < stepsPer; step++) {
       const idx = bar * stepsPer + step;
@@ -1789,6 +1841,7 @@ function createPatternForSection(ts, bars, groove = "") {
   }
   return pat;
 }
+
 
 function ensurePatternLength(section, preserve = true) {
   const ts       = section.timeSignature || "4/4";
@@ -2096,6 +2149,47 @@ function renderAblauf() {
   });
 }
 
+
+function bindMiniCell(cell) {
+  cell.addEventListener("click", function(e) {
+    const el = e.currentTarget;
+    const { sectionId, inst, step } = el.dataset;
+    const s = song.sections.find(x => x.id === sectionId);
+    if (!s || !s.pattern || !s.pattern[inst]) return;
+    const mode = getPaintMode(sectionId);
+    const cur  = s.pattern[inst][Number(step)];
+    const isPlus = Number(step) % 2 === 1;
+    let newVal;
+    if (mode === "off") { newVal = false; }
+    else if (mode === "hit") { newVal = (!cur || cur === false) ? true : false; }
+    else if (cur === mode) { newVal = false; }
+    else { newVal = mode; }
+    s.pattern[inst][Number(step)] = newVal;
+    const state = newVal === "a" ? "auftakt" : newVal === "b" ? "break" : (newVal === true || newVal === 1 ? "on" : "");
+    const icon  = newVal === "a" ? "A" : newVal === "b" ? "B" : (newVal === true || newVal === 1 ? "●" : "·");
+    el.className = "mini-cell" + (state ? " " + state : "");
+    el.style.width = "30px"; el.style.height = "30px";
+    el.style.borderRadius = "5px";
+    el.style.borderStyle = isPlus ? "dashed" : "solid";
+    el.textContent = icon;
+    renderPreview();
+  });
+}
+
+function bindGridEvents(container, s) {
+  container.querySelectorAll(".mini-cell").forEach(cell => bindMiniCell(cell));
+  container.querySelectorAll(".bar-note-input").forEach(input => {
+    input.addEventListener("input", e => {
+      const sid = e.target.dataset.sectionId;
+      const bar = Number(e.target.dataset.bar);
+      const sec = song.sections.find(x => x.id === sid);
+      if (!sec) return;
+      if (!sec.chordBars) sec.chordBars = [];
+      sec.chordBars[bar] = e.target.value;
+    });
+  });
+}
+
 function renderSections() {
   const host = document.getElementById("sections");
   host.innerHTML = "";
@@ -2165,7 +2259,7 @@ function renderSections() {
           <div class="grid-controls">
             <select data-preset="${section.id}" class="btn btn-outline btn-sm" style="padding:6px 10px;width:auto;">
               <option value="">Preset laden…</option>
-              ${Object.keys(PRESET_TO_GROOVE).map(n=>`<option value="${n}">${n}</option>`).join("")}
+              ${drumGrooveTemplates.map(t=>`<option value="${t.name}">${escapeHtml(t.name)}</option>`).join("")}
             </select>
             <button data-clear="${section.id}" class="btn btn-outline btn-sm" type="button">Reset</button>
           </div>
@@ -2251,14 +2345,59 @@ function renderSections() {
 
   host.querySelectorAll("[data-preset]").forEach(sel => {
     sel.addEventListener("change", e => {
+      try {
       if (!e.target.value) return;
+      const presetName = e.target.value;
       const s = song.sections.find(x => x.id === e.target.dataset.preset);
       if (!s) return;
-      s.groovePattern = PRESET_TO_GROOVE[e.target.value] || e.target.value;
-      delete s.pattern; // clear old pattern so ensurePatternLength won't preserve it
-      s.pattern = createPatternForSection(s.timeSignature||"4/4", s.bars||"1", s.groovePattern);
-      renderSections(); renderPreview();
-      status(`Preset ${e.target.value} gesetzt.`);
+      // Use preset name directly — getGrooveTemplate looks it up in drumGrooveTemplates
+      s.groovePattern = presetName;
+      s.groove = presetName;
+      const ts = s.timeSignature || song.timeSignature || "4/4";
+      const bars = s.bars || "1";
+      // Build pattern directly from template without going through ensurePatternLength
+      const tpl = getGrooveTemplate(presetName);
+      if (tpl) {
+        const tplBeats = getBeatsPerBar(tpl.timeSignature || ts);
+        const tplSteps = tplBeats * 2;
+        const tplTotal = tplSteps * 2;
+        const barCount = parseBars(bars);
+        const stepsPer = getStepsPerBar(ts);
+        const total = stepsPer * barCount;
+        // Build 2-bar boolean base from template
+        const base2 = emptyPattern(tplTotal);
+        GROOVE_ROWS.forEach(key => {
+          (tpl.pattern[key] || []).forEach(idx1 => {
+            const i = idx1 - 1;
+            if (i >= 0 && i < tplTotal) base2[key][i] = true;
+          });
+        });
+        // Tile over all bars
+        const newPat = emptyPattern(total);
+        for (let bar = 0; bar < barCount; bar++) {
+          for (let step = 0; step < stepsPer; step++) {
+            const src = (bar * stepsPer + step) % tplTotal;
+            const dst = bar * stepsPer + step;
+            GROOVE_ROWS.forEach(key => { newPat[key][dst] = base2[key][src] || false; });
+          }
+        }
+        s.pattern = newPat;
+      } else {
+        s.pattern = createPatternForSection(ts, bars, presetName);
+      }
+      // Temporarily disable ensurePatternLength override by marking correct length
+      status(`Preset "${presetName}" geladen ✓`);
+      // Only redraw the grid of this section - do NOT call renderSections()
+      // which would rebuild DOM and break event listeners
+      const card = e.target.closest("[data-section-id]");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        // Rebind mini-cell clicks for this card only
+        bindGridEvents(card, s);
+      }
+      renderPreview();
+      } catch(err) { alert("PRESET FEHLER: " + err.message + "\n" + err.stack); }
     });
   });
 
@@ -2303,42 +2442,7 @@ function renderSections() {
     });
   });
 
-  host.querySelectorAll(".mini-cell").forEach(cell => {
-    cell.addEventListener("click", e => {
-      const el = e.currentTarget;
-      const { sectionId, inst, step } = el.dataset;
-      const s = song.sections.find(x => x.id === sectionId);
-      if (!s) return;
-      const mode = getPaintMode(sectionId);
-      const cur  = s.pattern[inst][Number(step)];
-      const isPlus = Number(step) % 2 === 1;
-
-      let newVal;
-      if (mode === "off") {
-        newVal = false;
-      } else if (mode === "hit") {
-        // toggle true/false for black hits
-        newVal = (!cur || cur === false) ? true : false;
-      } else if (cur === mode) {
-        newVal = false;
-      } else {
-        newVal = mode;
-      }
-      s.pattern[inst][Number(step)] = newVal;
-
-      // Update cell classes and content directly
-      const state = newVal === "a" ? "auftakt" : newVal === "b" ? "break" : (newVal === true || newVal === 1 ? "on" : "");
-      const icon  = newVal === "a" ? "A" : newVal === "b" ? "B" : (newVal === true || newVal === 1 ? "●" : "·");
-      el.className = "mini-cell" + (state ? " " + state : "");
-      el.style.width  = "30px";
-      el.style.height = "30px";
-      el.style.borderRadius = "5px";
-      el.style.borderStyle  = isPlus ? "dashed" : "solid";
-      el.textContent = icon;
-
-      renderPreview();
-    });
-  });
+  host.querySelectorAll(".mini-cell").forEach(cell => bindMiniCell(cell));
   renderAblauf();
 }
 
@@ -2354,10 +2458,25 @@ function handleSectionFieldChange(e) {
   if (field === "bars") {
     s.bars = String(parseBars(s.bars));
     ensurePatternLength(s, true);
-    renderSections();
+    // Redraw only this section's grid + title — no full renderSections()
+    const card = e.target.closest(".section-card");
+    if (card) {
+      const scrollEl = card.querySelector(".grid-scroll");
+      const titleEl  = card.querySelector(".grid-title");
+      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+      if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
+      bindGridEvents(card, s);
+    }
   } else if (field === "timeSignature") {
-    ensurePatternLength(s, true);
-    renderSections();
+    ensurePatternLength(s, false);
+    const card = e.target.closest(".section-card");
+    if (card) {
+      const scrollEl = card.querySelector(".grid-scroll");
+      const titleEl  = card.querySelector(".grid-title");
+      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+      if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
+      bindGridEvents(card, s);
+    }
   } else if (field === "groove") {
     // Tool field changed — no pattern rebuild needed, tool is just a label
   } else if (field === "name") {
@@ -2633,8 +2752,11 @@ function resetSong() {
 function switchTab(name) {
   document.getElementById("editorView").classList.toggle("hide",  name !== "editor");
   document.getElementById("previewView").classList.toggle("hide", name !== "preview");
+  document.getElementById("grooveView").classList.toggle("hide",  name !== "grooves");
   document.getElementById("tabEditor").classList.toggle("active", name === "editor");
   document.getElementById("tabPreview").classList.toggle("active",name === "preview");
+  document.getElementById("tabGrooves").classList.toggle("active",name === "grooves");
+  if (name === "grooves") renderGrooveEditor();
 }
 
 // ── iREAL PARSER ─────────────────────────────────────
@@ -3506,6 +3628,7 @@ document.getElementById("exportBtn").addEventListener("click", exportJson);
 document.getElementById("printBtn").addEventListener("click", () => window.print());
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
+document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
 
 document.getElementById("addSectionBtn").addEventListener("click", () => {
   song.sections.push(makeSection("Neue Section", song.timeSignature, song.style, "1"));
@@ -3545,17 +3668,132 @@ if (!localStorage.getItem('dcb_welcomed')) {
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GROOVE PRESET EDITOR
+// ══════════════════════════════════════════════════════════════════════════════
+
+var GROOVE_LABELS = { hh:"HH", sn:"SN", bd:"BD", tom:"TOM", cr:"CR" };
+var TS_OPTIONS_GR = ["4/4","3/4","6/8","2/4","5/4"];
+
+function renderGrooveEditor() {
+  var list = document.getElementById("grooveList");
+  if (!list) return;
+  if (!drumGrooveTemplates || !drumGrooveTemplates.length) {
+    list.innerHTML = '<p style="color:var(--ink3);padding:10px;">Keine Presets vorhanden.</p>';
+    return;
+  }
+  list.innerHTML = drumGrooveTemplates.map(function(tpl, ti) {
+    var ts = tpl.timeSignature || "4/4";
+    var beats = getBeatsPerBar(ts);
+    var spb = beats * 2;
+    var total = spb * 2;
+    var isDefault = ti < DEFAULT_GROOVE_TEMPLATES.length;
+    var patBool = {};
+    GROOVE_ROWS.forEach(function(k) {
+      patBool[k] = Array(total).fill(false);
+      (tpl.pattern[k]||[]).forEach(function(x){ if(x>=1&&x<=total) patBool[k][x-1]=true; });
+    });
+    var hdr = "";
+    for (var bar=0;bar<2;bar++) for (var b=1;b<=beats;b++) {
+      var bl = (bar===0&&b===1)?"2px solid var(--ink3)":(b===1?"2px solid var(--accent)":"1px solid var(--line)");
+      hdr += '<th colspan="2" style="text-align:center;font-size:10px;color:var(--ink3);padding:2px;border-left:'+bl+';">'+(b===1?(bar+1)+". ":"")+b+'</th>';
+    }
+    var sub = "";
+    for (var i=0;i<total;i++) {
+      sub += '<td style="text-align:center;font-size:9px;color:var(--ink3);border-left:'+(i===spb?"2px solid var(--accent)":"none")+';">'+(i%2===0?"":"+")+'</td>';
+    }
+    var rows = GROOVE_ROWS.map(function(k) {
+      var cells = "";
+      for (var i=0;i<total;i++) {
+        var on = patBool[k][i];
+        cells += '<td style="padding:2px 1px;border-left:'+(i===spb?"2px solid var(--accent)":"none")+';">'
+          +'<button data-ti="'+ti+'" data-key="'+k+'" data-si="'+i+'" type="button" '
+          +'style="width:26px;height:26px;border-radius:4px;border:1px solid var(--line);cursor:pointer;font-size:13px;'
+          +'background:'+(on?'var(--ink)':'var(--soft)')+';color:'+(on?'#fff':'var(--ink3)')+';">'+(on?'●':'·')+'</button></td>';
+      }
+      return '<tr><td style="padding:3px 8px;font-size:11px;font-weight:700;color:var(--ink3);white-space:nowrap;">'+GROOVE_LABELS[k]+'</td>'+cells+'</tr>';
+    }).join("");
+    return '<div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:14px;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">'
+      +'<input data-groove-name="'+ti+'" value="'+escapeHtml(tpl.name)+'" style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;border:none;border-bottom:2px solid var(--accent);background:transparent;padding:2px 4px;width:180px;outline:none;"/>'
+      +'<select data-groove-ts="'+ti+'" style="border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font-size:12px;background:var(--soft);">'
+      +TS_OPTIONS_GR.map(function(o){return '<option value="'+o+'"'+(ts===o?' selected':'')+'>'+o+'</option>';}).join("")
+      +'</select><span style="font-size:11px;color:var(--ink3);">· 2 Takte</span><div style="flex:1"></div>'
+      +(isDefault
+        ?'<span style="font-size:10px;color:var(--ink3);background:var(--soft);border-radius:20px;padding:3px 10px;">Standard</span>'
+        :'<button data-groove-del="'+ti+'" class="btn btn-danger btn-sm" type="button">Löschen</button>')
+      +'</div><div style="overflow-x:auto;"><table style="border-collapse:collapse;">'
+      +'<tr><th style="width:40px;"></th>'+hdr+'</tr><tr><td></td>'+sub+'</tr>'+rows
+      +'</table></div></div>';
+  }).join("");
+
+  list.querySelectorAll("button[data-ti]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var ti=parseInt(btn.dataset.ti), k=btn.dataset.key, si=parseInt(btn.dataset.si);
+      var arr=drumGrooveTemplates[ti].pattern[k]||[], idx1=si+1, pos=arr.indexOf(idx1);
+      if(pos>=0) arr.splice(pos,1); else arr.push(idx1);
+      drumGrooveTemplates[ti].pattern[k]=arr.sort(function(a,b){return a-b;});
+      saveGrooveTemplates(drumGrooveTemplates);
+      updatePresetDropdowns();
+      renderGrooveEditor();
+    });
+  });
+  list.querySelectorAll("[data-groove-name]").forEach(function(inp) {
+    inp.addEventListener("change", function() {
+      drumGrooveTemplates[parseInt(inp.dataset.grooveName)].name=inp.value.trim()||"Groove";
+      saveGrooveTemplates(drumGrooveTemplates); updatePresetDropdowns();
+    });
+  });
+  list.querySelectorAll("[data-groove-ts]").forEach(function(sel) {
+    sel.addEventListener("change", function() {
+      var ti=parseInt(sel.dataset.grooveTs), tpl=drumGrooveTemplates[ti];
+      var newTotal=getBeatsPerBar(sel.value)*4;
+      GROOVE_ROWS.forEach(function(k){ tpl.pattern[k]=(tpl.pattern[k]||[]).filter(function(i){return i<=newTotal;}); });
+      tpl.timeSignature=sel.value;
+      saveGrooveTemplates(drumGrooveTemplates); renderGrooveEditor();
+    });
+  });
+  list.querySelectorAll("[data-groove-del]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var ti=parseInt(btn.dataset.grooveDel);
+      if(!confirm('Preset "'+drumGrooveTemplates[ti].name+'" löschen?')) return;
+      drumGrooveTemplates.splice(ti,1);
+      saveGrooveTemplates(drumGrooveTemplates); updatePresetDropdowns(); renderGrooveEditor();
+    });
+  });
+}
+
+function updatePresetDropdowns() {
+  document.querySelectorAll("[data-preset]").forEach(function(sel) {
+    var cur=sel.value;
+    sel.innerHTML='<option value="">Preset laden…</option>'
+      +drumGrooveTemplates.map(function(t){return '<option value="'+escapeHtml(t.name)+'"'+(cur===t.name?' selected':'')+'>'+escapeHtml(t.name)+'</option>';}).join("");
+  });
+}
+
+document.getElementById("addGrooveBtn").addEventListener("click", function() {
+  drumGrooveTemplates.push({id:"g-custom-"+Date.now(),name:"Neuer Groove",timeSignature:"4/4",pattern:{hh:[],sn:[],bd:[],tom:[],cr:[]}});
+  saveGrooveTemplates(drumGrooveTemplates);
+  updatePresetDropdowns();
+  renderGrooveEditor();
+  setTimeout(function(){ var l=document.getElementById("grooveList").lastElementChild; if(l) l.scrollIntoView({behavior:"smooth"}); },100);
+});
+
+
 loadLocal();
 bindTopFields();
 syncTopFields();
 renderSections();
 renderPreview();
 </script>
+
 <script>
   // Register Service Worker for offline use
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 </script>
+
 </body>
 </html>
