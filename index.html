@@ -1443,6 +1443,11 @@
           <span class="field-label">Allgemeine Notizen</span>
           <textarea id="notes" rows="3" placeholder="Besonderheiten, Bandabsprachen, Klangideen…"></textarea>
         </div>
+
+        <div class="field-group" style="margin-top:14px;">
+          <span class="field-label">Ablauf-übersicht</span>
+          <div id="ablaufTable" style="overflow-x:auto;"></div>
+        </div>
       </div>
 
       <!-- RIGHT: Groove-Legende -->
@@ -1494,9 +1499,12 @@
         <div class="a4-notes" id="pNotes" style="display:none;"></div>
 
         <!-- ── FORM BADGES ── -->
-        <div class="a4-form-row">
+        <div class="a4-form-row" style="display:none;">
           <div id="pFormLine" class="form-line" style="margin:0;gap:4px;"></div>
         </div>
+
+        <!-- ── ABLAUF + LEAD ── -->
+        <div id="pAblaufLine" style="display:none;margin:6px 0 2px;font-size:11px;color:var(--ink3);"></div>
 
         <!-- ── MAIN: Ablauf full width ── -->
         <div class="a4-body" style="grid-template-columns:1fr;">
@@ -2053,6 +2061,41 @@ function renderGrid(section) {
 }
 
 // ── SECTIONS RENDERER ────────────────────────────────
+function renderAblauf() {
+  const host = document.getElementById("ablaufTable");
+  if (!host) return;
+  const presets = ["Voc", "Bass", "Gitarre", "Sax", "Piano", "Drum", "Horn"];
+  if (!song.sections.length) { host.innerHTML = ""; return; }
+  const header = `<tr>
+    <th style="padding:4px 10px 4px 6px;font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;text-align:left;">#</th>
+    <th style="padding:4px 10px 4px 0;font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;text-align:left;">Section</th>
+    <th style="padding:4px 0;font-size:11px;font-weight:600;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;text-align:left;">Lead</th>
+  </tr>`;
+  const rows = song.sections.map((s, i) => {
+    const val = s.ablaufInstrument || "";
+    const listId = "lead-list-" + s.id;
+    const opts = presets.map(inst => `<option value="${inst}">${inst}</option>`).join("");
+    return `<tr>
+      <td style="padding:5px 10px 5px 6px;font-weight:600;white-space:nowrap;color:var(--ink3);font-size:12px;">${i+1}</td>
+      <td style="padding:5px 10px 5px 0;font-weight:600;white-space:nowrap;">${escapeHtml(s.name||"Part")}</td>
+      <td style="padding:5px 0;">
+        <datalist id="${listId}">${opts}</datalist>
+        <input type="text" list="${listId}" data-ablauf-id="${s.id}"
+          value="${escapeHtml(val)}"
+          placeholder="— leer —"
+          style="background:var(--soft);border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font-size:13px;color:var(--ink);width:160px;outline:none;" />
+      </td>
+    </tr>`;
+  }).join("");
+  host.innerHTML = `<table style="border-collapse:collapse;width:100%;">${header}${rows}</table>`;
+  host.querySelectorAll("[data-ablauf-id]").forEach(inp => {
+    inp.addEventListener("input", e => {
+      const s = song.sections.find(x => x.id === e.target.dataset.ablaufId);
+      if (s) { s.ablaufInstrument = e.target.value; renderPreview(); }
+    });
+  });
+}
+
 function renderSections() {
   const host = document.getElementById("sections");
   host.innerHTML = "";
@@ -2075,7 +2118,10 @@ function renderSections() {
             placeholder="Section-Name (A, B, Intro, Chorus…)"
             style="width:200px;" />
         </div>
-        <button data-remove="${section.id}" class="btn btn-danger btn-sm" type="button">Löschen</button>
+        <div style="display:flex;gap:6px;">
+          <button data-duplicate="${section.id}" class="btn btn-outline btn-sm" type="button">⧉ Kopieren</button>
+          <button data-remove="${section.id}" class="btn btn-danger btn-sm" type="button">Löschen</button>
+        </div>
       </div>
 
       <div class="form-grid cols-5" style="margin-bottom:10px;">
@@ -2189,6 +2235,20 @@ function renderSections() {
     });
   });
 
+  host.querySelectorAll("[data-duplicate]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const srcId = e.target.dataset.duplicate;
+      const src = song.sections.find(s => s.id === srcId);
+      if (!src) return;
+      const copy = JSON.parse(JSON.stringify(src));
+      copy.id = uid();
+      const idx = song.sections.findIndex(s => s.id === srcId);
+      song.sections.splice(idx + 1, 0, copy);
+      renderSections(); renderPreview();
+      status("Section dupliziert.");
+    });
+  });
+
   host.querySelectorAll("[data-preset]").forEach(sel => {
     sel.addEventListener("change", e => {
       if (!e.target.value) return;
@@ -2279,6 +2339,7 @@ function renderSections() {
       renderPreview();
     });
   });
+  renderAblauf();
 }
 
 function handleSectionFieldChange(e) {
@@ -2435,6 +2496,34 @@ function renderPreview() {
   document.getElementById("pFormCompact").textContent =
     seq.every(n=>/^[A-F]$/.test(n)) ? seq.join("") : seq.join(" / ");
 
+  // Ablauf + Lead summary line
+  const ablaufEl = document.getElementById("pAblaufLine");
+  if (ablaufEl) {
+    if (song.sections.length) {
+
+      const cols = song.sections.map((s, i) => {
+        const badge = normalizeFormName(s.name||"Part");
+        const badgeClass = getFormClass(badge);
+        const lead = s.ablaufInstrument
+          ? `<div style="font-size:11px;color:#1a3a5c;font-weight:700;margin-top:3px;">${escapeHtml(s.ablaufInstrument)}</div>`
+          : `<div style="font-size:11px;color:var(--ink3);margin-top:3px;">—</div>`;
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;">
+          <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
+          <span style="font-size:10px;color:var(--ink3);">${i+1}</span>
+          ${lead}
+        </div>`;
+      }).join("");
+      ablaufEl.innerHTML = `
+        <div style="margin-top:8px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin-bottom:6px;">Ablauf &amp; Lead</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${cols}</div>
+        </div>`;
+      ablaufEl.style.display = "";
+    } else {
+      ablaufEl.style.display = "none";
+    }
+  }
+
   document.getElementById("previewSections").innerHTML = song.sections.map((s, i) => `
     <div class="prev-sec-card">
       <div class="prev-sec-head">
@@ -2462,6 +2551,10 @@ function renderPreview() {
         ${s.cue ? `<div class="prev-sec-meta-item" style="grid-column:1/-1;">
           <div class="prev-sec-meta-label">Cue</div>
           <div class="prev-sec-meta-value" style="color:#d4522a;">${escapeHtml(s.cue)}</div>
+        </div>` : ""}
+        ${s.ablaufInstrument ? `<div class="prev-sec-meta-item">
+          <div class="prev-sec-meta-label">Lead</div>
+          <div class="prev-sec-meta-value" style="color:#1a3a5c;font-weight:700;">${escapeHtml(s.ablaufInstrument)}</div>
         </div>` : ""}
         ${(s.flowLabelLeft||s.flowLabelRight) ? `<div class="prev-sec-meta-item" style="grid-column:1/-1;">
           <div class="prev-sec-meta-label">Ablauf</div>
