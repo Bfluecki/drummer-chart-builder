@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Drum Chart" />
   <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1117" />
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f1117'/><text y='.9em' font-size='80' x='10'>🥁</text></svg>" />
   <title>Drummer Chart Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1540,30 +1542,47 @@
     <!-- Song list -->
     <div id="libraryList" style="overflow-y:auto;flex:1;padding:12px 16px;"></div>
 
-    <!-- iCloud Section -->
-    <div style="padding:12px 24px;border-top:1px solid var(--line);background:#f0f9ff;">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#0369a1;margin-bottom:8px;">☁️ iCloud Drive Sync</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="icloudExportAll" type="button" class="btn btn-outline btn-sm" style="font-size:12px;">
-          ⬇ Alle Songs exportieren
-        </button>
-        <label class="btn btn-outline btn-sm" style="font-size:12px;cursor:pointer;">
-          ⬆ Songs aus iCloud laden
-          <input id="icloudImportFile" type="file" accept=".json" style="display:none;" multiple />
-        </label>
-        <button id="icloudExportCurrent" type="button" class="btn btn-outline btn-sm" style="font-size:12px;">
-          ⬇ Aktuellen Song
-        </button>
+    <!-- GitHub Sync Section -->
+    <div style="border-top:1px solid var(--line);background:#f6f8fa;">
+      <!-- GitHub Token Setup (collapsible) -->
+      <div id="ghSetupBar" style="padding:10px 24px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="document.getElementById('ghSetupPanel').style.display=document.getElementById('ghSetupPanel').style.display==='none'?'block':'none'">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">⚙️</span>
+          <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:#24292f;">GitHub Einstellungen</span>
+          <span id="ghStatusDot" style="width:8px;height:8px;border-radius:50%;background:#d1d5db;display:inline-block;"></span>
+        </div>
+        <span style="font-size:11px;color:#6b7280;">▼</span>
       </div>
-      <div style="font-size:10px;color:#0369a1;margin-top:6px;line-height:1.5;">
-        Exportierte JSON-Dateien in iCloud Drive / Drummer Chart Builder Ordner speichern.<br>
-        Auf iPad: Files-App → iCloud Drive → Drummer Chart Builder → Datei antippen zum Laden.
+      <div id="ghSetupPanel" style="display:none;padding:0 24px 12px;">
+        <div style="display:grid;gap:6px;">
+          <div style="font-size:11px;color:#6b7280;">Repository (z.B. bfluecki/drummer-chart-builder)</div>
+          <input id="ghRepo" placeholder="username/repo" style="font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;width:100%;"/>
+          <div style="font-size:11px;color:#6b7280;margin-top:4px;">Personal Access Token <a href="https://github.com/settings/tokens/new?scopes=repo&description=DrummerChartBuilder" target="_blank" style="color:#0969da;">→ Token erstellen</a></div>
+          <input id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxx" style="font-size:13px;padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;width:100%;font-family:monospace;"/>
+          <button id="ghSaveSettings" type="button" class="btn btn-dark btn-sm" style="margin-top:4px;font-size:12px;">Einstellungen speichern</button>
+        </div>
+      </div>
+
+      <!-- GitHub Actions -->
+      <div style="padding:10px 24px 14px;border-top:1px solid #e8eaed;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:18px;">🐙</span>
+        <button id="ghPush" type="button" class="btn btn-outline btn-sm" style="font-size:12px;">⬆ Song auf GitHub speichern</button>
+        <button id="ghPull" type="button" class="btn btn-outline btn-sm" style="font-size:12px;">⬇ Songs von GitHub laden</button>
+        <div id="ghStatus" style="font-size:11px;color:#6b7280;width:100%;margin-top:4px;"></div>
       </div>
     </div>
 
+    <!-- Local export fallback -->
+    <div style="padding:8px 24px 10px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:11px;color:#6b7280;">Lokal:</span>
+      <button id="icloudExportAll" type="button" class="btn btn-outline btn-sm" style="font-size:11px;">⬇ Alle exportieren</button>
+      <label class="btn btn-outline btn-sm" style="font-size:11px;cursor:pointer;">⬆ JSON importieren<input id="icloudImportFile" type="file" accept=".json" style="display:none;" multiple /></label>
+      <button id="icloudExportCurrent" type="button" class="btn btn-outline btn-sm" style="font-size:11px;">⬇ Aktuellen Song</button>
+    </div>
+
     <!-- Footer -->
-    <div style="padding:10px 24px;border-top:1px solid var(--line);font-size:11px;color:var(--ink3);">
-      Songs werden lokal im Browser und in iCloud Drive gespeichert.
+    <div style="padding:8px 24px;border-top:1px solid var(--line);font-size:10px;color:var(--ink3);">
+      Songs lokal + GitHub gespeichert · bfluecki.github.io/drummer-chart-builder
     </div>
   </div>
 </div>
@@ -3004,9 +3023,9 @@ function libraryRenderList() {
 
 function libraryOpen() {
   const modal = document.getElementById("libraryModal");
-  // Pre-fill name from current song title
   document.getElementById("librarySaveName").value = song.title || "";
   libraryRenderList();
+  ghInitUI();
   modal.style.display = "flex";
 }
 
@@ -3216,8 +3235,157 @@ async function icloudImportFiles(e) {
   e.target.value = "";
 }
 
+// ── GITHUB API SYNC ──────────────────────────────────
+const GH_SETTINGS_KEY = "dcb_github_settings";
+
+function ghLoadSettings() {
+  try { return JSON.parse(localStorage.getItem(GH_SETTINGS_KEY) || "{}"); } 
+  catch { return {}; }
+}
+
+function ghSaveSettings(settings) {
+  localStorage.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function ghUpdateStatus(msg, ok = null) {
+  const el = document.getElementById("ghStatus");
+  if (el) {
+    el.textContent = msg;
+    el.style.color = ok === true ? "#1a7f37" : ok === false ? "#cf222e" : "#6b7280";
+  }
+  const dot = document.getElementById("ghStatusDot");
+  if (dot) dot.style.background = ok === true ? "#1a7f37" : ok === false ? "#cf222e" : "#d1d5db";
+}
+
+function ghInitUI() {
+  const s = ghLoadSettings();
+  const repoEl  = document.getElementById("ghRepo");
+  const tokenEl = document.getElementById("ghToken");
+  if (repoEl  && s.repo)  repoEl.value  = s.repo;
+  if (tokenEl && s.token) tokenEl.value = s.token;
+  if (s.repo && s.token) {
+    const dot = document.getElementById("ghStatusDot");
+    if (dot) dot.style.background = "#1a7f37";
+    ghUpdateStatus("Verbunden mit " + s.repo, true);
+  }
+}
+
+async function ghApiRequest(path, method = "GET", body = null) {
+  const s = ghLoadSettings();
+  if (!s.repo || !s.token) throw new Error("GitHub nicht konfiguriert.");
+  const url = "https://api.github.com/repos/" + s.repo + path;
+  const opts = {
+    method,
+    headers: {
+      "Authorization": "token " + s.token,
+      "Accept": "application/vnd.github+json",
+      "Content-Type": "application/json"
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const resp = await fetch(url, opts);
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || resp.statusText);
+  }
+  return resp.status === 204 ? null : resp.json();
+}
+
+async function ghPushSong() {
+  if (!song.title) { ghUpdateStatus("Kein Song geladen.", false); return; }
+  ghUpdateStatus("Speichere auf GitHub…");
+  try {
+    const filename = "songs/" + (song.title || "song")
+      .replace(/[^a-zA-Z0-9äöüÄÖÜ\s\-]/g, "")
+      .replace(/\s+/g, "-").toLowerCase() + ".json";
+    const entry = {
+      name:    song.title,
+      savedAt: new Date().toLocaleString("de-CH"),
+      data:    JSON.parse(JSON.stringify(song))
+    };
+    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(entry, null, 2))));
+
+    // Check if file exists (to get SHA for update)
+    let sha = null;
+    try {
+      const existing = await ghApiRequest("/contents/" + filename);
+      sha = existing.sha;
+    } catch {}
+
+    const body = {
+      message: "Song: " + song.title + " (" + new Date().toLocaleString("de-CH") + ")",
+      content: contentB64,
+    };
+    if (sha) body.sha = sha;
+
+    await ghApiRequest("/contents/" + filename, "PUT", body);
+
+    // Also update local library
+    librarySaveCurrent(song.title);
+    ghUpdateStatus("✓ " + song.title + " auf GitHub gespeichert.", true);
+    status("Song auf GitHub gespeichert ✓");
+  } catch(err) {
+    ghUpdateStatus("Fehler: " + err.message, false);
+    status("GitHub Fehler: " + err.message);
+  }
+}
+
+async function ghPullSongs() {
+  ghUpdateStatus("Lade Songs von GitHub…");
+  try {
+    // List all files in songs/ folder
+    let files;
+    try {
+      files = await ghApiRequest("/contents/songs");
+    } catch {
+      ghUpdateStatus("Kein songs/ Ordner gefunden. Zuerst einen Song speichern.", false);
+      return;
+    }
+
+    if (!Array.isArray(files) || !files.length) {
+      ghUpdateStatus("Keine Songs auf GitHub gefunden.", false);
+      return;
+    }
+
+    const songs = libraryLoad();
+    let count = 0;
+
+    for (const file of files) {
+      if (!file.name.endsWith(".json")) continue;
+      try {
+        const resp = await fetch(file.download_url);
+        const entry = await resp.json();
+        if (!entry.name || !entry.data) continue;
+        const idx = songs.findIndex(s => s.name === entry.name);
+        if (idx >= 0) songs[idx] = entry;
+        else songs.unshift(entry);
+        count++;
+      } catch {}
+    }
+
+    librarySave(songs);
+    libraryRenderList();
+    ghUpdateStatus("✓ " + count + " Song(s) von GitHub geladen.", true);
+    status(count + " Songs von GitHub geladen ✓");
+  } catch(err) {
+    ghUpdateStatus("Fehler: " + err.message, false);
+  }
+}
+
 // ── BOOT ─────────────────────────────────────────────
 document.getElementById("newBtn").addEventListener("click", resetSong);
+
+// GitHub buttons
+document.getElementById("ghSaveSettings").addEventListener("click", () => {
+  const repo  = document.getElementById("ghRepo").value.trim();
+  const token = document.getElementById("ghToken").value.trim();
+  if (!repo || !token) { ghUpdateStatus("Bitte Repo und Token eingeben.", false); return; }
+  ghSaveSettings({ repo, token });
+  ghUpdateStatus("Einstellungen gespeichert ✓ — Verbunden mit " + repo, true);
+  document.getElementById("ghSetupPanel").style.display = "none";
+});
+document.getElementById("ghPush").addEventListener("click", ghPushSong);
+document.getElementById("ghPull").addEventListener("click", ghPullSongs);
 document.getElementById("icloudExportAll").addEventListener("click", icloudExportAll);
 document.getElementById("icloudExportCurrent").addEventListener("click", icloudExportCurrent);
 document.getElementById("icloudImportFile").addEventListener("change", icloudImportFiles);
@@ -3289,6 +3457,12 @@ bindTopFields();
 syncTopFields();
 renderSections();
 renderPreview();
+</script>
+<script>
+  // Register Service Worker for offline use
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
 </script>
 </body>
 </html>
