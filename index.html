@@ -199,6 +199,104 @@
     .pill.active { background: var(--ink); color: #fff; border-color: var(--ink); }
     #metroBeat { display:inline-block; transition: opacity .1s, transform .1s, color .05s; opacity:.3; font-size:16px; }
     .pill-autosave-on { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .pill-tap { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .pill-tap:active { background: #f59e0b; color: #fff; }
+    .metro-adj { background: none; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; font-size: 14px; cursor: pointer; color: var(--ink2); line-height: 1; }
+    .metro-adj:hover { background: var(--soft); color: var(--ink); }
+
+    /* ── METRONOM MODAL ─────────────────────────────────── */
+    .mo-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mo-box {
+      background: #fff;
+      border-radius: 28px;
+      width: min(400px, 95vw);
+      padding: 20px 20px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,.28);
+    }
+    .mo-close {
+      position: absolute; top: 14px; right: 14px;
+      background: #f1f5f9; border: none; border-radius: 50%;
+      width: 32px; height: 32px; font-size: 16px;
+      cursor: pointer; color: var(--ink2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mo-close:hover { background: #e2e8f0; }
+    .mo-header {
+      width: 100%; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 4px;
+    }
+    .mo-ts-block, .mo-bpm-block { display: flex; flex-direction: column; }
+    .mo-bpm-block { align-items: flex-end; }
+    .mo-bignum {
+      font-size: 52px; font-weight: 800; line-height: 1;
+      font-family: 'DM Mono', monospace; letter-spacing: -2px;
+    }
+    .mo-sublabel { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+    .mo-circle-wrap { position: relative; width: 280px; height: 280px; flex-shrink: 0; }
+    .mo-circle-wrap svg { position: absolute; inset: 0; overflow: visible; }
+    #moDot { transition: cx .06s ease, cy .06s ease, r .06s ease; }
+    .mo-tap-zone {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 158px; height: 158px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+    }
+    .mo-tap-zone:active { opacity: .75; }
+    .mo-countdown { font-size: 52px; font-weight: 800; color: #d4522a; line-height: 1; font-family: 'DM Mono', monospace; min-height: 56px; }
+    .mo-tap-label { font-size: 22px; color: var(--ink2); font-weight: 500; }
+    .mo-ring-btn {
+      position: absolute; background: none; border: none;
+      font-size: 26px; font-weight: 300; color: var(--ink2);
+      cursor: pointer; width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mo-ring-btn:hover { color: var(--ink); }
+    .mo-ring-plus  { top: 2px;  left: 50%; transform: translateX(-50%); }
+    .mo-ring-minus { left: 2px; top: 50%;  transform: translateY(-50%); }
+    .mo-counts-row {
+      width: 100%; display: flex; justify-content: space-between; padding: 0 8px;
+    }
+    .mo-count-col { display: flex; flex-direction: column; }
+    .mo-count-col.right { align-items: flex-end; }
+    .mo-count-num { font-size: 38px; font-weight: 800; font-family: 'DM Mono', monospace; line-height: 1; }
+    .mo-count-lbl { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+    .mo-action-row { display: flex; gap: 8px; width: 100%; }
+    .mo-action-pill {
+      flex: 1; padding: 9px 10px; border-radius: 22px;
+      border: 1.5px solid var(--line); background: var(--soft);
+      font: inherit; font-size: 13px; cursor: pointer; color: var(--ink);
+    }
+    .mo-action-pill:hover { filter: brightness(.94); }
+    .mo-action-pill.primary { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .mo-mode-row {
+      display: flex; background: #f1f5f9; border-radius: 26px;
+      padding: 3px; gap: 2px; width: 100%;
+    }
+    .mo-mode-pill {
+      flex: 1; padding: 9px 4px; border-radius: 22px; border: none;
+      background: none; font: inherit; font-size: 13px;
+      cursor: pointer; color: var(--ink2);
+    }
+    .mo-mode-pill.active {
+      background: #fff; color: var(--ink);
+      box-shadow: 0 1px 5px rgba(0,0,0,.14);
+    }
+    .mo-bpm-tap { cursor: pointer; border-bottom: 2px dashed #d1d5db; transition: border-color .15s; }
+    .mo-bpm-tap:hover { border-color: #3b82f6; color: #3b82f6; }
+    .mo-bpm-input {
+      width: 110px; font-size: 52px; font-weight: 800;
+      font-family: 'DM Mono', monospace; letter-spacing: -2px;
+      border: none; border-bottom: 2px solid #3b82f6;
+      outline: none; background: transparent; text-align: right;
+      color: #3b82f6; padding: 0;
+    }
 
     #statusText { font-size: 12px; color: var(--ink3); margin-left: 4px; }
 
@@ -1335,18 +1433,24 @@
       <label class="upload-label">📄 iReal PDF/TXT<input id="irealInput" type="file" accept=".pdf,.txt" /></label>
       <label class="upload-label">🎼 MusicXML<input id="xmlInput" type="file" accept=".musicxml,.xml,.mxl" /></label>
       <button id="printBtn" class="btn btn-accent" type="button">🖨 Drucken / PDF</button>
+      <button id="exportPdfBtn" class="btn btn-accent" type="button">⬇ PDF Download</button>
     </div>
   </header>
 
   <!-- STATUS BAR -->
   <div class="statusbar no-print">
     <button id="btnLive" class="pill pill-live pill-btn" title="Metronom starten/stoppen" type="button">● Live</button>
-    <button id="btnForScore" class="pill pill-btn" title="Chart als PDF-Datei exportieren" type="button">⬇ forScore</button>
+    <button id="btnCountIn" class="pill pill-btn" title="Mit Count-In starten" type="button">Count-In</button>
+    <button id="btnTapTempo" class="pill pill-btn pill-tap" title="Tap Tempo" type="button">Tap</button>
+    <button id="btnForScore" class="pill pill-btn" title="Chart als PDF-Datei exportieren" type="button">⬇ PDF</button>
     <span class="pill">Standalone</span>
     <button id="btnAutoSave" class="pill pill-btn" title="Auto-Save ein/aus" type="button">Auto-Save</button>
-    <div id="metronomeDisplay" style="display:none;align-items:center;gap:6px;">
+    <div id="metronomeDisplay" style="display:none;align-items:center;gap:4px;">
+      <span id="metroCountIn" style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#d4522a;min-width:14px;text-align:center;"></span>
       <span id="metroBeat" style="font-size:18px;transition:opacity .05s;">◆</span>
-      <span id="metroBPM" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ink2);"></span>
+      <button id="btnBpmMinus" class="metro-adj" type="button">−</button>
+      <span id="metroBPM" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--ink2);min-width:52px;text-align:center;"></span>
+      <button id="btnBpmPlus" class="metro-adj" type="button">+</button>
     </div>
     <span id="statusText">Bereit.</span>
   </div>
@@ -3321,72 +3425,318 @@ function libraryClose() {
 }
 
 // ── METRONOM ─────────────────────────────────────────
-let metroInterval  = null;
-let metroBeatCount = 0;
+// ── METRONOME (Web Audio scheduled, Tap-Tempo, Count-In) ──────────────────
+let metroCtx       = null;
 let metroActive    = false;
+let metroScheduler = null;
+let metroNextTime  = 0;
+let metroBeatCount = 0;
+let metroBPM       = 120;
+let tapTimes       = [];
+let tapResetTimer  = null;
 
-function metroStart() {
-  const bpm = Number(song.tempo) || 120;
-  const ms  = Math.round(60000 / bpm);
-  metroBeatCount = 0;
-  metroActive    = true;
+const METRO_SCHEDULE_AHEAD = 0.1; // seconds
+const METRO_TICK_MS        = 25;  // scheduler interval
 
-  const display = document.getElementById("metronomeDisplay");
-  const beatEl  = document.getElementById("metroBeat");
-  const bpmEl   = document.getElementById("metroBPM");
-  display.style.display = "flex";
-  bpmEl.textContent = bpm + " BPM";
-
-  // AudioContext for click sound
-  let ctx = null;
-  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-
-  function playClick(accent) {
-    if (!ctx) return;
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = accent ? 1200 : 900;
-    gain.gain.setValueAtTime(.4, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .05);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + .06);
+function metroGetCtx() {
+  if (!metroCtx) {
+    try { metroCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
   }
+  return metroCtx;
+}
 
-  function tick() {
-    metroBeatCount++;
-    const beats = getBeatsPerBar(song.timeSignature || "4/4");
-    const isAccent = (metroBeatCount - 1) % beats === 0;
-    playClick(isAccent);
-    beatEl.style.opacity = "1";
-    beatEl.style.color   = isAccent ? "#d4522a" : "var(--ink)";
-    beatEl.style.transform = "scale(1.3)";
+let moMode       = "off";  // off | acoustic | visual | both
+let moBeatsTotal = 0;
+let moBarsTotal  = 0;
+
+function metroPlayClick(time, accent) {
+  if (moMode === "off" || moMode === "visual") return;
+  const ctx = metroGetCtx();
+  if (!ctx) return;
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = accent ? 1200 : 900;
+  gain.gain.setValueAtTime(0.4, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+  osc.start(time);
+  osc.stop(time + 0.07);
+}
+
+function moUpdateDot(beatInMeasure, totalBeats) {
+  const angle = (beatInMeasure / totalBeats) * 2 * Math.PI - Math.PI / 2;
+  const cx = 150 + 105 * Math.cos(angle);
+  const cy = 150 + 105 * Math.sin(angle);
+  const dot = document.getElementById("moDot");
+  if (!dot) return;
+  dot.setAttribute("cx", cx.toFixed(1));
+  dot.setAttribute("cy", cy.toFixed(1));
+  dot.setAttribute("r",  beatInMeasure === 0 ? "21" : "15");
+  dot.setAttribute("fill", beatInMeasure === 0 ? "#111" : "#9ca3af");
+}
+
+function metroSchedule() {
+  const ctx = metroGetCtx();
+  if (!ctx || !metroActive) return;
+  const beatInterval = 60 / metroBPM;
+  const beats        = getBeatsPerBar(song.timeSignature || "4/4");
+  while (metroNextTime < ctx.currentTime + METRO_SCHEDULE_AHEAD) {
+    const isAccent    = metroBeatCount % beats === 0;
+    const beatInMeas  = metroBeatCount % beats;
+    metroPlayClick(metroNextTime, isAccent);
+    const delay   = Math.max(0, (metroNextTime - ctx.currentTime) * 1000);
+    const beatNum = metroBeatCount;
     setTimeout(() => {
-      beatEl.style.opacity   = ".3";
-      beatEl.style.transform = "scale(1)";
-    }, ms * .3);
+      if (!metroActive) return;
+      // statusbar flash
+      if (moMode !== "visual") {
+        const beatEl = document.getElementById("metroBeat");
+        if (beatEl) {
+          beatEl.style.opacity   = "1";
+          beatEl.style.color     = (beatNum % beats === 0) ? "#d4522a" : "var(--ink)";
+          beatEl.style.transform = "scale(1.4)";
+          setTimeout(() => { beatEl.style.opacity = ".3"; beatEl.style.transform = "scale(1)"; }, beatInterval * 280);
+        }
+      }
+      // modal dot + counters
+      if (moMode !== "off") {
+        moUpdateDot(beatNum % beats, beats);
+        moBeatsTotal++;
+        if (beatNum % beats === 0 && beatNum > 0) moBarsTotal++;
+        const bEl = document.getElementById("moBeats");
+        const rEl = document.getElementById("moBars");
+        if (bEl) bEl.textContent = moBeatsTotal;
+        if (rEl) rEl.textContent = moBarsTotal;
+      }
+    }, delay);
+    metroBeatCount++;
+    metroNextTime += beatInterval;
   }
+}
 
-  tick();
-  metroInterval = setInterval(tick, ms);
+function metroShowDisplay() {
+  document.getElementById("metronomeDisplay").style.display = "flex";
+  document.getElementById("metroBPM").textContent = metroBPM + " BPM";
   document.getElementById("btnLive").classList.add("active");
   document.getElementById("btnLive").textContent = "◼ Stop";
-  status("Metronom läuft · " + bpm + " BPM");
+}
+
+function metroStart(withCountIn) {
+  const ctx = metroGetCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume();
+  metroBPM       = Number(song.tempo) || metroBPM || 120;
+  metroBeatCount = 0;
+  metroActive    = true;
+  metroShowDisplay();
+
+  if (withCountIn) {
+    const countBeats   = parseInt(song.countIn) || 4;
+    const beatInterval = 60 / metroBPM;
+    const startTime    = ctx.currentTime + 0.05;
+    for (let i = 0; i < countBeats; i++) {
+      metroPlayClick(startTime + i * beatInterval, true);
+      const delay     = Math.max(0, (startTime + i * beatInterval - ctx.currentTime) * 1000);
+      const remaining = countBeats - i;
+      setTimeout(() => {
+        if (!metroActive) return;
+        const el = document.getElementById("metroCountIn");
+        if (el) el.textContent = remaining;
+      }, delay);
+    }
+    status("Count-In · " + countBeats + " Beats...");
+    setTimeout(() => {
+      if (!metroActive) return;
+      const el = document.getElementById("metroCountIn");
+      if (el) el.textContent = "";
+      metroNextTime  = ctx.currentTime + 0.05;
+      metroBeatCount = 0;
+      metroScheduler = setInterval(metroSchedule, METRO_TICK_MS);
+      status("Metronom läuft · " + metroBPM + " BPM");
+    }, countBeats * beatInterval * 1000 + 60);
+  } else {
+    metroNextTime  = ctx.currentTime + 0.05;
+    metroScheduler = setInterval(metroSchedule, METRO_TICK_MS);
+    status("Metronom läuft · " + metroBPM + " BPM");
+  }
 }
 
 function metroStop() {
-  clearInterval(metroInterval);
-  metroInterval = null;
-  metroActive   = false;
+  clearInterval(metroScheduler);
+  metroScheduler = null;
+  metroActive    = false;
   document.getElementById("metronomeDisplay").style.display = "none";
+  document.getElementById("metroCountIn").textContent = "";
   document.getElementById("btnLive").classList.remove("active");
   document.getElementById("btnLive").textContent = "● Live";
+  const cd = document.getElementById("moCountDisp");
+  if (cd) cd.textContent = "";
+  const tl = document.getElementById("moTapLabel");
+  if (tl) tl.textContent = moMode === "off" ? "Tippe" : "Tap";
   status("Metronom gestoppt.");
 }
 
-function metroToggle() {
-  if (metroActive) metroStop(); else metroStart();
+function metroToggle() { moOpen(); }
+
+// ── METRONOM MODAL FUNCTIONS ──────────────────────────────────
+function moOpen() {
+  metroBPM = Number(song.tempo) || metroBPM || 120;
+  const modal = document.getElementById("metroModal");
+  if (!modal) return;
+  modal.style.display = "flex";
+  moRefreshHeader();
+  moUpdateDot(0, getBeatsPerBar(song.timeSignature || "4/4"));
+  document.querySelectorAll(".mo-mode-pill").forEach(b =>
+    b.classList.toggle("active", b.dataset.mode === moMode)
+  );
+  // restore saved mode if song has one
+  if (song.metronomeMode && song.metronomeMode !== moMode) {
+    moMode = song.metronomeMode;
+    document.querySelectorAll(".mo-mode-pill").forEach(b =>
+      b.classList.toggle("active", b.dataset.mode === moMode)
+    );
+  }
+}
+
+function moClose() {
+  const modal = document.getElementById("metroModal");
+  if (modal) modal.style.display = "none";
+}
+
+function moRefreshHeader() {
+  const bpmEl = document.getElementById("moBPMNum");
+  const tsEl  = document.getElementById("moTSNum");
+  const ts    = song.timeSignature || "4/4";
+  const beatNames = { "4":"vier", "3":"drei", "2":"zwei", "6":"sechs" };
+  const topNum = ts.split("/")[0];
+  if (bpmEl) bpmEl.textContent = metroBPM;
+  if (tsEl)  tsEl.textContent  = topNum;
+  const lbl = tsEl && tsEl.nextElementSibling;
+  if (lbl) lbl.textContent = "/" + (beatNames[topNum] || topNum);
+}
+
+function moSetMode(mode) {
+  moMode = mode;
+  document.querySelectorAll(".mo-mode-pill").forEach(b =>
+    b.classList.toggle("active", b.dataset.mode === mode)
+  );
+  if (mode === "off") {
+    if (metroActive) metroStop();
+    document.getElementById("moTapLabel").textContent = "Tippe";
+  } else {
+    if (metroActive) metroStop();
+    moBeatsTotal = 0;
+    moBarsTotal  = 0;
+    document.getElementById("moBeats").textContent = "0";
+    document.getElementById("moBars").textContent  = "0";
+    metroStart(false);
+    document.getElementById("moTapLabel").textContent = "Tap";
+  }
+}
+
+function moSaveToSong() {
+  song.tempo         = String(metroBPM);
+  song.metronomeMode = moMode;
+  const tempoEl = document.getElementById("tempo");
+  if (tempoEl) tempoEl.value = metroBPM;
+  saveLocal();
+  status("Metronom-Einstellungen gespeichert ✓");
+}
+
+function moReset() {
+  moBeatsTotal = 0;
+  moBarsTotal  = 0;
+  document.getElementById("moBeats").textContent = "0";
+  document.getElementById("moBars").textContent  = "0";
+  if (metroActive) {
+    metroStop();
+    moSetMode(moMode);
+  }
+}
+
+function moTap() {
+  tapTempo();
+  moRefreshHeader();
+}
+
+function moStartBPMEdit() {
+  const el = document.getElementById("moBPMNum");
+  if (!el || el.tagName === "INPUT") return;
+  const inp = document.createElement("input");
+  inp.type      = "number";
+  inp.min       = "20";
+  inp.max       = "300";
+  inp.value     = metroBPM;
+  inp.className = "mo-bpm-input";
+  el.replaceWith(inp);
+  inp.id = "moBPMNum";
+  inp.select();
+  function commit() {
+    const val = Math.max(20, Math.min(300, parseInt(inp.value) || metroBPM));
+    metroBPM = val;
+    song.tempo = String(val);
+    document.getElementById("tempo").value = val;
+    const span = document.createElement("div");
+    span.className = "mo-bignum mo-bpm-tap";
+    span.id        = "moBPMNum";
+    span.title     = "Antippen zum Bearbeiten";
+    span.textContent = val;
+    inp.replaceWith(span);
+    span.addEventListener("click", moStartBPMEdit);
+    document.getElementById("metroBPM").textContent = val + " BPM";
+    if (metroActive) {
+      clearInterval(metroScheduler);
+      const ctx = metroGetCtx();
+      metroNextTime  = ctx.currentTime + 0.05;
+      metroScheduler = setInterval(metroSchedule, METRO_TICK_MS);
+    }
+    status("Tempo: " + val + " BPM");
+  }
+  inp.addEventListener("blur", commit);
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter")  { inp.blur(); }
+    if (e.key === "Escape") { inp.value = metroBPM; inp.blur(); }
+    if (e.key === "ArrowUp")   { e.preventDefault(); inp.value = Math.min(300, (parseInt(inp.value)||metroBPM) + 1); }
+    if (e.key === "ArrowDown") { e.preventDefault(); inp.value = Math.max(20,  (parseInt(inp.value)||metroBPM) - 1); }
+  });
+}
+
+function metroBPMAdjust(delta) {
+  metroBPM = Math.max(20, Math.min(300, metroBPM + delta));
+  document.getElementById("metroBPM").textContent = metroBPM + " BPM";
+  if (metroActive) {
+    clearInterval(metroScheduler);
+    const ctx = metroGetCtx();
+    metroNextTime  = ctx.currentTime + 0.05;
+    metroScheduler = setInterval(metroSchedule, METRO_TICK_MS);
+  }
+  status("Tempo: " + metroBPM + " BPM");
+}
+
+function tapTempo() {
+  const now = Date.now();
+  tapTimes.push(now);
+  if (tapTimes.length > 8) tapTimes.shift();
+  clearTimeout(tapResetTimer);
+  tapResetTimer = setTimeout(() => { tapTimes = []; }, 3000);
+
+  if (tapTimes.length >= 2) {
+    let sum = 0;
+    for (let i = 1; i < tapTimes.length; i++) sum += tapTimes[i] - tapTimes[i - 1];
+    metroBPM = Math.round(60000 / (sum / (tapTimes.length - 1)));
+    metroBPM = Math.max(20, Math.min(300, metroBPM));
+    document.getElementById("metroBPM").textContent = metroBPM + " BPM";
+    document.getElementById("tempo").value = metroBPM;
+    song.tempo = String(metroBPM);
+    if (metroActive) {
+      clearInterval(metroScheduler);
+      const ctx = metroGetCtx();
+      metroNextTime  = ctx.currentTime + 0.05;
+      metroScheduler = setInterval(metroSchedule, METRO_TICK_MS);
+    }
+    status("Tap Tempo: " + metroBPM + " BPM");
+  }
 }
 
 // ── AUTO-SAVE ─────────────────────────────────────────
@@ -3428,11 +3778,43 @@ function autoSaveOnChange() {
 }
 
 // ── FORSCORE PRINT ────────────────────────────────────
-function forScorePrint() {
+async function exportPDF() {
   renderPreview();
   switchTab("preview");
-  status("Druckdialog öffnet sich → 'Als PDF sichern' → in forScore importieren.");
-  setTimeout(() => window.print(), 400);
+  await new Promise(r => setTimeout(r, 400));
+  const page = document.getElementById("a4Page");
+  status("PDF wird erstellt…");
+  try {
+    const canvas = await html2canvas(page, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      width: page.offsetWidth,
+      height: page.offsetHeight
+    });
+    const { jsPDF } = window.jspdf;
+    const pdf      = new jsPDF("p", "mm", "a4");
+    const pw       = pdf.internal.pageSize.getWidth();
+    const ph       = pdf.internal.pageSize.getHeight();
+    const imgData  = canvas.toDataURL("image/jpeg", 0.95);
+    const imgH     = (canvas.height * pw) / canvas.width;
+    if (imgH <= ph) {
+      pdf.addImage(imgData, "JPEG", 0, 0, pw, imgH);
+    } else {
+      let yOff = 0, rem = imgH;
+      while (rem > 0) {
+        pdf.addImage(imgData, "JPEG", 0, -yOff, pw, imgH);
+        rem  -= ph;
+        yOff += ph;
+        if (rem > 0) pdf.addPage();
+      }
+    }
+    const fname = ((song.title || "chart").replace(/[^\w\-]/g, "_")) + ".pdf";
+    pdf.save(fname);
+    status("PDF gespeichert: " + fname);
+  } catch(e) {
+    status("PDF-Fehler: " + e.message);
+  }
 }
 
 // ── iCLOUD DRIVE FUNCTIONS ───────────────────────────
@@ -3679,7 +4061,27 @@ document.getElementById("icloudImportFile").addEventListener("change", icloudImp
 // New function buttons - wrapped safely
 try {
   document.getElementById("btnLive").addEventListener("click", metroToggle);
-    } catch(e) { console.warn("Button binding error:", e); }
+  document.getElementById("btnCountIn").addEventListener("click", () => {
+    if (metroActive) metroStop(); else { moMode = moMode === "off" ? "acoustic" : moMode; metroStart(true); }
+  });
+  document.getElementById("btnTapTempo").addEventListener("click", tapTempo);
+  document.getElementById("btnBpmMinus").addEventListener("click", () => metroBPMAdjust(-1));
+  document.getElementById("btnBpmPlus").addEventListener("click",  () => metroBPMAdjust(+1));
+  document.getElementById("btnForScore").addEventListener("click", exportPDF);
+
+  // Modal
+  document.getElementById("moClose").addEventListener("click", moClose);
+  document.getElementById("moBPMNum").addEventListener("click", moStartBPMEdit);
+  document.getElementById("metroModal").addEventListener("click", e => { if (e.target === document.getElementById("metroModal")) moClose(); });
+  document.getElementById("moTapZone").addEventListener("click", moTap);
+  document.getElementById("moBpmPlus2").addEventListener("click",  e => { e.stopPropagation(); metroBPMAdjust(+1); moRefreshHeader(); });
+  document.getElementById("moBpmMinus2").addEventListener("click", e => { e.stopPropagation(); metroBPMAdjust(-1); moRefreshHeader(); });
+  document.getElementById("moSaveBtn").addEventListener("click", moSaveToSong);
+  document.getElementById("moResetBtn").addEventListener("click", moReset);
+  document.querySelectorAll(".mo-mode-pill").forEach(btn =>
+    btn.addEventListener("click", () => moSetMode(btn.dataset.mode))
+  );
+} catch(e) { console.warn("Button binding error:", e); }
 document.getElementById("songsBtn").addEventListener("click", libraryOpen);
 document.getElementById("libraryClose").addEventListener("click", libraryClose);
 document.getElementById("libraryModal").addEventListener("click", e => {
@@ -3698,6 +4100,7 @@ document.getElementById("librarySaveName").addEventListener("keydown", e => {
 document.getElementById("saveBtn").addEventListener("click", saveLocal);
 document.getElementById("exportBtn").addEventListener("click", exportJson);
 document.getElementById("printBtn").addEventListener("click", () => window.print());
+document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
 document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
@@ -3988,6 +4391,61 @@ renderFormBuilder();
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 </script>
+
+<!-- ── METRONOM MODAL ─────────────────────────────────────────── -->
+<div id="metroModal" class="mo-overlay" style="display:none;">
+  <div class="mo-box">
+    <button class="mo-close" id="moClose">✕</button>
+
+    <div class="mo-header">
+      <div class="mo-ts-block">
+        <div class="mo-bignum" id="moTSNum">4</div>
+        <div class="mo-sublabel">/vier</div>
+      </div>
+      <div class="mo-bpm-block">
+        <div class="mo-bignum mo-bpm-tap" id="moBPMNum" title="Antippen zum Bearbeiten">120</div>
+        <div class="mo-sublabel">/Minute</div>
+      </div>
+    </div>
+
+    <div class="mo-circle-wrap">
+      <svg viewBox="0 0 300 300" width="280" height="280">
+        <circle cx="150" cy="150" r="128" fill="#e5e7eb"/>
+        <circle cx="150" cy="150" r="78"  fill="#fff"/>
+        <circle id="moDot" cx="150" cy="22" r="18" fill="#111"/>
+      </svg>
+      <div class="mo-tap-zone" id="moTapZone">
+        <div class="mo-countdown" id="moCountDisp"></div>
+        <div class="mo-tap-label" id="moTapLabel">Tippe</div>
+      </div>
+      <button class="mo-ring-btn mo-ring-plus"  id="moBpmPlus2">+</button>
+      <button class="mo-ring-btn mo-ring-minus" id="moBpmMinus2">−</button>
+    </div>
+
+    <div class="mo-counts-row">
+      <div class="mo-count-col">
+        <div class="mo-count-num" id="moBeats">0</div>
+        <div class="mo-count-lbl">#Schläge</div>
+      </div>
+      <div class="mo-count-col right">
+        <div class="mo-count-num" id="moBars">0</div>
+        <div class="mo-count-lbl">#Takte</div>
+      </div>
+    </div>
+
+    <div class="mo-action-row">
+      <button class="mo-action-pill primary" id="moSaveBtn">Zum Song speichern</button>
+      <button class="mo-action-pill" id="moResetBtn">Reset</button>
+    </div>
+
+    <div class="mo-mode-row">
+      <button class="mo-mode-pill active" data-mode="off">Aus</button>
+      <button class="mo-mode-pill" data-mode="acoustic">Akustisch</button>
+      <button class="mo-mode-pill" data-mode="visual">Optisch</button>
+      <button class="mo-mode-pill" data-mode="both">Beides</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
