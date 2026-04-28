@@ -2462,10 +2462,10 @@ function renderSections() {
         </div>
         <div class="paint-tools" style="margin:10px 0 6px;">
           <span style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;">Malen:</span>
-          <button class="paint-btn" data-paint="hit" data-psid="${section.id}" type="button"><span class="dot"></span> Hit</button>
-          <button class="paint-btn" data-paint="a" data-psid="${section.id}" type="button"><span class="dot"></span> Auftakt</button>
-          <button class="paint-btn" data-paint="b" data-psid="${section.id}" type="button"><span class="dot"></span> Break</button>
-          <button class="paint-btn" data-paint="off" data-psid="${section.id}" type="button">✕ Löschen</button>
+          <button class="paint-btn" data-paint="hit" data-section-id="${section.id}" type="button"><span class="dot"></span> Hit</button>
+          <button class="paint-btn" data-paint="a" data-section-id="${section.id}" type="button"><span class="dot"></span> Auftakt</button>
+          <button class="paint-btn" data-paint="b" data-section-id="${section.id}" type="button"><span class="dot"></span> Break</button>
+          <button class="paint-btn" data-paint="off" data-section-id="${section.id}" type="button">✕ Löschen</button>
         </div>
         <div class="grid-scroll">${renderGrid(section)}</div>
       </div>
@@ -2476,8 +2476,14 @@ function renderSections() {
 
   // ── bind events ──
   host.querySelectorAll("input[data-id], textarea[data-id], select[data-id][data-field]").forEach(el => {
-    el.addEventListener("input",  handleSectionFieldChange);
-    el.addEventListener("change", handleSectionFieldChange);
+    const field = el.dataset.field;
+    // bars + timeSignature rebuild the grid — only on confirmed change, not every keystroke
+    if (field === "bars" || field === "timeSignature") {
+      el.addEventListener("change", handleSectionFieldChange);
+    } else {
+      el.addEventListener("input",  handleSectionFieldChange);
+      el.addEventListener("change", handleSectionFieldChange);
+    }
   });
 
   // ── Drag & Drop reorder ──
@@ -2582,18 +2588,17 @@ function renderSections() {
         s.pattern = createPatternForSection(ts, bars, presetName);
       }
       // Temporarily disable ensurePatternLength override by marking correct length
-      status(`Preset "${presetName}" geladen ✓`);
-      // Only redraw the grid of this section - do NOT call renderSections()
-      // which would rebuild DOM and break event listeners
       const card = e.target.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
         if (scrollEl) scrollEl.innerHTML = renderGrid(s);
-        // Rebind mini-cell clicks for this card only
         bindGridEvents(card, s);
       }
+      // Reset select so the same preset can be re-selected (change event needs value to differ)
+      e.target.value = "";
       renderPreview();
-      } catch(err) { alert("PRESET FEHLER: " + err.message + "\n" + err.stack); }
+      status(`Preset "${presetName}" geladen ✓`);
+      } catch(err) { status("Preset-Fehler: " + err.message); console.error(err); }
     });
   });
 
@@ -2601,9 +2606,18 @@ function renderSections() {
     btn.addEventListener("click", e => {
       const s = song.sections.find(x => x.id === e.target.dataset.clear);
       if (!s) return;
-      delete s.pattern;
-      s.pattern = createPatternForSection(s.timeSignature||"4/4", s.bars||"1", getGroovePattern(s));
-      renderSections(); renderPreview();
+      s.pattern = createPatternForSection(s.timeSignature || "4/4", s.bars || "1", "");
+      s.groovePattern = "";
+      const card = e.target.closest("[data-section-id]");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        bindGridEvents(card, s);
+        const sel = card.querySelector("[data-preset]");
+        if (sel) sel.value = "";
+      }
+      renderPreview();
+      status("Grid zurückgesetzt.");
     });
   });
 
@@ -2623,7 +2637,7 @@ function renderSections() {
   });
 
   // Paint mode buttons
-  host.querySelectorAll(".paint-btn[data-psid]").forEach(btn => {
+  host.querySelectorAll(".paint-btn[data-section-id]").forEach(btn => {
     const sid = btn.dataset.psid;
     // Set initial active state from stored mode
     const currentMode = sectionPaintMode[sid] || "hit";
@@ -2644,52 +2658,52 @@ function renderSections() {
 }
 
 function handleSectionFieldChange(e) {
-  const id    = e.target.dataset.id;
-  const field = e.target.dataset.field;
-  const s     = song.sections.find(x => x.id === id);
-  if (!s) return;
-  s[field] = e.target.value;
+  try {
+    const id    = e.target.dataset.id;
+    const field = e.target.dataset.field;
+    const s     = song.sections.find(x => x.id === id);
+    if (!s) return;
+    s[field] = e.target.value;
 
-  // Only re-render sections when structure changes (bars, timeSignature)
-  // For text fields (groove, cue, dynamics, name, flowLabel*) just update state + preview
-  if (field === "bars") {
-    s.bars = String(parseBars(s.bars));
-    ensurePatternLength(s, true);
-    // Redraw only this section's grid + title — no full renderSections()
-    const card = e.target.closest(".section-card");
-    if (card) {
-      const scrollEl = card.querySelector(".grid-scroll");
-      const titleEl  = card.querySelector(".grid-title");
-      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
-      if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
-      bindGridEvents(card, s);
-    }
-  } else if (field === "timeSignature") {
-    ensurePatternLength(s, false);
-    const card = e.target.closest(".section-card");
-    if (card) {
-      const scrollEl = card.querySelector(".grid-scroll");
-      const titleEl  = card.querySelector(".grid-title");
-      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
-      if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
-      bindGridEvents(card, s);
-    }
-  } else if (field === "groove") {
-    // Tool field changed — no pattern rebuild needed, tool is just a label
-  } else if (field === "name") {
-    // Patch badge in-place
-    const card = e.target.closest(".section-card");
-    if (card) {
-      const badge = card.querySelector(".section-top-left .form-badge");
-      if (badge) {
-        const norm = normalizeFormName(s.name||"Part");
-        badge.textContent = norm;
-        badge.className   = "form-badge " + getFormClass(s.name);
+    if (field === "bars") {
+      s.bars = String(parseBars(s.bars));
+      // Clamp input to valid value so spinner reflects reality
+      e.target.value = s.bars;
+      ensurePatternLength(s, true);
+      const card = e.target.closest(".section-card");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        const titleEl  = card.querySelector(".grid-title");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
+        bindGridEvents(card, s);
+      }
+    } else if (field === "timeSignature") {
+      ensurePatternLength(s, false);
+      const card = e.target.closest(".section-card");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        const titleEl  = card.querySelector(".grid-title");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
+        bindGridEvents(card, s);
+      }
+    } else if (field === "name") {
+      const card = e.target.closest(".section-card");
+      if (card) {
+        const badge = card.querySelector(".section-top-left .form-badge");
+        if (badge) {
+          badge.textContent = normalizeFormName(s.name || "Part");
+          badge.className   = "form-badge " + getFormClass(s.name);
+        }
       }
     }
-  }
 
-  renderPreview();
+    renderPreview();
+  } catch(err) {
+    console.error("handleSectionFieldChange:", err);
+    status("Fehler beim Speichern: " + err.message);
+  }
 }
 
 // ── FLOW SHEET ───────────────────────────────────────
