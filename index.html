@@ -1406,7 +1406,7 @@
       Tippe in Safari auf <strong>Teilen ↑</strong> → <strong>„Zum Home-Bildschirm"</strong><br>
       → Die App erscheint als Icon auf deinem iPad!
     </div>
-    <button onclick="document.getElementById('iosHelper').style.display='none';localStorage.setItem('dcb_welcomed','1');"
+    <button onclick="document.getElementById('iosHelper').style.display='none';store.setItem('dcb_welcomed','1');"
       style="background:#0f1117;color:#fff;border:none;border-radius:12px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;width:100%;">
       Los geht's →
     </button>
@@ -1788,6 +1788,14 @@ function applyStyleToSections(style) {
 
 const STORAGE_KEY = "drummer_chart_builder_v18";
 
+// Safe localStorage wrapper — falls back to in-memory map when storage is blocked (e.g. data: URLs)
+const _memStore = {};
+const store = {
+  getItem(k)    { try { return store.getItem(k); }    catch(e) { return _memStore[k] ?? null; } },
+  setItem(k, v) { try { store.setItem(k, v); }        catch(e) { _memStore[k] = v; } },
+  removeItem(k) { try { store.removeItem(k); }        catch(e) { delete _memStore[k]; } }
+};
+
 const INSTRUMENTS = [
   { key: "hh",  label: "HH" },
   { key: "sn",  label: "SN" },
@@ -1886,14 +1894,14 @@ const GROOVE_STORAGE_KEY = "drumchart_grooves_v1";
 
 function loadGrooveTemplates() {
   try {
-    const raw = localStorage.getItem(GROOVE_STORAGE_KEY);
+    const raw = store.getItem(GROOVE_STORAGE_KEY);
     if (raw) return JSON.parse(raw);
   } catch(e) {}
   return JSON.parse(JSON.stringify(DEFAULT_GROOVE_TEMPLATES));
 }
 
 function saveGrooveTemplates(templates) {
-  localStorage.setItem(GROOVE_STORAGE_KEY, JSON.stringify(templates));
+  store.setItem(GROOVE_STORAGE_KEY, JSON.stringify(templates));
 }
 
 let drumGrooveTemplates = loadGrooveTemplates();
@@ -2864,12 +2872,12 @@ function renderPreview() {
 
 // ── PERSISTENCE ──────────────────────────────────────
 function saveLocal() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(song));
+  store.setItem(STORAGE_KEY, JSON.stringify(song));
   status("Lokal gespeichert ✓");
 }
 
 function loadLocal() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = store.getItem(STORAGE_KEY);
   if (!raw) return;
   try {
     const parsed = JSON.parse(raw);
@@ -3324,12 +3332,12 @@ async function importMusicXMLFile(e) {
 const LIB_KEY = "drummer_chart_library_v1";
 
 function libraryLoad() {
-  try { return JSON.parse(localStorage.getItem(LIB_KEY) || "[]"); }
+  try { return JSON.parse(store.getItem(LIB_KEY) || "[]"); }
   catch { return []; }
 }
 
 function librarySave(songs) {
-  localStorage.setItem(LIB_KEY, JSON.stringify(songs));
+  store.setItem(LIB_KEY, JSON.stringify(songs));
 }
 
 function librarySaveCurrent(name) {
@@ -3908,12 +3916,12 @@ async function icloudImportFiles(e) {
 const GH_SETTINGS_KEY = "dcb_github_settings";
 
 function ghLoadSettings() {
-  try { return JSON.parse(localStorage.getItem(GH_SETTINGS_KEY) || "{}"); } 
+  try { return JSON.parse(store.getItem(GH_SETTINGS_KEY) || "{}"); } 
   catch { return {}; }
 }
 
 function ghSaveSettings(settings) {
-  localStorage.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
+  store.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function ghUpdateStatus(msg, ok = null) {
@@ -4133,13 +4141,13 @@ document.getElementById("irealInput").addEventListener("change", importIRealFile
 document.getElementById("xmlInput").addEventListener("change", importMusicXMLFile);
 
 // Show iPad welcome on first visit
-if (!localStorage.getItem('dcb_welcomed')) {
+if (!store.getItem('dcb_welcomed')) {
   const isTouch = navigator.maxTouchPoints > 0;
   if (isTouch) {
     const h = document.getElementById('iosHelper');
     if (h) h.style.display = 'flex';
   } else {
-    localStorage.setItem('dcb_welcomed','1');
+    store.setItem('dcb_welcomed','1');
   }
 }
 
