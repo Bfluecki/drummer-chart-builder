@@ -251,6 +251,24 @@
     .perf-nav-btn:hover { background:#374151; }
     .perf-nav-btn:disabled { opacity:.3;cursor:default; }
     .perf-song-num { font-family:'DM Mono',monospace;font-size:16px;color:#6b7280;min-width:60px;text-align:center; }
+    .perf-metro { display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 20px;flex-shrink:0; }
+    .perf-metro-btn { background:#1f2937;border:none;color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;padding:10px 22px;touch-action:manipulation;transition:background .15s;min-width:110px; }
+    .perf-metro-btn:hover { background:#374151; }
+    .perf-metro-btn.running { background:#16a34a; }
+    .perf-metro-bpm { font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:#e5e7eb;min-width:100px;text-align:center; }
+    .perf-metro-dot { width:20px;height:20px;border-radius:50%;background:#374151;transition:background .06s,transform .06s;flex-shrink:0; }
+    .perf-metro-dot.beat   { background:#f97316;transform:scale(1.3); }
+    .perf-metro-dot.accent { background:#ef4444;transform:scale(1.6); }
+    /* Named setlists */
+    .sl-namebar { display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap; }
+    .sl-name-input { flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;font:inherit;font-size:14px;background:var(--white);color:var(--ink); }
+    .sl-name-input:focus { outline:none;border-color:var(--accent); }
+    .sl-saved-row { display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line);min-height:40px;flex-shrink:0;align-items:center; }
+    .sl-saved-chip { display:inline-flex;align-items:center;gap:4px;background:var(--soft);border:1.5px solid var(--line);border-radius:20px;padding:4px 10px 4px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink);transition:all .15s;user-select:none; }
+    .sl-saved-chip:hover { border-color:var(--accent);color:var(--accent); }
+    .sl-saved-chip.active { background:var(--ink);color:#fff;border-color:var(--ink); }
+    .sl-chip-del { background:none;border:none;cursor:pointer;font-size:13px;line-height:1;padding:0;color:inherit;opacity:.6; }
+    .sl-chip-del:hover { opacity:1; }
 
     /* ── METRONOM MODAL ─────────────────────────────────── */
     .mo-overlay {
@@ -3602,6 +3620,13 @@ function metroSchedule() {
         if (bEl) bEl.textContent = moBeatsTotal;
         if (rEl) rEl.textContent = moBarsTotal;
       }
+      // perf mode dot flash
+      const perfDot = document.getElementById("perfMetroDot");
+      if (perfDot) {
+        const cls = (beatNum % beats === 0) ? "accent" : "beat";
+        perfDot.classList.add(cls);
+        setTimeout(() => perfDot.classList.remove(cls), beatInterval * 250);
+      }
     }, delay);
     metroBeatCount++;
     metroNextTime += beatInterval;
@@ -3815,12 +3840,43 @@ function tapTempo() {
 // ══════════════════════════════════════════════════════════════════
 // SETLIST
 // ══════════════════════════════════════════════════════════════════
-const SETLIST_KEY = "drumchart_setlist_v1";
+const SETLIST_KEY_LEGACY = "drumchart_setlist_v1";
+const SETLISTS_KEY       = "drumchart_setlists_v2";
 
-function setlistLoad()       { try { return JSON.parse(store.getItem(SETLIST_KEY) || "[]"); } catch { return []; } }
-function setlistSave(list)   { store.setItem(SETLIST_KEY, JSON.stringify(list)); }
+let activeSetlistName = "";
+
+function setlistsLoad() { try { return JSON.parse(store.getItem(SETLISTS_KEY) || "{}"); } catch { return {}; } }
+function setlistsSave(all) { store.setItem(SETLISTS_KEY, JSON.stringify(all)); }
+
+function setlistMigrate() {
+  const old = store.getItem(SETLIST_KEY_LEGACY);
+  if (!old) return;
+  try {
+    const items = JSON.parse(old);
+    if (!Array.isArray(items) || !items.length) return;
+    const all = setlistsLoad();
+    if (!all["Meine Setlist"]) { all["Meine Setlist"] = items; setlistsSave(all); }
+    store.removeItem(SETLIST_KEY_LEGACY);
+  } catch {}
+}
+
+function setlistLoad() {
+  if (!activeSetlistName) return [];
+  return setlistsLoad()[activeSetlistName] || [];
+}
+function setlistSave(items) {
+  if (!activeSetlistName) return;
+  const all = setlistsLoad();
+  all[activeSetlistName] = items;
+  setlistsSave(all);
+}
 
 function setlistOpen() {
+  setlistMigrate();
+  if (!activeSetlistName) {
+    const names = Object.keys(setlistsLoad());
+    activeSetlistName = names[0] || "";
+  }
   setlistRender();
   document.getElementById("setlistModal").style.display = "flex";
 }
@@ -3828,7 +3884,50 @@ function setlistClose() {
   document.getElementById("setlistModal").style.display = "none";
 }
 
+function setlistNew() {
+  activeSetlistName = "";
+  const inp = document.getElementById("slNameInput");
+  if (inp) { inp.value = ""; inp.focus(); }
+  setlistRender();
+}
+
+function setlistSaveAs() {
+  const inp  = document.getElementById("slNameInput");
+  const name = (inp?.value || "").trim();
+  if (!name) { status("Bitte einen Namen eingeben."); inp?.focus(); return; }
+  const prev = activeSetlistName;
+  const all  = setlistsLoad();
+  const items = prev ? (all[prev] || []) : [];   // keep existing items when renaming
+  if (prev && prev !== name) delete all[prev];   // rename: remove old key
+  all[name] = all[name] || items;
+  setlistsSave(all);
+  activeSetlistName = name;
+  setlistRender();
+  status(`Setlist "${name}" gespeichert ✓`);
+}
+
+function setlistLoadNamed(name) {
+  activeSetlistName = name;
+  const inp = document.getElementById("slNameInput");
+  if (inp) inp.value = name;
+  setlistRender();
+}
+
+function setlistDeleteNamed(name) {
+  if (!confirm(`Setlist "${name}" wirklich löschen?`)) return;
+  const all = setlistsLoad();
+  delete all[name];
+  setlistsSave(all);
+  if (activeSetlistName === name) {
+    activeSetlistName = Object.keys(all)[0] || "";
+  }
+  const inp = document.getElementById("slNameInput");
+  if (inp) inp.value = activeSetlistName;
+  setlistRender();
+}
+
 function setlistAdd(name) {
+  if (!activeSetlistName) { status("Zuerst Setlist-Name eingeben und 💾 Speichern."); return; }
   const list = setlistLoad();
   if (list.find(e => e.name === name)) { status(`"${name}" bereits in der Setlist.`); return; }
   list.push({ name });
@@ -3854,8 +3953,28 @@ function setlistMove(name, dir) {
 }
 
 function setlistRender() {
-  const lib  = libraryLoad();
-  const list = setlistLoad();
+  const lib   = libraryLoad();
+  const all   = setlistsLoad();
+  const list  = setlistLoad();
+  const names = Object.keys(all);
+
+  // Name input sync
+  const inp = document.getElementById("slNameInput");
+  if (inp && document.activeElement !== inp) inp.value = activeSetlistName;
+
+  // Saved setlist chips
+  const savedEl = document.getElementById("slSaved");
+  if (savedEl) {
+    savedEl.innerHTML = names.length
+      ? names.map(n => `<span class="sl-saved-chip ${n === activeSetlistName ? "active" : ""}" data-load="${escapeHtml(n)}">${escapeHtml(n)}<button class="sl-chip-del" data-delsl="${escapeHtml(n)}" type="button">✕</button></span>`).join("")
+      : `<span style="font-size:12px;color:var(--ink3);">Noch keine Setlisten. Namen eingeben → 💾 Speichern.</span>`;
+    savedEl.querySelectorAll("[data-load]").forEach(el => {
+      el.addEventListener("click", e => { if (e.target.closest("[data-delsl]")) return; setlistLoadNamed(el.dataset.load); });
+    });
+    savedEl.querySelectorAll("[data-delsl]").forEach(btn => {
+      btn.addEventListener("click", e => { e.stopPropagation(); setlistDeleteNamed(btn.dataset.delsl); });
+    });
+  }
 
   // Left: library
   const libEl = document.getElementById("slLibrary");
@@ -3885,7 +4004,7 @@ function setlistRender() {
   // Right: setlist
   const slEl = document.getElementById("slItems");
   if (!list.length) {
-    slEl.innerHTML = `<div class="sl-empty">Setlist ist leer.<br>Songs links hinzufügen.</div>`;
+    slEl.innerHTML = `<div class="sl-empty">${activeSetlistName ? "Setlist ist leer.<br>Songs links hinzufügen." : "Namen eingeben → 💾 Speichern → Songs hinzufügen."}</div>`;
   } else {
     slEl.innerHTML = list.map((e, i) => {
       const libEntry = lib.find(s => s.name === e.name);
@@ -3939,8 +4058,32 @@ function perfOpen() {
 }
 
 function perfClose() {
+  if (metroActive) metroStop();
   document.getElementById("perfMode").style.display = "none";
   document.removeEventListener("keydown", perfKeyHandler);
+  const btn = document.getElementById("perfMetroBtn");
+  if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
+}
+
+function perfMetroToggle() {
+  if (metroActive) {
+    metroStop();
+    const btn = document.getElementById("perfMetroBtn");
+    if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
+  } else {
+    // Set BPM from currently shown song
+    const list    = setlistLoad();
+    const lib     = libraryLoad();
+    const entry   = list[perfIndex];
+    const libItem = lib.find(s => s.name === entry?.name);
+    const tempo   = Number(libItem?.data?.tempo);
+    if (tempo > 0) metroBPM = tempo;
+    // Use moMode if not off, otherwise default to acoustic
+    if (moMode === "off") moMode = "acoustic";
+    metroStart(false);
+    const btn = document.getElementById("perfMetroBtn");
+    if (btn) { btn.textContent = "◼ Stop"; btn.classList.add("running"); }
+  }
 }
 
 function perfKeyHandler(e) {
@@ -3966,6 +4109,16 @@ function perfShow() {
   document.getElementById("perfSongNum").textContent  = `${perfIndex + 1} / ${list.length}`;
   document.getElementById("perfPrev").disabled = perfIndex === 0;
   document.getElementById("perfNext").disabled = perfIndex === list.length - 1;
+
+  // Update metro BPM display and restart if running
+  const perfTempo = Number(lib.find(s => s.name === entry?.name)?.data?.tempo) || 0;
+  const bpmEl = document.getElementById("perfMetroBpm");
+  if (bpmEl) bpmEl.textContent = perfTempo ? `${perfTempo} BPM` : "— BPM";
+  if (metroActive && perfTempo > 0 && perfTempo !== metroBPM) {
+    metroBPM = perfTempo;
+    metroStop();
+    metroStart(false);
+  }
 
   if (!data) {
     document.getElementById("perfTitle").textContent  = entry?.name || "—";
@@ -4387,10 +4540,14 @@ document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
 document.getElementById("setlistBtn").addEventListener("click", setlistOpen);
 document.getElementById("setlistModalClose").addEventListener("click", setlistClose);
 document.getElementById("setlistModal").addEventListener("click", e => { if (e.target === document.getElementById("setlistModal")) setlistClose(); });
+document.getElementById("slSaveBtn").addEventListener("click", setlistSaveAs);
+document.getElementById("slNewBtn").addEventListener("click", setlistNew);
+document.getElementById("slNameInput").addEventListener("keydown", e => { if (e.key === "Enter") setlistSaveAs(); });
 document.getElementById("slStartPerf").addEventListener("click", perfOpen);
 document.getElementById("perfExit").addEventListener("click", perfClose);
 document.getElementById("perfPrev").addEventListener("click", () => perfNavigate(-1));
 document.getElementById("perfNext").addEventListener("click", () => perfNavigate(1));
+document.getElementById("perfMetroBtn").addEventListener("click", perfMetroToggle);
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
 document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
@@ -4689,6 +4846,12 @@ renderFormBuilder();
       <h2>📋 Setlist</h2>
       <button class="sl-close" id="setlistModalClose">✕</button>
     </div>
+    <div class="sl-namebar">
+      <input id="slNameInput" class="sl-name-input" type="text" placeholder="Name (z.B. Konzert 1. Mai)" />
+      <button id="slSaveBtn" class="btn" type="button">💾 Speichern</button>
+      <button id="slNewBtn"  class="btn btn-ghost" type="button">＋ Neue Setlist</button>
+    </div>
+    <div id="slSaved" class="sl-saved-row"></div>
     <div class="sl-body">
       <div class="sl-col">
         <div class="sl-col-title">Bibliothek</div>
@@ -4717,6 +4880,11 @@ renderFormBuilder();
     <div class="perf-artist" id="perfArtist">—</div>
     <div class="perf-pills"  id="perfPills"></div>
     <div class="perf-sections" id="perfSections"></div>
+  </div>
+  <div class="perf-metro">
+    <button id="perfMetroBtn" class="perf-metro-btn" type="button">▶ Metro</button>
+    <div id="perfMetroBpm" class="perf-metro-bpm">— BPM</div>
+    <div id="perfMetroDot" class="perf-metro-dot"></div>
   </div>
   <div class="perf-navrow">
     <button class="perf-nav-btn" id="perfPrev" title="Vorheriger Song (←)">◀</button>
