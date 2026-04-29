@@ -4065,20 +4065,27 @@ function perfClose() {
   if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
 }
 
+function perfSyncMetroSong() {
+  // Sync metroBPM + song.timeSignature from currently shown perf song
+  const list    = setlistLoad();
+  const lib     = libraryLoad();
+  const entry   = list[perfIndex];
+  const libItem = lib.find(s => s.name === entry?.name);
+  const data    = libItem?.data;
+  if (!data) return;
+  const tempo = Number(data.tempo);
+  if (tempo > 0) metroBPM = tempo;
+  // Override the global timeSignature so metroSchedule counts correctly
+  song.timeSignature = data.timeSignature || "4/4";
+}
+
 function perfMetroToggle() {
   if (metroActive) {
     metroStop();
     const btn = document.getElementById("perfMetroBtn");
     if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
   } else {
-    // Set BPM from currently shown song
-    const list    = setlistLoad();
-    const lib     = libraryLoad();
-    const entry   = list[perfIndex];
-    const libItem = lib.find(s => s.name === entry?.name);
-    const tempo   = Number(libItem?.data?.tempo);
-    if (tempo > 0) metroBPM = tempo;
-    // Use moMode if not off, otherwise default to acoustic
+    perfSyncMetroSong();
     if (moMode === "off") moMode = "acoustic";
     metroStart(false);
     const btn = document.getElementById("perfMetroBtn");
@@ -4110,14 +4117,22 @@ function perfShow() {
   document.getElementById("perfPrev").disabled = perfIndex === 0;
   document.getElementById("perfNext").disabled = perfIndex === list.length - 1;
 
-  // Update metro BPM display and restart if running
-  const perfTempo = Number(lib.find(s => s.name === entry?.name)?.data?.tempo) || 0;
+  // Update metro BPM display + time signature
+  const perfTempo = Number(data?.tempo) || 0;
+  const perfTS    = data?.timeSignature || "4/4";
   const bpmEl = document.getElementById("perfMetroBpm");
   if (bpmEl) bpmEl.textContent = perfTempo ? `${perfTempo} BPM` : "— BPM";
-  if (metroActive && perfTempo > 0 && perfTempo !== metroBPM) {
-    metroBPM = perfTempo;
-    metroStop();
-    metroStart(false);
+  if (metroActive) {
+    const changed = perfTempo > 0 && perfTempo !== metroBPM || perfTS !== song.timeSignature;
+    if (changed) {
+      if (perfTempo > 0) metroBPM = perfTempo;
+      song.timeSignature = perfTS;
+      metroStop();
+      metroStart(false);
+    }
+  } else {
+    // Keep song.timeSignature in sync even when stopped
+    song.timeSignature = perfTS;
   }
 
   if (!data) {
