@@ -4418,8 +4418,20 @@ async function ghPushSong() {
 
     // Also update local library
     librarySaveCurrent(song.title);
-    ghUpdateStatus("✓ " + song.title + " auf GitHub gespeichert.", true);
-    status("Song auf GitHub gespeichert ✓");
+
+    // Push setlists
+    try {
+      const slAll     = setlistsLoad();
+      const slContent = btoa(unescape(encodeURIComponent(JSON.stringify(slAll, null, 2))));
+      let slSha = null;
+      try { const ex = await ghApiRequest("/contents/setlists.json"); slSha = ex.sha; } catch {}
+      const slBody = { message: "Setlists aktualisiert", content: slContent };
+      if (slSha) slBody.sha = slSha;
+      await ghApiRequest("/contents/setlists.json", "PUT", slBody);
+    } catch {}
+
+    ghUpdateStatus("✓ " + song.title + " + Setlisten auf GitHub gespeichert.", true);
+    status("Song + Setlisten auf GitHub gespeichert ✓");
   } catch(err) {
     ghUpdateStatus("Fehler: " + err.message, false);
     status("GitHub Fehler: " + err.message);
@@ -4461,8 +4473,24 @@ async function ghPullSongs() {
 
     librarySave(songs);
     libraryRenderList();
-    ghUpdateStatus("✓ " + count + " Song(s) von GitHub geladen.", true);
-    status(count + " Songs von GitHub geladen ✓");
+
+    // Pull setlists
+    try {
+      const slFile = await ghApiRequest("/contents/setlists.json");
+      const slText = decodeURIComponent(escape(atob(slFile.content.replace(/\n/g,""))));
+      const slAll  = JSON.parse(slText);
+      if (typeof slAll === "object" && slAll !== null) {
+        setlistsSave(slAll);
+        // Refresh active setlist name if needed
+        const names = Object.keys(slAll);
+        if (!activeSetlistName && names.length) activeSetlistName = names[0];
+      }
+      ghUpdateStatus(`✓ ${count} Song(s) + Setlisten von GitHub geladen.`, true);
+      status(count + " Songs + Setlisten von GitHub geladen ✓");
+    } catch {
+      ghUpdateStatus("✓ " + count + " Song(s) von GitHub geladen.", true);
+      status(count + " Songs von GitHub geladen ✓");
+    }
   } catch(err) {
     ghUpdateStatus("Fehler: " + err.message, false);
   }
