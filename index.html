@@ -277,6 +277,22 @@
     .mini-cell.rimshot { background:#047857 !important;color:#fff !important;border-color:#047857;font-size:14px; }
     .mini-cell.xstick  { background:#6b7280 !important;color:#fff !important;border-color:#6b7280;font-size:12px; }
     .mini-cell.drag-over { outline:2px solid var(--accent) !important;transform:scale(1.15);z-index:2; }
+    .gv-cell.drag-over-gv { outline:2px solid var(--accent) !important;transform:scale(1.1); }
+    /* ── NOTE DURATIONS ────────────────────────────────── */
+    .mini-cell.note-q  { background:#0f3460 !important;color:#fff !important;font-size:15px; }
+    .mini-cell.note-e  { background:#1a56db !important;color:#fff !important;font-size:14px; }
+    .mini-cell.note-qd { background:#1e40af !important;color:#fff !important;font-size:12px; }
+    .mini-cell.note-ed { background:#3b82f6 !important;color:#fff !important;font-size:11px; }
+    .mini-cell.note-h  { background:#f8fafc !important;color:#0f3460 !important;border:2px solid #0f3460 !important;font-size:14px; }
+    .mini-cell.note-w  { background:#f8fafc !important;color:#0f3460 !important;border:2px solid #0f3460 !important;font-size:12px; }
+    .mini-cell.note-16 { background:#60a5fa !important;color:#fff !important;font-size:13px; }
+    /* ── RESTS ─────────────────────────────────────────── */
+    .mini-cell.rest-q  { background:#fef3c7 !important;color:#92400e !important;font-size:14px;font-weight:700; }
+    .mini-cell.rest-e  { background:#fef3c7 !important;color:#92400e !important;font-size:13px;font-weight:700; }
+    .mini-cell.rest-h  { background:#fef9e7 !important;color:#92400e !important;font-size:13px;font-weight:700; }
+    .mini-cell.rest-w  { background:#fef9e7 !important;color:#92400e !important;font-size:12px;font-weight:700; }
+    /* groove editor cell articulations */
+    .gv-art { font-size:11px; }
     /* ── NOTEN-PALETTE ──────────────────────────────────── */
     .note-palette { display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:10px;user-select:none; }
     .palette-group { display:flex;align-items:center;gap:4px; }
@@ -310,6 +326,22 @@
     .global-pal-item[data-gpval="a"]:hover,.global-pal-item[data-gpval="a"].active  { background:#6366f1;border-color:#6366f1;color:#fff; }
     .global-pal-item[data-gpval="b"]:hover,.global-pal-item[data-gpval="b"].active  { background:#db2777;border-color:#db2777;color:#fff; }
     .global-pal-item[data-gpval="false"]:hover,.global-pal-item[data-gpval="false"].active { background:#ef4444;border-color:#ef4444;color:#fff; }
+    /* note duration palette colors */
+    .global-pal-item[data-gpval="n4"]:hover,.global-pal-item[data-gpval="n4"].active,
+    .global-pal-item[data-gpval="n8"]:hover,.global-pal-item[data-gpval="n8"].active,
+    .global-pal-item[data-gpval="n16"]:hover,.global-pal-item[data-gpval="n16"].active,
+    .global-pal-item[data-gpval="n4."]:hover,.global-pal-item[data-gpval="n4."].active,
+    .global-pal-item[data-gpval="n8."]:hover,.global-pal-item[data-gpval="n8."].active,
+    .global-pal-item[data-gpval="n2"]:hover,.global-pal-item[data-gpval="n2"].active,
+    .global-pal-item[data-gpval="n1"]:hover,.global-pal-item[data-gpval="n1"].active { background:#0f3460;border-color:#0f3460;color:#fff; }
+    .global-pal-item[data-gpval="p4"]:hover,.global-pal-item[data-gpval="p4"].active,
+    .global-pal-item[data-gpval="p8"]:hover,.global-pal-item[data-gpval="p8"].active,
+    .global-pal-item[data-gpval="p2"]:hover,.global-pal-item[data-gpval="p2"].active,
+    .global-pal-item[data-gpval="p1"]:hover,.global-pal-item[data-gpval="p1"].active { background:#d97706;border-color:#d97706;color:#fff; }
+    /* same for in-card palette */
+    .pal-item[data-pval="n4"]:hover,.pal-item[data-pval="n8"]:hover,.pal-item[data-pval="n16"]:hover,
+    .pal-item[data-pval^="n"]:hover,.pal-item[data-pval^="n"].active { background:#0f3460;border-color:#0f3460;color:#fff; }
+    .pal-item[data-pval^="p"]:hover,.pal-item[data-pval^="p"].active { background:#d97706;border-color:#d97706;color:#fff; }
     /* ── TAGS ───────────────────────────────────────────── */
     .tags-row { display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px; }
     .tag-pill { display:inline-flex;align-items:center;gap:4px;background:#e0e7ff;color:#3730a3;border-radius:20px;padding:3px 10px 3px 12px;font-size:12px;font-weight:600; }
@@ -1766,6 +1798,19 @@
         <div class="pal-item global-pal-item" data-gpval="b"     draggable="true" title="Break"><span class="pal-sym" style="color:#db2777;">B</span><span class="pal-lbl">Break</span></div>
         <div class="palette-sep"></div>
         <div class="pal-item global-pal-item" data-gpval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
+        <div class="palette-sep"></div>
+        <div class="pal-item global-pal-item" data-gpval="n1"  draggable="true" title="Ganze Note"><span class="pal-sym">𝅝</span><span class="pal-lbl">Ganze</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n2"  draggable="true" title="Halbe Note"><span class="pal-sym">𝅗𝅥</span><span class="pal-lbl">Halbe</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n4"  draggable="true" title="Viertelnote"><span class="pal-sym">♩</span><span class="pal-lbl">Viertel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n8"  draggable="true" title="Achtelnote"><span class="pal-sym">♪</span><span class="pal-lbl">Achtel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n16" draggable="true" title="Sechzehntelnote"><span class="pal-sym">♬</span><span class="pal-lbl">16tel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
+        <div class="pal-item global-pal-item" data-gpval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
+        <div class="palette-sep"></div>
+        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">𝄻 Pause</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">𝄼 Pause</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">𝄽 Pause</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">𝄾 Pause</span></div>
       </div>
 
       <div id="sections"></div>
@@ -2370,16 +2415,42 @@ function cellValToState(v) {
   if (v === "o")    return "open-hh";
   if (v === "r")    return "rimshot";
   if (v === "x")    return "xstick";
+  // Note durations
+  if (v === "n4")   return "note-q";
+  if (v === "n8")   return "note-e";
+  if (v === "n16")  return "note-16";
+  if (v === "n4.")  return "note-qd";
+  if (v === "n8.")  return "note-ed";
+  if (v === "n2")   return "note-h";
+  if (v === "n1")   return "note-w";
+  // Rests (Pausen)
+  if (v === "p4")   return "rest-q";
+  if (v === "p8")   return "rest-e";
+  if (v === "p2")   return "rest-h";
+  if (v === "p1")   return "rest-w";
   return (v && v !== false) ? "on" : "";
 }
 function cellValToIcon(v) {
-  if (v === "a")   return "A";
-  if (v === "b")   return "B";
-  if (v === ">")   return ">";
-  if (v === "g")   return "(·)";
-  if (v === "o")   return "○";
-  if (v === "r")   return "+";
-  if (v === "x")   return "×";
+  if (v === "a")    return "A";
+  if (v === "b")    return "B";
+  if (v === ">")    return ">";
+  if (v === "g")    return "(·)";
+  if (v === "o")    return "○";
+  if (v === "r")    return "+";
+  if (v === "x")    return "×";
+  // Note durations
+  if (v === "n4")   return "♩";
+  if (v === "n8")   return "♪";
+  if (v === "n16")  return "♬";
+  if (v === "n4.")  return "♩.";
+  if (v === "n8.")  return "♪.";
+  if (v === "n2")   return "𝅗𝅥";
+  if (v === "n1")   return "𝅝";
+  // Rests (Pausen)
+  if (v === "p4")   return "𝄽";
+  if (v === "p8")   return "𝄾";
+  if (v === "p2")   return "𝄼";
+  if (v === "p1")   return "𝄻";
   return (v && v !== false) ? "●" : "·";
 }
 function cellValFromPalette(raw) {
@@ -2485,25 +2556,55 @@ function renderMiniNotation(section) {
         s += `<text x="${cx}" y="${yHH+5}" text-anchor="middle" font-size="14" fill="#111827" font-weight="700">×</text>`;
       }
 
+      // Helper: draw a note/rest symbol in SVG at (cx, cy) with given cell value
+      function svgNote(val, cx, cy) {
+        if (!val || val === false) return "";
+        const col = val === "b" ? "#db2777" : val === "a" ? "#7c3aed" : "#111827";
+        // Rests
+        if (val === "p4") return `<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="14" fill="#d97706">𝄽</text>`;
+        if (val === "p8") return `<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="13" fill="#d97706">𝄾</text>`;
+        if (val === "p2") return `<rect x="${cx-6}" y="${cy-1}" width="12" height="5" fill="#d97706" rx="1"/>`;
+        if (val === "p1") return `<rect x="${cx-8}" y="${cy+3}" width="14" height="5" fill="#d97706" rx="1"/>`;
+        // Half note: open circle + stem
+        if (val === "n2") {
+          return `<circle cx="${cx}" cy="${cy}" r="5" fill="none" stroke="${col}" stroke-width="2"/>` +
+                 `<line x1="${cx+5}" y1="${cy}" x2="${cx+5}" y2="${cy-16}" stroke="${col}" stroke-width="1.5"/>`;
+        }
+        // Whole note: open circle, larger, no stem
+        if (val === "n1") {
+          return `<ellipse cx="${cx}" cy="${cy}" rx="7" ry="5" fill="none" stroke="${col}" stroke-width="2"/>`;
+        }
+        // Quarter note: filled circle + stem
+        const stem = `<line x1="${cx+5}" y1="${cy}" x2="${cx+5}" y2="${cy-16}" stroke="${col}" stroke-width="1.5"/>`;
+        const head = `<circle cx="${cx}" cy="${cy}" r="5" fill="${col}"/>`;
+        if (val === "n8") {
+          // Eighth: filled + stem + flag
+          return head + stem + `<path d="M${cx+5},${cy-16} Q${cx+12},${cy-10} ${cx+9},${cy-7}" stroke="${col}" stroke-width="1.5" fill="none"/>`;
+        }
+        if (val === "n16") {
+          // Sixteenth: filled + stem + 2 flags
+          return head + stem +
+            `<path d="M${cx+5},${cy-16} Q${cx+12},${cy-10} ${cx+9},${cy-7}" stroke="${col}" stroke-width="1.5" fill="none"/>` +
+            `<path d="M${cx+5},${cy-12} Q${cx+12},${cy-6} ${cx+9},${cy-3}" stroke="${col}" stroke-width="1.5" fill="none"/>`;
+        }
+        if (val === "n4.") return head + stem + `<text x="${cx+10}" y="${cy+4}" font-size="10" fill="${col}">.</text>`;
+        if (val === "n8.") {
+          return head + stem +
+            `<path d="M${cx+5},${cy-16} Q${cx+12},${cy-10} ${cx+9},${cy-7}" stroke="${col}" stroke-width="1.5" fill="none"/>` +
+            `<text x="${cx+10}" y="${cy+4}" font-size="10" fill="${col}">.</text>`;
+        }
+        // Default (true, ">", "g", "o", "r", "x", "n4", etc.) — filled + stem
+        const accent = val === ">" ? `<text x="${cx-7}" y="${cy+4}" font-size="9" fill="#1d4ed8" font-weight="700">></text>` : "";
+        return head + stem + accent;
+      }
+
       // SN
       const sn = (pat.sn || [])[idx];
-      if (sn === "b") {
-        s += `<circle cx="${cx}" cy="${ySN}" r="5" fill="none" stroke="#db2777" stroke-width="1.5"/>`;
-        s += `<line x1="${cx+5}" y1="${ySN}" x2="${cx+5}" y2="${ySN-16}" stroke="#db2777" stroke-width="1.5"/>`;
-      } else if (sn) {
-        s += `<circle cx="${cx}" cy="${ySN}" r="5" fill="#111827"/>`;
-        s += `<line x1="${cx+5}" y1="${ySN}" x2="${cx+5}" y2="${ySN-16}" stroke="#111827" stroke-width="1.5"/>`;
-      }
+      s += svgNote(sn, cx, ySN);
 
       // BD
       const bd = (pat.bd || [])[idx];
-      if (bd === "b") {
-        s += `<circle cx="${cx}" cy="${yBD}" r="5" fill="none" stroke="#db2777" stroke-width="1.5"/>`;
-        s += `<line x1="${cx+5}" y1="${yBD}" x2="${cx+5}" y2="${yBD-16}" stroke="#db2777" stroke-width="1.5"/>`;
-      } else if (bd) {
-        s += `<circle cx="${cx}" cy="${yBD}" r="5" fill="#111827"/>`;
-        s += `<line x1="${cx+5}" y1="${yBD}" x2="${cx+5}" y2="${yBD-16}" stroke="#111827" stroke-width="1.5"/>`;
-      }
+      s += svgNote(bd, cx, yBD);
     }
   }
   // Final bar line
@@ -2987,6 +3088,23 @@ function renderSections() {
           <div class="palette-sep"></div>
           <div class="palette-group">
             <div class="pal-item paint-btn" data-paint="off" data-section-id="${section.id}" data-pval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
+          </div>
+          <div class="palette-sep"></div>
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n1"  draggable="true" title="Ganze Note"><span class="pal-sym">𝅝</span><span class="pal-lbl">Ganze</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n2"  draggable="true" title="Halbe Note"><span class="pal-sym">𝅗𝅥</span><span class="pal-lbl">Halbe</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n4"  draggable="true" title="Viertelnote"><span class="pal-sym">♩</span><span class="pal-lbl">Viertel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n8"  draggable="true" title="Achtelnote"><span class="pal-sym">♪</span><span class="pal-lbl">Achtel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n16" draggable="true" title="Sechzehntelnote"><span class="pal-sym">♬</span><span class="pal-lbl">16tel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
+          </div>
+          <div class="palette-sep"></div>
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">𝄻 Pause</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">𝄼 Pause</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">𝄽 Pause</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">𝄾 Pause</span></div>
           </div>
         </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
@@ -5211,6 +5329,7 @@ function renderGrooveEditor() {
     var total = spb * 2;
     var isDefault = ti < DEFAULT_GROOVE_TEMPLATES.length;
     var patBool = {};
+    var artMap = tpl.patternArt || {};  // { "hh": {"0": ">", "4": "n8"}, ... }
     GROOVE_ROWS.forEach(function(k) {
       patBool[k] = Array(total).fill(false);
       (tpl.pattern[k]||[]).forEach(function(x){ if(x>=1&&x<=total) patBool[k][x-1]=true; });
@@ -5228,10 +5347,23 @@ function renderGrooveEditor() {
       var cells = "";
       for (var i=0;i<total;i++) {
         var on = patBool[k][i];
+        var artVal = on ? ((artMap[k]||{})[String(i)] || true) : false;
+        var cellIcon = cellValToIcon(artVal);
+        var cellState = cellValToState(artVal);
+        var bgColor = on ? (cellState && cellState !== 'on' ? 'var(--accent)' : 'var(--ink)') : 'var(--soft)';
+        if (cellState === 'note-q' || cellState === 'note-e' || cellState === 'note-16' || cellState === 'note-qd' || cellState === 'note-ed') bgColor = '#0f3460';
+        else if (cellState === 'note-h' || cellState === 'note-w') bgColor = '#f8fafc';
+        else if (cellState && cellState.startsWith('rest-')) bgColor = '#fef3c7';
+        else if (cellState === 'accent') bgColor = '#1d4ed8';
+        else if (cellState === 'ghost') bgColor = '#f9fafb';
+        else if (cellState === 'open-hh') bgColor = '#7c3aed';
+        else if (cellState === 'rimshot') bgColor = '#047857';
+        else if (cellState === 'xstick') bgColor = '#6b7280';
+        var fgColor = (on && cellState !== 'note-h' && cellState !== 'note-w' && cellState !== 'ghost') ? '#fff' : (on ? '#0f3460' : 'var(--ink3)');
         cells += '<td style="padding:2px 1px;border-left:'+(i===spb?"2px solid var(--accent)":"none")+';">'
-          +'<button data-ti="'+ti+'" data-key="'+k+'" data-si="'+i+'" type="button" '
-          +'style="width:26px;height:26px;border-radius:4px;border:1px solid var(--line);cursor:pointer;font-size:13px;'
-          +'background:'+(on?'var(--ink)':'var(--soft)')+';color:'+(on?'#fff':'var(--ink3)')+';">'+(on?'●':'·')+'</button></td>';
+          +'<button data-ti="'+ti+'" data-key="'+k+'" data-si="'+i+'" type="button" class="gv-cell" '
+          +'style="width:26px;height:26px;border-radius:4px;border:1px solid var(--line);cursor:pointer;font-size:12px;'
+          +'background:'+bgColor+';color:'+fgColor+';">'+cellIcon+'</button></td>';
       }
       return '<tr><td style="padding:3px 8px;font-size:11px;font-weight:700;color:var(--ink3);white-space:nowrap;">'+GROOVE_LABELS[k]+'</td>'+cells+'</tr>';
     }).join("");
@@ -5248,6 +5380,20 @@ function renderGrooveEditor() {
         :'<button data-groove-del="'+ti+'" class="btn btn-danger btn-sm" type="button">Löschen</button>')
       +'</div>'
       +'<div class="notation-wrap" data-gnotewrap="'+ti+'" style="display:none;padding:8px 0 12px;">'+noteSvg+'</div>'
+      +'<div class="groove-pal" data-gpal="'+ti+'" style="display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:8px 0 10px;border-top:1px solid var(--line);margin-top:6px;user-select:none;">'
+      +'<span style="font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em;margin-right:4px;">Note:</span>'
+      +['n1:𝅝:Ganze','n2:𝅗𝅥:Halbe','n4:♩:Viertel','n8:♪:Achtel','n16:♬:16tel','n4.:♩.:Pkt.♩','n8.:♪.:Pkt.♪'].map(function(s){
+        var p=s.split(':'); return '<div class="pal-item gv-pal-item" data-gti="'+ti+'" data-gpval="'+p[0]+'" draggable="true" style="min-width:32px;padding:4px 6px;" title="'+p[2]+'"><span class="pal-sym" style="font-size:14px;">'+p[1]+'</span><span class="pal-lbl" style="font-size:8px;">'+p[2]+'</span></div>';
+      }).join('')
+      +'<div style="width:1px;height:24px;background:var(--line);flex-shrink:0;margin:0 2px;"></div>'
+      +['p1:𝄻:Ganze','p2:𝄼:Halbe','p4:𝄽:Viertel','p8:𝄾:Achtel'].map(function(s){
+        var p=s.split(':'); return '<div class="pal-item gv-pal-item" data-gti="'+ti+'" data-gpval="'+p[0]+'" draggable="true" style="min-width:32px;padding:4px 6px;" title="'+p[2]+' Pause"><span class="pal-sym" style="font-size:14px;">'+p[1]+'</span><span class="pal-lbl" style="font-size:8px;">'+p[2]+' Pause</span></div>';
+      }).join('')
+      +'<div style="width:1px;height:24px;background:var(--line);flex-shrink:0;margin:0 2px;"></div>'
+      +['true:●:Hit','>:>:Akzent','g:(·):Ghost','o:○:Open HH','r:+:Rimshot','x:×:X-Stick','false:✕:Löschen'].map(function(s){
+        var p=s.split(':'); return '<div class="pal-item gv-pal-item" data-gti="'+ti+'" data-gpval="'+p[0]+'" draggable="true" style="min-width:32px;padding:4px 6px;" title="'+p[2]+'"><span class="pal-sym" style="font-size:14px;">'+p[1]+'</span><span class="pal-lbl" style="font-size:8px;">'+p[2]+'</span></div>';
+      }).join('')
+      +'</div>'
       +'<div style="overflow-x:auto;" data-ggridwrap="'+ti+'"><table style="border-collapse:collapse;">'
       +'<tr><th style="width:40px;"></th>'+hdr+'</tr><tr><td></td>'+sub+'</tr>'+rows
       +'</table></div></div>';
@@ -5270,17 +5416,49 @@ function renderGrooveEditor() {
   var _gDrag = false, _gDragTi = -1, _gDragVal = true;
   function _applyGrooveCell(btn, val) {
     var ti=parseInt(btn.dataset.ti), k=btn.dataset.key, si=parseInt(btn.dataset.si);
-    var arr=drumGrooveTemplates[ti].pattern[k]||[], idx1=si+1, pos=arr.indexOf(idx1);
-    if (val && pos < 0)  arr.push(idx1);
-    if (!val && pos >= 0) arr.splice(pos,1);
-    drumGrooveTemplates[ti].pattern[k] = arr.sort(function(a,b){return a-b;});
-    btn.style.background = val ? 'var(--ink)' : 'var(--soft)';
-    btn.style.color      = val ? '#fff' : 'var(--ink3)';
-    btn.textContent      = val ? '●' : '·';
+    var tpl = drumGrooveTemplates[ti];
+    var arr = tpl.pattern[k] || [];
+    var idx1 = si + 1;
+    var pos = arr.indexOf(idx1);
+    if (!tpl.patternArt) tpl.patternArt = {};
+    if (!tpl.patternArt[k]) tpl.patternArt[k] = {};
+
+    if (val === false || val === "false") {
+      // Erase
+      if (pos >= 0) arr.splice(pos, 1);
+      delete tpl.patternArt[k][String(si)];
+    } else if (val === true || val === "true") {
+      // Plain hit
+      if (pos < 0) arr.push(idx1);
+      delete tpl.patternArt[k][String(si)];
+    } else {
+      // Articulation or duration — add as hit + store art
+      if (pos < 0) arr.push(idx1);
+      tpl.patternArt[k][String(si)] = val;
+    }
+    tpl.pattern[k] = arr.sort(function(a,b){return a-b;});
+
+    var isOn = val !== false && val !== "false";
+    var artVal = isOn ? (tpl.patternArt[k][String(si)] || true) : false;
+    var cellIcon = cellValToIcon(artVal);
+    var cellState = cellValToState(artVal);
+    var bgColor = isOn ? 'var(--ink)' : 'var(--soft)';
+    if (cellState === 'note-q' || cellState === 'note-e' || cellState === 'note-16' || cellState === 'note-qd' || cellState === 'note-ed') bgColor = '#0f3460';
+    else if (cellState === 'note-h' || cellState === 'note-w') bgColor = '#f8fafc';
+    else if (cellState && cellState.startsWith('rest-')) bgColor = '#fef3c7';
+    else if (cellState === 'accent') bgColor = '#1d4ed8';
+    else if (cellState === 'ghost') bgColor = '#f9fafb';
+    else if (cellState === 'open-hh') bgColor = '#7c3aed';
+    else if (cellState === 'rimshot') bgColor = '#047857';
+    else if (cellState === 'xstick') bgColor = '#6b7280';
+    var fgColor = (isOn && cellState !== 'note-h' && cellState !== 'note-w' && cellState !== 'ghost') ? '#fff' : (isOn ? '#0f3460' : 'var(--ink3)');
+    btn.style.background = bgColor;
+    btn.style.color = fgColor;
+    btn.textContent = cellIcon;
     // Update notation SVG live
     var noteWrap = list.querySelector('[data-gnotewrap="'+ti+'"]');
     if (noteWrap && noteWrap.style.display !== 'none') {
-      noteWrap.innerHTML = renderGrooveNotation(drumGrooveTemplates[ti]);
+      noteWrap.innerHTML = renderGrooveNotation(tpl);
     }
   }
 
@@ -5356,6 +5534,65 @@ function renderGrooveEditor() {
       if(!confirm('Preset "'+drumGrooveTemplates[ti].name+'" löschen?')) return;
       drumGrooveTemplates.splice(ti,1);
       saveGrooveTemplates(drumGrooveTemplates); updatePresetDropdowns(); renderGrooveEditor();
+    });
+  });
+
+  // ── Groove palette: drag-and-drop note/articulation values onto cells ──
+  var _gpDragValG = null;
+  list.querySelectorAll(".gv-pal-item[data-gpval]").forEach(function(item) {
+    item.addEventListener("dragstart", function(e) {
+      _gpDragValG = item.dataset.gpval;
+      e.dataTransfer.setData("text/plain", _gpDragValG);
+      e.dataTransfer.effectAllowed = "copy";
+    });
+    item.addEventListener("dragend", function() { _gpDragValG = null; });
+    // Touch drag for iPad
+    var _tGhostG = null;
+    item.addEventListener("touchstart", function(e) {
+      _gpDragValG = item.dataset.gpval;
+      var touch = e.touches[0];
+      _tGhostG = document.createElement("div");
+      _tGhostG.textContent = item.querySelector(".pal-sym") ? item.querySelector(".pal-sym").textContent : "●";
+      _tGhostG.style.cssText = "position:fixed;left:"+(touch.clientX-18)+"px;top:"+(touch.clientY-30)+"px;background:var(--accent);color:#fff;padding:6px 10px;border-radius:8px;font-size:18px;font-weight:700;pointer-events:none;z-index:9999;opacity:.85;";
+      document.body.appendChild(_tGhostG);
+    }, {passive:true});
+    item.addEventListener("touchmove", function(e) {
+      if (!_gpDragValG || !_tGhostG) return;
+      var touch = e.touches[0];
+      _tGhostG.style.left = (touch.clientX-18)+"px";
+      _tGhostG.style.top  = (touch.clientY-30)+"px";
+      document.querySelectorAll(".gv-cell.drag-over-gv").forEach(function(c){ c.classList.remove("drag-over-gv"); });
+      var el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el && el.classList.contains("gv-cell")) el.classList.add("drag-over-gv");
+    }, {passive:true});
+    item.addEventListener("touchend", function(e) {
+      if (_gpDragValG) {
+        var touch = e.changedTouches[0];
+        var el = document.elementFromPoint(touch.clientX, touch.clientY);
+        document.querySelectorAll(".gv-cell.drag-over-gv").forEach(function(c){ c.classList.remove("drag-over-gv"); });
+        if (el && el.classList.contains("gv-cell") && el.dataset.ti !== undefined) {
+          var rawVal = _gpDragValG;
+          var val = (rawVal === "true") ? true : (rawVal === "false") ? false : rawVal;
+          _applyGrooveCell(el, val);
+          saveGrooveTemplates(drumGrooveTemplates); updatePresetDropdowns();
+        }
+        if (_tGhostG) { _tGhostG.remove(); _tGhostG = null; }
+      }
+      _gpDragValG = null;
+    });
+  });
+
+  // Drop onto groove grid cells
+  list.querySelectorAll(".gv-cell[data-ti]").forEach(function(btn) {
+    btn.addEventListener("dragover", function(e) { e.preventDefault(); btn.classList.add("drag-over-gv"); });
+    btn.addEventListener("dragleave", function() { btn.classList.remove("drag-over-gv"); });
+    btn.addEventListener("drop", function(e) {
+      e.preventDefault();
+      btn.classList.remove("drag-over-gv");
+      var rawVal = e.dataTransfer.getData("text/plain");
+      var val = (rawVal === "true") ? true : (rawVal === "false") ? false : rawVal;
+      _applyGrooveCell(btn, val);
+      saveGrooveTemplates(drumGrooveTemplates); updatePresetDropdowns();
     });
   });
 }
