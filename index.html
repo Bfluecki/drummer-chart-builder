@@ -270,6 +270,22 @@
     .sl-chip-del { background:none;border:none;cursor:pointer;font-size:13px;line-height:1;padding:0;color:inherit;opacity:.6; }
     .sl-chip-del:hover { opacity:1; }
 
+    /* ── TAGS ───────────────────────────────────────────── */
+    .tags-row { display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px; }
+    .tag-pill { display:inline-flex;align-items:center;gap:4px;background:#e0e7ff;color:#3730a3;border-radius:20px;padding:3px 10px 3px 12px;font-size:12px;font-weight:600; }
+    .tag-pill button { background:none;border:none;cursor:pointer;color:#6366f1;font-size:12px;line-height:1;padding:0;opacity:.7; }
+    .tag-pill button:hover { opacity:1; }
+    .tag-add-input { border:1.5px solid var(--line);border-radius:20px;padding:3px 10px;font:inherit;font-size:12px;width:120px;color:var(--ink);background:var(--white); }
+    .tag-add-input:focus { outline:none;border-color:var(--accent); }
+    /* ── GROOVE-REF BANNER ──────────────────────────────── */
+    .groove-ref-banner { display:flex;align-items:center;gap:10px;background:#fef9c3;border:1.5px solid #fde047;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:10px;font-size:13px;color:#713f12;font-weight:600; }
+    .groove-ref-banner span { flex:1; }
+    .mini-cell.readonly { cursor:not-allowed;opacity:.65;background:var(--soft) !important; }
+    /* ── MINI-NOTATION ──────────────────────────────────── */
+    .notation-wrap { overflow-x:auto;padding:8px 0 4px; }
+    .notation-toggle { font-size:12px;font-weight:600;color:var(--accent);background:none;border:1.5px solid var(--accent);border-radius:20px;padding:4px 12px;cursor:pointer;transition:all .15s; }
+    .notation-toggle:hover,.notation-toggle.active { background:var(--accent);color:#fff; }
+
     /* ── METRONOM MODAL ─────────────────────────────────── */
     .mo-overlay {
       position: fixed; inset: 0;
@@ -2141,6 +2157,7 @@ function makeSection(name = "", timeSignature = "4/4", style = "Pop", bars = "2"
     chordBars: [],
     repeat: 1,             // Wiederholungen
     grooveRef: "",         // Groove von anderer Section übernehmen
+    tags: [],              // Tags z.B. ["Swing","Brushes"]
     formNotes: "",         // Spielhinweis im Form Builder
     ablaufInstrument: "",  // Lead-Instrument
     pattern: createPatternForSection(timeSignature, bars, groovePattern)
@@ -2266,11 +2283,170 @@ function bindTopFields() {
 }
 
 // ── GRID RENDERER ────────────────────────────────────
+// ── MINI-NOTATION (SVG) ────────────────────────────────────────────
+function renderMiniNotation(section) {
+  const ts        = section.timeSignature || "4/4";
+  const beats     = getBeatsPerBar(ts);
+  const bars      = parseBars(section.bars || "1");
+  const stepsPer  = getStepsPerBar(ts);
+  // Use effective pattern (grooveRef or own)
+  let pat = section.pattern;
+  if (section.grooveRef) {
+    const ref = song.sections.find(s => s.name === section.grooveRef && s.id !== section.id);
+    if (ref) { ensurePatternLength(ref, true); pat = ref.pattern; }
+  }
+  ensurePatternLength(section, true);
+
+  const stepW   = 22;
+  const leftPad = 30;
+  const barGap  = 10;
+  const barW    = stepsPer * stepW;
+  const svgW    = leftPad + bars * barW + (bars - 1) * barGap + 8;
+  const svgH    = 68;
+  const yHH = 12, ySN = 32, yBD = 54;
+
+  let s = `<svg width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="display:block;">`;
+
+  // Staff lines
+  [yHH, ySN, yBD].forEach(y => {
+    s += `<line x1="${leftPad}" y1="${y}" x2="${svgW-4}" y2="${y}" stroke="#d1d5db" stroke-width="1"/>`;
+  });
+
+  for (let bar = 0; bar < bars; bar++) {
+    const bx = leftPad + bar * (barW + barGap);
+    // Bar line
+    s += `<line x1="${bx}" y1="${yHH-8}" x2="${bx}" y2="${yBD+8}" stroke="#9ca3af" stroke-width="1.5"/>`;
+
+    for (let step = 0; step < stepsPer; step++) {
+      const idx = bar * stepsPer + step;
+      const cx  = bx + step * stepW + stepW / 2;
+
+      // HH
+      const hh = (pat.hh || [])[idx];
+      if (hh === "a") {
+        s += `<text x="${cx}" y="${yHH+4}" text-anchor="middle" font-size="10" fill="#7c3aed" font-weight="700">A</text>`;
+      } else if (hh === "b") {
+        s += `<text x="${cx}" y="${yHH+4}" text-anchor="middle" font-size="10" fill="#db2777" font-weight="700">B</text>`;
+      } else if (hh) {
+        s += `<text x="${cx}" y="${yHH+5}" text-anchor="middle" font-size="14" fill="#111827" font-weight="700">×</text>`;
+      }
+
+      // SN
+      const sn = (pat.sn || [])[idx];
+      if (sn === "b") {
+        s += `<circle cx="${cx}" cy="${ySN}" r="5" fill="none" stroke="#db2777" stroke-width="1.5"/>`;
+        s += `<line x1="${cx+5}" y1="${ySN}" x2="${cx+5}" y2="${ySN-16}" stroke="#db2777" stroke-width="1.5"/>`;
+      } else if (sn) {
+        s += `<circle cx="${cx}" cy="${ySN}" r="5" fill="#111827"/>`;
+        s += `<line x1="${cx+5}" y1="${ySN}" x2="${cx+5}" y2="${ySN-16}" stroke="#111827" stroke-width="1.5"/>`;
+      }
+
+      // BD
+      const bd = (pat.bd || [])[idx];
+      if (bd === "b") {
+        s += `<circle cx="${cx}" cy="${yBD}" r="5" fill="none" stroke="#db2777" stroke-width="1.5"/>`;
+        s += `<line x1="${cx+5}" y1="${yBD}" x2="${cx+5}" y2="${yBD-16}" stroke="#db2777" stroke-width="1.5"/>`;
+      } else if (bd) {
+        s += `<circle cx="${cx}" cy="${yBD}" r="5" fill="#111827"/>`;
+        s += `<line x1="${cx+5}" y1="${yBD}" x2="${cx+5}" y2="${yBD-16}" stroke="#111827" stroke-width="1.5"/>`;
+      }
+    }
+  }
+  // Final bar line
+  s += `<line x1="${svgW-4}" y1="${yHH-8}" x2="${svgW-4}" y2="${yBD+8}" stroke="#9ca3af" stroke-width="2"/>`;
+  // Labels
+  s += `<text x="2" y="${yHH+4}" font-size="9" fill="#9ca3af" font-weight="600">HH</text>`;
+  s += `<text x="2" y="${ySN+4}" font-size="9" fill="#9ca3af" font-weight="600">SN</text>`;
+  s += `<text x="2" y="${yBD+4}" font-size="9" fill="#9ca3af" font-weight="600">BD</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+// ── GROOVE-REF DETACH ──────────────────────────────────────────────
+function detachGrooveRef(sectionId) {
+  const s = song.sections.find(x => x.id === sectionId);
+  if (!s) return;
+  // Copy referenced pattern into own pattern before detaching
+  const ref = song.sections.find(r => r.name === s.grooveRef && r.id !== sectionId);
+  if (ref) {
+    ensurePatternLength(ref, true);
+    s.pattern = JSON.parse(JSON.stringify(ref.pattern));
+    ensurePatternLength(s, true);
+  }
+  s.grooveRef = "";
+  saveLocal();
+  const card = document.querySelector(`[data-section-id="${sectionId}"]`);
+  if (card) {
+    const scrollEl = card.querySelector(".grid-scroll");
+    if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+    bindGridEvents(card, s);
+    // Update the grooveRef input field
+    const inp = card.querySelector(`input[data-field="grooveRef"]`);
+    if (inp) inp.value = "";
+  }
+  status("Groove entkoppelt — eigenes Pattern kopiert ✓");
+}
+
+// ── TAGS ───────────────────────────────────────────────────────────
+function addTag(sectionId, tag) {
+  const s = song.sections.find(x => x.id === sectionId);
+  if (!s) return;
+  if (!s.tags) s.tags = [];
+  tag = tag.trim();
+  if (!tag || s.tags.includes(tag)) return;
+  s.tags.push(tag);
+  saveLocal();
+  renderTagsRow(sectionId);
+}
+
+function removeTag(sectionId, tag) {
+  const s = song.sections.find(x => x.id === sectionId);
+  if (!s || !s.tags) return;
+  s.tags = s.tags.filter(t => t !== tag);
+  saveLocal();
+  renderTagsRow(sectionId);
+}
+
+function renderTagsRow(sectionId) {
+  const s = song.sections.find(x => x.id === sectionId);
+  if (!s) return;
+  const card = document.querySelector(`[data-section-id="${sectionId}"]`);
+  if (!card) return;
+  const row = card.querySelector(".tags-row");
+  if (!row) return;
+  row.innerHTML = (s.tags||[]).map(t =>
+    `<span class="tag-pill">${escapeHtml(t)}<button data-rmtag="${escapeHtml(t)}" type="button">✕</button></span>`
+  ).join("") +
+  `<input class="tag-add-input" placeholder="Tag…" data-tagsid="${sectionId}" type="text" maxlength="30"/>`;
+  // bind remove
+  row.querySelectorAll("[data-rmtag]").forEach(btn => {
+    btn.addEventListener("click", () => removeTag(sectionId, btn.dataset.rmtag));
+  });
+  // bind add on Enter
+  const inp = row.querySelector(".tag-add-input");
+  if (inp) {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter" && inp.value.trim()) { addTag(sectionId, inp.value); inp.value = ""; }
+    });
+  }
+}
+
 function renderGrid(section) {
   const ts       = section.timeSignature || song.timeSignature || "4/4";
   const beats    = getBeatsPerBar(ts);
   const bars     = parseBars(section.bars || "1");
   const stepsPer = getStepsPerBar(ts); // beats * 2
+
+  // grooveRef: overlay referenced section's pattern (read-only)
+  let effectivePat = section.pattern;
+  const isInherited = !!(section.grooveRef);
+  if (isInherited) {
+    const refSec = song.sections.find(s => s.name === section.grooveRef && s.id !== section.id);
+    if (refSec) {
+      ensurePatternLength(refSec, true);
+      effectivePat = refSec.pattern;
+    }
+  }
   ensurePatternLength(section, true);
 
   // Labels: "1" "+" "2" "+" "3" "+" "4" "+"
@@ -2317,17 +2493,17 @@ function renderGrid(section) {
     for (let bar = 0; bar < bars; bar++) {
       cellsHtml += `<div class="cell-group">`;
       for (let step = 0; step < stepsPer; step++) {
-        const idx    = bar * stepsPer + step;
-        const on     = !!section.pattern[key][idx];
-        const isPlus = step % 2 === 1;
-        const cellVal  = section.pattern[key][idx];
+        const idx      = bar * stepsPer + step;
+        const isPlus   = step % 2 === 1;
+        const cellVal  = (effectivePat[key] || [])[idx];
         const cellState = cellVal === "a" ? "auftakt" : cellVal === "b" ? "break" : (cellVal ? "on" : "");
         const cellIcon  = cellVal === "a" ? "A" : cellVal === "b" ? "B" : (cellVal ? "●" : "·");
-        cellsHtml += `<div class="mini-cell ${cellState}"
+        cellsHtml += `<div class="mini-cell ${cellState}${isInherited?" readonly":""}"
           style="width:30px;height:30px;border-radius:5px;${isPlus?"border-style:dashed;":""}"
           data-section-id="${section.id}"
           data-inst="${key}"
           data-step="${idx}"
+          ${isInherited?'data-readonly="true"':''}
         >${cellIcon}</div>`;
       }
       cellsHtml += `</div>`;
@@ -2388,6 +2564,7 @@ function renderAblauf() {
 function bindMiniCell(cell) {
   cell.addEventListener("click", function(e) {
     const el = e.currentTarget;
+    if (el.dataset.readonly) return; // grooveRef → read-only
     const { sectionId, inst, step } = el.dataset;
     const s = song.sections.find(x => x.id === sectionId);
     if (!s || !s.pattern || !s.pattern[inst]) return;
@@ -2514,27 +2691,42 @@ function renderSections() {
             value="${escapeHtml(section.formNotes||"")}"
             placeholder="z. B. Ride öffnen · 2 Choruses · Brushes…" />
         </div>
+        <div class="field-group" style="grid-column:1/-1;">
+          <span class="field-label">Tags</span>
+          <div class="tags-row">
+            ${(section.tags||[]).map(t=>`<span class="tag-pill">${escapeHtml(t)}<button data-rmtag="${escapeHtml(t)}" type="button">✕</button></span>`).join("")}
+            <input class="tag-add-input" placeholder="Tag… (Enter)" data-tagsid="${section.id}" type="text" maxlength="30"/>
+          </div>
+        </div>
       </div>
 
       <div class="grid-box">
         <div class="grid-header">
-            <div class="grid-title">Groove Grid · ${section.timeSignature||"4/4"} · ${section.bars} Takt${parseBars(section.bars)!==1?"e":""}</div>
+          <div class="grid-title">Groove Grid · ${section.timeSignature||"4/4"} · ${section.bars} Takt${parseBars(section.bars)!==1?"e":""}</div>
           <div class="grid-controls">
+            <button class="notation-toggle" data-notation="${section.id}" type="button">𝅘𝅥 Notation</button>
+            ${section.grooveRef ? "" : `
             <select data-preset="${section.id}" class="btn btn-outline btn-sm" style="padding:6px 10px;width:auto;">
               <option value="">Preset laden…</option>
               ${drumGrooveTemplates.map(t=>`<option value="${t.name}">${escapeHtml(t.name)}</option>`).join("")}
             </select>
-            <button data-clear="${section.id}" class="btn btn-outline btn-sm" type="button">Reset</button>
+            <button data-clear="${section.id}" class="btn btn-outline btn-sm" type="button">Reset</button>`}
           </div>
         </div>
+        ${section.grooveRef ? `
+        <div class="groove-ref-banner">
+          <span>↗ Groove geerbt von <strong>"${escapeHtml(section.grooveRef)}"</strong> · Grid ist schreibgeschützt</span>
+          <button data-detach="${section.id}" class="btn btn-outline btn-sm" type="button">Entkoppeln</button>
+        </div>` : `
         <div class="paint-tools" style="margin:10px 0 6px;">
           <span style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;">Malen:</span>
           <button class="paint-btn" data-paint="hit" data-section-id="${section.id}" type="button"><span class="dot"></span> Hit</button>
           <button class="paint-btn" data-paint="a" data-section-id="${section.id}" type="button"><span class="dot"></span> Auftakt</button>
           <button class="paint-btn" data-paint="b" data-section-id="${section.id}" type="button"><span class="dot"></span> Break</button>
           <button class="paint-btn" data-paint="off" data-section-id="${section.id}" type="button">✕ Löschen</button>
-        </div>
+        </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
+        <div class="notation-wrap" style="display:none;">${renderMiniNotation(section)}</div>
       </div>
     `;
     host.appendChild(card);
@@ -2701,6 +2893,42 @@ function renderSections() {
       s.chordBars[bar] = e.target.value;
       renderPreview();
     });
+  });
+
+  // Tags
+  host.querySelectorAll(".tag-add-input").forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter" && inp.value.trim()) { addTag(inp.dataset.tagsid, inp.value); inp.value = ""; }
+    });
+  });
+  host.querySelectorAll("[data-rmtag]").forEach(btn => {
+    const sid = btn.closest("[data-section-id]")?.dataset.sectionId;
+    if (sid) btn.addEventListener("click", () => removeTag(sid, btn.dataset.rmtag));
+  });
+
+  // Notation toggle
+  host.querySelectorAll("[data-notation]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const card    = btn.closest("[data-section-id]");
+      const gridEl  = card?.querySelector(".grid-scroll");
+      const noteEl  = card?.querySelector(".notation-wrap");
+      if (!gridEl || !noteEl) return;
+      const showing = noteEl.style.display !== "none";
+      gridEl.style.display   = showing ? "" : "none";
+      noteEl.style.display   = showing ? "none" : "";
+      btn.classList.toggle("active", !showing);
+      // Re-render notation when toggled on (picks up latest pattern)
+      if (!showing) {
+        const sid = btn.dataset.notation;
+        const s   = song.sections.find(x => x.id === sid);
+        if (s) noteEl.innerHTML = renderMiniNotation(s);
+      }
+    });
+  });
+
+  // Groove-Ref Detach
+  host.querySelectorAll("[data-detach]").forEach(btn => {
+    btn.addEventListener("click", () => detachGrooveRef(btn.dataset.detach));
   });
 
   // Paint mode buttons
@@ -2998,6 +3226,7 @@ function loadLocal() {
         chordBars: s.chordBars || [],
         repeat: s.repeat || 1,
         grooveRef: s.grooveRef || "",
+        tags: Array.isArray(s.tags) ? s.tags : [],
         formNotes: s.formNotes || "",
         ablaufInstrument: s.ablaufInstrument || "",
         id: s.id || uid()
