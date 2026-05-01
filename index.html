@@ -2283,6 +2283,55 @@ function bindTopFields() {
 }
 
 // ── GRID RENDERER ────────────────────────────────────
+// ── MINI-NOTATION für Groove-Template (1-basierte Indices) ─────────
+function renderGrooveNotation(tpl) {
+  const ts       = tpl.timeSignature || "4/4";
+  const beats    = getBeatsPerBar(ts);
+  const stepsPer = beats * 2;
+  const total    = stepsPer * 2; // 2 bars
+  const bars     = 2;
+  // Convert 1-based template to boolean pattern
+  const pat = {};
+  GROOVE_ROWS.forEach(k => {
+    pat[k] = Array(total).fill(false);
+    (tpl.pattern[k]||[]).forEach(x => { if (x >= 1 && x <= total) pat[k][x-1] = true; });
+  });
+
+  const stepW = 22, leftPad = 30, barGap = 10;
+  const barW  = stepsPer * stepW;
+  const svgW  = leftPad + bars * barW + (bars - 1) * barGap + 8;
+  const svgH  = 68;
+  const yHH = 12, ySN = 32, yBD = 54;
+
+  let s = `<svg width="${svgW}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" style="display:block;">`;
+  [yHH, ySN, yBD].forEach(y => {
+    s += `<line x1="${leftPad}" y1="${y}" x2="${svgW-4}" y2="${y}" stroke="#d1d5db" stroke-width="1"/>`;
+  });
+  for (let bar = 0; bar < bars; bar++) {
+    const bx = leftPad + bar * (barW + barGap);
+    s += `<line x1="${bx}" y1="${yHH-8}" x2="${bx}" y2="${yBD+8}" stroke="#9ca3af" stroke-width="1.5"/>`;
+    for (let step = 0; step < stepsPer; step++) {
+      const idx = bar * stepsPer + step;
+      const cx  = bx + step * stepW + stepW / 2;
+      if (pat.hh[idx]) s += `<text x="${cx}" y="${yHH+5}" text-anchor="middle" font-size="14" fill="#111827" font-weight="700">×</text>`;
+      if (pat.sn[idx]) {
+        s += `<circle cx="${cx}" cy="${ySN}" r="5" fill="#111827"/>`;
+        s += `<line x1="${cx+5}" y1="${ySN}" x2="${cx+5}" y2="${ySN-16}" stroke="#111827" stroke-width="1.5"/>`;
+      }
+      if (pat.bd[idx]) {
+        s += `<circle cx="${cx}" cy="${yBD}" r="5" fill="#111827"/>`;
+        s += `<line x1="${cx+5}" y1="${yBD}" x2="${cx+5}" y2="${yBD-16}" stroke="#111827" stroke-width="1.5"/>`;
+      }
+    }
+  }
+  s += `<line x1="${svgW-4}" y1="${yHH-8}" x2="${svgW-4}" y2="${yBD+8}" stroke="#9ca3af" stroke-width="2"/>`;
+  s += `<text x="2" y="${yHH+4}" font-size="9" fill="#9ca3af" font-weight="600">HH</text>`;
+  s += `<text x="2" y="${ySN+4}" font-size="9" fill="#9ca3af" font-weight="600">SN</text>`;
+  s += `<text x="2" y="${yBD+4}" font-size="9" fill="#9ca3af" font-weight="600">BD</text>`;
+  s += `</svg>`;
+  return s;
+}
+
 // ── MINI-NOTATION (SVG) ────────────────────────────────────────────
 function renderMiniNotation(section) {
   const ts        = section.timeSignature || "4/4";
@@ -2561,29 +2610,110 @@ function renderAblauf() {
 }
 
 
+// ── Drag-to-Paint state ────────────────────────────────────────────
+let _dragPainting   = false;
+let _dragSectionId  = null;
+let _dragFirstVal   = null; // value we're painting (true/false/"a"/"b")
+document.addEventListener("mouseup",  () => { _dragPainting = false; });
+document.addEventListener("touchend", () => { _dragPainting = false; });
+
+function _applyPaintToCell(el) {
+  if (!el || !el.classList.contains("mini-cell") || el.dataset.readonly) return;
+  const { sectionId, inst, step } = el.dataset;
+  if (sectionId !== _dragSectionId) return;
+  const s = song.sections.find(x => x.id === sectionId);
+  if (!s || !s.pattern || !s.pattern[inst]) return;
+  s.pattern[inst][Number(step)] = _dragFirstVal;
+  const v = _dragFirstVal;
+  const state = v === "a" ? "auftakt" : v === "b" ? "break" : (v ? "on" : "");
+  const icon  = v === "a" ? "A" : v === "b" ? "B" : (v ? "●" : "·");
+  const isPlus = Number(step) % 2 === 1;
+  el.className = "mini-cell" + (state ? " " + state : "");
+  el.style.width = "30px"; el.style.height = "30px";
+  el.style.borderRadius = "5px";
+  el.style.borderStyle = isPlus ? "dashed" : "solid";
+  el.textContent = icon;
+}
+
 function bindMiniCell(cell) {
-  cell.addEventListener("click", function(e) {
-    const el = e.currentTarget;
-    if (el.dataset.readonly) return; // grooveRef → read-only
+  if (cell.dataset.readonly) return;
+
+  // ── Compute new value for paint ────────────────────────────────
+  function computeNewVal(el) {
     const { sectionId, inst, step } = el.dataset;
+    const s = song.sections.find(x => x.id === sectionId);
+    if (!s) return false;
+    const mode = getPaintMode(sectionId);
+    const cur  = s.pattern[inst][Number(step)];
+    if (mode === "off")  return false;
+    if (mode === "hit")  return (!cur || cur === false) ? true : false;
+    if (cur === mode)    return false;
+    return mode;
+  }
+
+  // ── mousedown: start drag-paint ────────────────────────────────
+  cell.addEventListener("mousedown", e => {
+    e.preventDefault();
+    _dragPainting  = true;
+    _dragSectionId = cell.dataset.sectionId;
+    _dragFirstVal  = computeNewVal(cell);
+    _applyPaintToCell(cell);
+    renderPreview();
+  });
+
+  // ── mouseover: continue drag-paint ────────────────────────────
+  cell.addEventListener("mouseover", () => {
+    if (!_dragPainting) return;
+    _applyPaintToCell(cell);
+    renderPreview();
+  });
+
+  // ── touchmove: paint under finger ─────────────────────────────
+  cell.addEventListener("touchstart", e => {
+    e.preventDefault();
+    _dragPainting  = true;
+    _dragSectionId = cell.dataset.sectionId;
+    _dragFirstVal  = computeNewVal(cell);
+    _applyPaintToCell(cell);
+    renderPreview();
+  }, { passive: false });
+
+  // Global touchmove listener (once, on document)
+  if (!document._miniCellTouchMoveAdded) {
+    document._miniCellTouchMoveAdded = true;
+    document.addEventListener("touchmove", e => {
+      if (!_dragPainting) return;
+      const t = e.touches[0];
+      const el = document.elementFromPoint(t.clientX, t.clientY);
+      if (el && el.classList.contains("mini-cell") && !el.dataset.readonly) {
+        _applyPaintToCell(el);
+        renderPreview();
+      }
+    }, { passive: true });
+  }
+
+  // ── click: fallback for tap without drag ───────────────────────
+  cell.addEventListener("click", e => {
+    if (_dragPainting) return; // already handled by mousedown
+    const { sectionId, inst, step } = cell.dataset;
     const s = song.sections.find(x => x.id === sectionId);
     if (!s || !s.pattern || !s.pattern[inst]) return;
     const mode = getPaintMode(sectionId);
     const cur  = s.pattern[inst][Number(step)];
     const isPlus = Number(step) % 2 === 1;
     let newVal;
-    if (mode === "off") { newVal = false; }
-    else if (mode === "hit") { newVal = (!cur || cur === false) ? true : false; }
-    else if (cur === mode) { newVal = false; }
-    else { newVal = mode; }
+    if (mode === "off")  newVal = false;
+    else if (mode === "hit") newVal = (!cur || cur === false) ? true : false;
+    else if (cur === mode)   newVal = false;
+    else newVal = mode;
     s.pattern[inst][Number(step)] = newVal;
     const state = newVal === "a" ? "auftakt" : newVal === "b" ? "break" : (newVal === true || newVal === 1 ? "on" : "");
     const icon  = newVal === "a" ? "A" : newVal === "b" ? "B" : (newVal === true || newVal === 1 ? "●" : "·");
-    el.className = "mini-cell" + (state ? " " + state : "");
-    el.style.width = "30px"; el.style.height = "30px";
-    el.style.borderRadius = "5px";
-    el.style.borderStyle = isPlus ? "dashed" : "solid";
-    el.textContent = icon;
+    cell.className = "mini-cell" + (state ? " " + state : "");
+    cell.style.width = "30px"; cell.style.height = "30px";
+    cell.style.borderRadius = "5px";
+    cell.style.borderStyle = isPlus ? "dashed" : "solid";
+    cell.textContent = icon;
     renderPreview();
   });
 }
@@ -4908,19 +5038,36 @@ function renderGrooveEditor() {
       }
       return '<tr><td style="padding:3px 8px;font-size:11px;font-weight:700;color:var(--ink3);white-space:nowrap;">'+GROOVE_LABELS[k]+'</td>'+cells+'</tr>';
     }).join("");
+    var noteSvg = renderGrooveNotation(tpl);
     return '<div style="background:var(--white);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:14px;">'
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">'
       +'<input data-groove-name="'+ti+'" value="'+escapeHtml(tpl.name)+'" style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;border:none;border-bottom:2px solid var(--accent);background:transparent;padding:2px 4px;width:180px;outline:none;"/>'
       +'<select data-groove-ts="'+ti+'" style="border:1px solid var(--line);border-radius:var(--r-sm);padding:4px 8px;font-size:12px;background:var(--soft);">'
       +TS_OPTIONS_GR.map(function(o){return '<option value="'+o+'"'+(ts===o?' selected':'')+'>'+o+'</option>';}).join("")
       +'</select><span style="font-size:11px;color:var(--ink3);">· 2 Takte</span><div style="flex:1"></div>'
+      +'<button class="notation-toggle" data-gnotation="'+ti+'" type="button">𝅘𝅥 Notation</button>'
       +(isDefault
         ?'<span style="font-size:10px;color:var(--ink3);background:var(--soft);border-radius:20px;padding:3px 10px;">Standard</span>'
         :'<button data-groove-del="'+ti+'" class="btn btn-danger btn-sm" type="button">Löschen</button>')
-      +'</div><div style="overflow-x:auto;"><table style="border-collapse:collapse;">'
+      +'</div>'
+      +'<div class="notation-wrap" data-gnotewrap="'+ti+'" style="display:none;padding:8px 0 12px;">'+noteSvg+'</div>'
+      +'<div style="overflow-x:auto;" data-ggridwrap="'+ti+'"><table style="border-collapse:collapse;">'
       +'<tr><th style="width:40px;"></th>'+hdr+'</tr><tr><td></td>'+sub+'</tr>'+rows
       +'</table></div></div>';
   }).join("");
+
+  list.querySelectorAll("[data-gnotation]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var ti = btn.dataset.gnotation;
+      var noteWrap = list.querySelector('[data-gnotewrap="'+ti+'"]');
+      var gridWrap = list.querySelector('[data-ggridwrap="'+ti+'"]');
+      if (!noteWrap || !gridWrap) return;
+      var showing = noteWrap.style.display !== 'none';
+      noteWrap.style.display = showing ? 'none' : '';
+      gridWrap.style.display = showing ? '' : 'none';
+      btn.classList.toggle('active', !showing);
+    });
+  });
 
   list.querySelectorAll("button[data-ti]").forEach(function(btn) {
     btn.addEventListener("click", function() {
