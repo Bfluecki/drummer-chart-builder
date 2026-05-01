@@ -270,6 +270,34 @@
     .sl-chip-del { background:none;border:none;cursor:pointer;font-size:13px;line-height:1;padding:0;color:inherit;opacity:.6; }
     .sl-chip-del:hover { opacity:1; }
 
+    /* ── ERWEITERTE ZELL-STATES ─────────────────────────── */
+    .mini-cell.accent  { background:#1d4ed8 !important;color:#fff !important;border-color:#1d4ed8;font-weight:900;font-size:14px; }
+    .mini-cell.ghost   { background:#f9fafb !important;color:#9ca3af !important;border-style:dashed !important;font-size:11px; }
+    .mini-cell.open-hh { background:#7c3aed !important;color:#fff !important;border-color:#7c3aed;font-size:13px; }
+    .mini-cell.rimshot { background:#047857 !important;color:#fff !important;border-color:#047857;font-size:14px; }
+    .mini-cell.xstick  { background:#6b7280 !important;color:#fff !important;border-color:#6b7280;font-size:12px; }
+    .mini-cell.drag-over { outline:2px solid var(--accent) !important;transform:scale(1.15);z-index:2; }
+    /* ── NOTEN-PALETTE ──────────────────────────────────── */
+    .note-palette { display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:10px;user-select:none; }
+    .palette-group { display:flex;align-items:center;gap:4px; }
+    .palette-sep { width:1px;height:28px;background:var(--line);flex-shrink:0; }
+    .pal-item { display:flex;flex-direction:column;align-items:center;gap:2px;cursor:grab;padding:5px 8px;border-radius:8px;border:1.5px solid var(--line);background:var(--white);transition:all .15s;min-width:38px;touch-action:none; }
+    .pal-item:hover { border-color:var(--accent);background:#f0f4ff; }
+    .pal-item.active { border-color:var(--accent);background:var(--accent);color:#fff; }
+    .pal-item .pal-sym { font-size:16px;line-height:1.1;font-weight:700; }
+    .pal-item .pal-lbl { font-size:9px;font-weight:600;color:var(--ink3);letter-spacing:.03em;text-transform:uppercase;white-space:nowrap; }
+    .pal-item.active .pal-lbl { color:rgba(255,255,255,.8); }
+    /* state colors on palette items */
+    .pal-item[data-pval=">"]:hover,.pal-item[data-pval=">"].active { background:#1d4ed8;border-color:#1d4ed8;color:#fff; }
+    .pal-item[data-pval="g"]:hover,.pal-item[data-pval="g"].active { background:#6b7280;border-color:#6b7280;color:#fff; }
+    .pal-item[data-pval="o"]:hover,.pal-item[data-pval="o"].active { background:#7c3aed;border-color:#7c3aed;color:#fff; }
+    .pal-item[data-pval="r"]:hover,.pal-item[data-pval="r"].active { background:#047857;border-color:#047857;color:#fff; }
+    .pal-item[data-pval="x"]:hover,.pal-item[data-pval="x"].active { background:#6b7280;border-color:#6b7280;color:#fff; }
+    .pal-item[data-pval="a"]:hover,.pal-item[data-pval="a"].active { background:#6366f1;border-color:#6366f1;color:#fff; }
+    .pal-item[data-pval="b"]:hover,.pal-item[data-pval="b"].active { background:#db2777;border-color:#db2777;color:#fff; }
+    .pal-item[data-pval="false"]:hover,.pal-item[data-pval="false"].active { background:#ef4444;border-color:#ef4444;color:#fff; }
+    /* drag ghost */
+    #palDragGhost { position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:scale(1.2);transition:none; }
     /* ── TAGS ───────────────────────────────────────────── */
     .tags-row { display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px; }
     .tag-pill { display:inline-flex;align-items:center;gap:4px;background:#e0e7ff;color:#3730a3;border-radius:20px;padding:3px 10px 3px 12px;font-size:12px;font-weight:600; }
@@ -2304,6 +2332,33 @@ function bindTopFields() {
 }
 
 // ── GRID RENDERER ────────────────────────────────────
+// ── Zell-Wert → State/Icon/Klasse ─────────────────────────────────
+function cellValToState(v) {
+  if (v === "a")    return "auftakt";
+  if (v === "b")    return "break";
+  if (v === ">")    return "accent";
+  if (v === "g")    return "ghost";
+  if (v === "o")    return "open-hh";
+  if (v === "r")    return "rimshot";
+  if (v === "x")    return "xstick";
+  return (v && v !== false) ? "on" : "";
+}
+function cellValToIcon(v) {
+  if (v === "a")   return "A";
+  if (v === "b")   return "B";
+  if (v === ">")   return ">";
+  if (v === "g")   return "(·)";
+  if (v === "o")   return "○";
+  if (v === "r")   return "+";
+  if (v === "x")   return "×";
+  return (v && v !== false) ? "●" : "·";
+}
+function cellValFromPalette(raw) {
+  if (raw === "true"  || raw === "hit") return true;
+  if (raw === "false" || raw === "off") return false;
+  return raw; // "a", "b", ">", "g", "o", "r", "x"
+}
+
 // ── MINI-NOTATION für Groove-Template (1-basierte Indices) ─────────
 function renderGrooveNotation(tpl) {
   const ts       = tpl.timeSignature || "4/4";
@@ -2565,9 +2620,9 @@ function renderGrid(section) {
       for (let step = 0; step < stepsPer; step++) {
         const idx      = bar * stepsPer + step;
         const isPlus   = step % 2 === 1;
-        const cellVal  = (effectivePat[key] || [])[idx];
-        const cellState = cellVal === "a" ? "auftakt" : cellVal === "b" ? "break" : (cellVal ? "on" : "");
-        const cellIcon  = cellVal === "a" ? "A" : cellVal === "b" ? "B" : (cellVal ? "●" : "·");
+        const cellVal   = (effectivePat[key] || [])[idx];
+        const cellState = cellValToState(cellVal);
+        const cellIcon  = cellValToIcon(cellVal);
         cellsHtml += `<div class="mini-cell ${cellState}${isInherited?" readonly":""}"
           style="width:30px;height:30px;border-radius:5px;${isPlus?"border-style:dashed;":""}"
           data-section-id="${section.id}"
@@ -2645,14 +2700,12 @@ function _applyPaintToCell(el) {
   const s = song.sections.find(x => x.id === sectionId);
   if (!s || !s.pattern || !s.pattern[inst]) return;
   s.pattern[inst][Number(step)] = _dragFirstVal;
-  const v = _dragFirstVal;
-  const state = v === "a" ? "auftakt" : v === "b" ? "break" : (v ? "on" : "");
-  const icon  = v === "a" ? "A" : v === "b" ? "B" : (v ? "●" : "·");
+  const v     = _dragFirstVal;
+  const state = cellValToState(v);
+  const icon  = cellValToIcon(v);
   const isPlus = Number(step) % 2 === 1;
   el.className = "mini-cell" + (state ? " " + state : "");
-  el.style.width = "30px"; el.style.height = "30px";
-  el.style.borderRadius = "5px";
-  el.style.borderStyle = isPlus ? "dashed" : "solid";
+  el.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
   el.textContent = icon;
 }
 
@@ -2666,11 +2719,32 @@ function bindMiniCell(cell) {
     if (!s) return false;
     const mode = getPaintMode(sectionId);
     const cur  = s.pattern[inst][Number(step)];
-    if (mode === "off")  return false;
+    if (mode === "off" || mode === "false") return false;
     if (mode === "hit")  return (!cur || cur === false) ? true : false;
     if (cur === mode)    return false;
-    return mode;
+    return mode; // ">", "g", "o", "r", "x", "a", "b"
   }
+
+  // ── Drop from notation palette ─────────────────────────────────
+  cell.addEventListener("dragover", e => { e.preventDefault(); cell.classList.add("drag-over"); });
+  cell.addEventListener("dragleave", ()  => cell.classList.remove("drag-over"));
+  cell.addEventListener("drop", e => {
+    e.preventDefault();
+    cell.classList.remove("drag-over");
+    const rawVal = e.dataTransfer.getData("text/plain");
+    const newVal = cellValFromPalette(rawVal);
+    const { sectionId, inst, step } = cell.dataset;
+    const s = song.sections.find(x => x.id === sectionId);
+    if (!s || !s.pattern || !s.pattern[inst]) return;
+    s.pattern[inst][Number(step)] = newVal;
+    const state = cellValToState(newVal);
+    const icon  = cellValToIcon(newVal);
+    const isPlus = Number(step) % 2 === 1;
+    cell.className = "mini-cell" + (state ? " " + state : "");
+    cell.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
+    cell.textContent = icon;
+    renderPreview();
+  });
 
   // ── mousedown: start drag-paint ────────────────────────────────
   cell.addEventListener("mousedown", e => {
@@ -2728,12 +2802,10 @@ function bindMiniCell(cell) {
     else if (cur === mode)   newVal = false;
     else newVal = mode;
     s.pattern[inst][Number(step)] = newVal;
-    const state = newVal === "a" ? "auftakt" : newVal === "b" ? "break" : (newVal === true || newVal === 1 ? "on" : "");
-    const icon  = newVal === "a" ? "A" : newVal === "b" ? "B" : (newVal === true || newVal === 1 ? "●" : "·");
+    const state = cellValToState(newVal);
+    const icon  = cellValToIcon(newVal);
     cell.className = "mini-cell" + (state ? " " + state : "");
-    cell.style.width = "30px"; cell.style.height = "30px";
-    cell.style.borderRadius = "5px";
-    cell.style.borderStyle = isPlus ? "dashed" : "solid";
+    cell.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
     cell.textContent = icon;
     renderPreview();
   });
@@ -2869,12 +2941,24 @@ function renderSections() {
           <span>↗ Groove geerbt von <strong>"${escapeHtml(section.grooveRef)}"</strong> · Grid ist schreibgeschützt</span>
           <button data-detach="${section.id}" class="btn btn-outline btn-sm" type="button">Entkoppeln</button>
         </div>` : `
-        <div class="paint-tools" style="margin:10px 0 6px;">
-          <span style="font-size:11px;font-weight:600;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase;">Malen:</span>
-          <button class="paint-btn" data-paint="hit" data-section-id="${section.id}" type="button"><span class="dot"></span> Hit</button>
-          <button class="paint-btn" data-paint="a" data-section-id="${section.id}" type="button"><span class="dot"></span> Auftakt</button>
-          <button class="paint-btn" data-paint="b" data-section-id="${section.id}" type="button"><span class="dot"></span> Break</button>
-          <button class="paint-btn" data-paint="off" data-section-id="${section.id}" type="button">✕ Löschen</button>
+        <div class="note-palette" data-palette-sid="${section.id}">
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-paint="hit" data-section-id="${section.id}" data-pval="true" draggable="true" title="Hit"><span class="pal-sym">●</span><span class="pal-lbl">Hit</span></div>
+            <div class="pal-item paint-btn" data-paint=">" data-section-id="${section.id}" data-pval=">" draggable="true" title="Akzent"><span class="pal-sym">></span><span class="pal-lbl">Akzent</span></div>
+            <div class="pal-item paint-btn" data-paint="g" data-section-id="${section.id}" data-pval="g" draggable="true" title="Ghost Note"><span class="pal-sym">(·)</span><span class="pal-lbl">Ghost</span></div>
+            <div class="pal-item paint-btn" data-paint="o" data-section-id="${section.id}" data-pval="o" draggable="true" title="Open Hi-Hat"><span class="pal-sym">○</span><span class="pal-lbl">Open HH</span></div>
+            <div class="pal-item paint-btn" data-paint="r" data-section-id="${section.id}" data-pval="r" draggable="true" title="Rimshot"><span class="pal-sym">+</span><span class="pal-lbl">Rimshot</span></div>
+            <div class="pal-item paint-btn" data-paint="x" data-section-id="${section.id}" data-pval="x" draggable="true" title="Cross Stick"><span class="pal-sym">×</span><span class="pal-lbl">X-Stick</span></div>
+          </div>
+          <div class="palette-sep"></div>
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-paint="a" data-section-id="${section.id}" data-pval="a" draggable="true" title="Auftakt / Pickup"><span class="pal-sym" style="color:#6366f1;">A</span><span class="pal-lbl">Auftakt</span></div>
+            <div class="pal-item paint-btn" data-paint="b" data-section-id="${section.id}" data-pval="b" draggable="true" title="Break"><span class="pal-sym" style="color:#db2777;">B</span><span class="pal-lbl">Break</span></div>
+          </div>
+          <div class="palette-sep"></div>
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-paint="off" data-section-id="${section.id}" data-pval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
+          </div>
         </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
         <div class="notation-wrap" style="display:none;">${renderMiniNotation(section)}</div>
@@ -3043,6 +3127,69 @@ function renderSections() {
       while (s.chordBars.length <= bar) s.chordBars.push("");
       s.chordBars[bar] = e.target.value;
       renderPreview();
+    });
+  });
+
+  // ── Palette: drag-start (HTML5) + paint-mode click ─────────────
+  host.querySelectorAll(".pal-item[data-pval]").forEach(item => {
+    item.addEventListener("dragstart", e => {
+      e.dataTransfer.setData("text/plain", item.dataset.pval);
+      e.dataTransfer.effectAllowed = "copy";
+      // Show a minimal ghost
+      const ghost = document.createElement("div");
+      ghost.id = "palDragGhost";
+      ghost.textContent = item.querySelector(".pal-sym")?.textContent || "●";
+      ghost.style.cssText = "background:var(--accent);color:#fff;padding:6px 10px;border-radius:8px;font-size:18px;font-weight:700;";
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 20, 20);
+      setTimeout(() => ghost.remove(), 0);
+    });
+  });
+
+  // ── Palette: touch-drag (iPad) ──────────────────────────────────
+  host.querySelectorAll(".pal-item[data-pval]").forEach(item => {
+    let _tDragVal = null, _tGhost = null;
+    item.addEventListener("touchstart", e => {
+      _tDragVal = item.dataset.pval;
+      const touch = e.touches[0];
+      _tGhost = document.createElement("div");
+      _tGhost.id = "palDragGhost";
+      _tGhost.textContent = item.querySelector(".pal-sym")?.textContent || "●";
+      _tGhost.style.cssText = `position:fixed;left:${touch.clientX-18}px;top:${touch.clientY-18}px;background:var(--accent);color:#fff;padding:6px 10px;border-radius:8px;font-size:18px;font-weight:700;pointer-events:none;z-index:9999;`;
+      document.body.appendChild(_tGhost);
+    }, {passive:true});
+
+    item.addEventListener("touchmove", e => {
+      if (!_tDragVal || !_tGhost) return;
+      const touch = e.touches[0];
+      _tGhost.style.left = (touch.clientX - 18) + "px";
+      _tGhost.style.top  = (touch.clientY - 18) + "px";
+      // Highlight cell under finger
+      document.querySelectorAll(".mini-cell.drag-over").forEach(c => c.classList.remove("drag-over"));
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el?.classList?.contains("mini-cell") && !el.dataset.readonly) el.classList.add("drag-over");
+    }, {passive:true});
+
+    item.addEventListener("touchend", e => {
+      if (!_tDragVal) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.querySelectorAll(".mini-cell.drag-over").forEach(c => c.classList.remove("drag-over"));
+      if (el?.classList?.contains("mini-cell") && !el.dataset.readonly) {
+        const newVal = cellValFromPalette(_tDragVal);
+        const { sectionId, inst, step } = el.dataset;
+        const s = song.sections.find(x => x.id === sectionId);
+        if (s?.pattern?.[inst]) {
+          s.pattern[inst][Number(step)] = newVal;
+          const isPlus = Number(step) % 2 === 1;
+          el.className = "mini-cell" + (cellValToState(newVal) ? " " + cellValToState(newVal) : "");
+          el.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
+          el.textContent = cellValToIcon(newVal);
+          renderPreview();
+        }
+      }
+      if (_tGhost) { _tGhost.remove(); _tGhost = null; }
+      _tDragVal = null;
     });
   });
 
