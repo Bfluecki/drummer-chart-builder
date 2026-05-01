@@ -298,6 +298,18 @@
     .pal-item[data-pval="false"]:hover,.pal-item[data-pval="false"].active { background:#ef4444;border-color:#ef4444;color:#fff; }
     /* drag ghost */
     #palDragGhost { position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:scale(1.2);transition:none; }
+    /* ── GLOBAL NOTEN-PALETTE ───────────────────────────── */
+    .global-palette { display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 14px;background:var(--white);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:14px;user-select:none;box-shadow:0 1px 4px rgba(0,0,0,.06);position:sticky;top:0;z-index:100; }
+    .global-palette-label { font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;margin-right:4px;white-space:nowrap; }
+    /* global pal items use data-gpval for color variants */
+    .global-pal-item[data-gpval=">"]:hover,.global-pal-item[data-gpval=">"].active  { background:#1d4ed8;border-color:#1d4ed8;color:#fff; }
+    .global-pal-item[data-gpval="g"]:hover,.global-pal-item[data-gpval="g"].active  { background:#6b7280;border-color:#6b7280;color:#fff; }
+    .global-pal-item[data-gpval="o"]:hover,.global-pal-item[data-gpval="o"].active  { background:#7c3aed;border-color:#7c3aed;color:#fff; }
+    .global-pal-item[data-gpval="r"]:hover,.global-pal-item[data-gpval="r"].active  { background:#047857;border-color:#047857;color:#fff; }
+    .global-pal-item[data-gpval="x"]:hover,.global-pal-item[data-gpval="x"].active  { background:#6b7280;border-color:#6b7280;color:#fff; }
+    .global-pal-item[data-gpval="a"]:hover,.global-pal-item[data-gpval="a"].active  { background:#6366f1;border-color:#6366f1;color:#fff; }
+    .global-pal-item[data-gpval="b"]:hover,.global-pal-item[data-gpval="b"].active  { background:#db2777;border-color:#db2777;color:#fff; }
+    .global-pal-item[data-gpval="false"]:hover,.global-pal-item[data-gpval="false"].active { background:#ef4444;border-color:#ef4444;color:#fff; }
     /* ── TAGS ───────────────────────────────────────────── */
     .tags-row { display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px; }
     .tag-pill { display:inline-flex;align-items:center;gap:4px;background:#e0e7ff;color:#3730a3;border-radius:20px;padding:3px 10px 3px 12px;font-size:12px;font-weight:600; }
@@ -1739,6 +1751,23 @@
         <div class="panel-title" style="margin:0;">Sections</div>
         <button id="addSectionBtn" class="btn btn-dark btn-sm no-print" type="button">+ Section</button>
       </div>
+
+      <!-- ── GLOBALE NOTEN-PALETTE ─────────────────────────────── -->
+      <div class="global-palette no-print" id="globalPalette">
+        <span class="global-palette-label">🎼 Noten-Palette</span>
+        <div class="pal-item global-pal-item" data-gpval="true"  draggable="true" title="Hit (●)"><span class="pal-sym">●</span><span class="pal-lbl">Hit</span></div>
+        <div class="pal-item global-pal-item" data-gpval=">"     draggable="true" title="Akzent"><span class="pal-sym">></span><span class="pal-lbl">Akzent</span></div>
+        <div class="pal-item global-pal-item" data-gpval="g"     draggable="true" title="Ghost Note"><span class="pal-sym">(·)</span><span class="pal-lbl">Ghost</span></div>
+        <div class="pal-item global-pal-item" data-gpval="o"     draggable="true" title="Open Hi-Hat"><span class="pal-sym">○</span><span class="pal-lbl">Open HH</span></div>
+        <div class="pal-item global-pal-item" data-gpval="r"     draggable="true" title="Rimshot"><span class="pal-sym">+</span><span class="pal-lbl">Rimshot</span></div>
+        <div class="pal-item global-pal-item" data-gpval="x"     draggable="true" title="Cross Stick"><span class="pal-sym">×</span><span class="pal-lbl">X-Stick</span></div>
+        <div class="palette-sep"></div>
+        <div class="pal-item global-pal-item" data-gpval="a"     draggable="true" title="Auftakt"><span class="pal-sym" style="color:#6366f1;">A</span><span class="pal-lbl">Auftakt</span></div>
+        <div class="pal-item global-pal-item" data-gpval="b"     draggable="true" title="Break"><span class="pal-sym" style="color:#db2777;">B</span><span class="pal-lbl">Break</span></div>
+        <div class="palette-sep"></div>
+        <div class="pal-item global-pal-item" data-gpval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
+      </div>
+
       <div id="sections"></div>
     </div>
   </div>
@@ -5511,6 +5540,69 @@ syncTopFields();
 renderSections();
 renderPreview();
 renderFormBuilder();
+
+// ── Global Noten-Palette: drag & touch events ────────────────────────────
+(function bindGlobalPalette() {
+  let _gpDragVal = null, _gpGhost = null;
+
+  document.querySelectorAll(".global-pal-item[data-gpval]").forEach(item => {
+    // HTML5 drag-start
+    item.addEventListener("dragstart", e => {
+      _gpDragVal = item.dataset.gpval;
+      e.dataTransfer.setData("text/plain", _gpDragVal);
+      e.dataTransfer.effectAllowed = "copy";
+      const ghost = document.createElement("div");
+      ghost.textContent = item.querySelector(".pal-sym")?.textContent || "●";
+      ghost.style.cssText = "background:var(--accent);color:#fff;padding:6px 10px;border-radius:8px;font-size:18px;font-weight:700;position:fixed;top:-100px;";
+      document.body.appendChild(ghost);
+      e.dataTransfer.setDragImage(ghost, 20, 20);
+      setTimeout(() => ghost.remove(), 0);
+    });
+    item.addEventListener("dragend", () => { _gpDragVal = null; });
+
+    // Touch-drag (iPad / mobile)
+    item.addEventListener("touchstart", e => {
+      _gpDragVal = item.dataset.gpval;
+      const touch = e.touches[0];
+      _gpGhost = document.createElement("div");
+      _gpGhost.textContent = item.querySelector(".pal-sym")?.textContent || "●";
+      _gpGhost.style.cssText = `position:fixed;left:${touch.clientX-18}px;top:${touch.clientY-30}px;background:var(--accent);color:#fff;padding:6px 10px;border-radius:8px;font-size:18px;font-weight:700;pointer-events:none;z-index:9999;opacity:.85;`;
+      document.body.appendChild(_gpGhost);
+    }, {passive:true});
+
+    item.addEventListener("touchmove", e => {
+      if (!_gpDragVal || !_gpGhost) return;
+      const touch = e.touches[0];
+      _gpGhost.style.left = (touch.clientX - 18) + "px";
+      _gpGhost.style.top  = (touch.clientY - 30) + "px";
+      document.querySelectorAll(".mini-cell.drag-over").forEach(c => c.classList.remove("drag-over"));
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el?.classList?.contains("mini-cell") && !el.dataset.readonly) el.classList.add("drag-over");
+    }, {passive:true});
+
+    item.addEventListener("touchend", e => {
+      if (!_gpDragVal) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.querySelectorAll(".mini-cell.drag-over").forEach(c => c.classList.remove("drag-over"));
+      if (el?.classList?.contains("mini-cell") && !el.dataset.readonly) {
+        const newVal = cellValFromPalette(_gpDragVal);
+        const { sectionId, inst, step } = el.dataset;
+        const s = song.sections.find(x => x.id === sectionId);
+        if (s?.pattern?.[inst]) {
+          s.pattern[inst][Number(step)] = newVal;
+          const isPlus = Number(step) % 2 === 1;
+          el.className = "mini-cell" + (cellValToState(newVal) ? " " + cellValToState(newVal) : "");
+          el.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
+          el.textContent = cellValToIcon(newVal);
+          renderPreview();
+        }
+      }
+      if (_gpGhost) { _gpGhost.remove(); _gpGhost = null; }
+      _gpDragVal = null;
+    });
+  });
+})();
 </script>
 
 <script>
