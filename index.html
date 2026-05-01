@@ -2101,13 +2101,9 @@ function getStepsPerBar(ts) {
 }
 
 function emptyPattern(n) {
-  return {
-    hh:  Array(n).fill(false),
-    sn:  Array(n).fill(false),
-    bd:  Array(n).fill(false),
-    tom: Array(n).fill(false),
-    cr:  Array(n).fill(false)
-  };
+  const p = {};
+  GROOVE_ROWS.forEach(k => { p[k] = Array(n).fill(false); });
+  return p;
 }
 
 // ── DRUM GROOVE TEMPLATES (1-basierte Indices → 0-basiert beim Laden) ──
@@ -2155,7 +2151,7 @@ function createBaseBarPattern(ts, groove = "") {
   const tpl = getGrooveTemplate(groove);
   if (tpl) {
     // Convert 1-based indices to 0-based booleans
-    ["hh","sn","bd","tom","cr"].forEach(key => {
+    GROOVE_ROWS.forEach(key => {
       (tpl.pattern[key] || []).forEach(idx => {
         const i = idx - 1; // 1-based → 0-based
         if (i >= 0 && i < steps) r[key][i] = true;
@@ -2199,7 +2195,7 @@ function createPatternForSection(ts, bars, groove = "") {
       for (let step = 0; step < stepsPer; step++) {
         const srcStep = (bar * stepsPer + step) % tplTotal;
         const dstIdx  = bar * stepsPer + step;
-        INSTRUMENTS.forEach(({ key }) => { pat[key][dstIdx] = base2[key][srcStep] || false; });
+        GROOVE_ROWS.forEach(key => { pat[key][dstIdx] = (base2[key]?.[srcStep]) || false; });
       }
     }
     return pat;
@@ -2210,7 +2206,7 @@ function createPatternForSection(ts, bars, groove = "") {
   for (let bar = 0; bar < barCount; bar++) {
     for (let step = 0; step < stepsPer; step++) {
       const idx = bar * stepsPer + step;
-      INSTRUMENTS.forEach(({ key }) => { pat[key][idx] = base[key][step] || false; });
+      GROOVE_ROWS.forEach(key => { pat[key][idx] = (base[key]?.[step]) || false; });
     }
   }
   return pat;
@@ -2227,8 +2223,8 @@ function ensurePatternLength(section, preserve = true) {
   // If pattern already has correct length and we're preserving, keep all values as-is
   const firstKey = "hh";
   if (preserve && Array.isArray(old[firstKey]) && old[firstKey].length === total) {
-    // Just ensure all instruments exist at correct length
-    INSTRUMENTS.forEach(({ key }) => {
+    // Just ensure all instruments exist at correct length (including newly added keys like ft)
+    GROOVE_ROWS.forEach(key => {
       if (!Array.isArray(section.pattern[key]) || section.pattern[key].length !== total) {
         section.pattern[key] = Array(total).fill(false);
       }
@@ -2239,14 +2235,14 @@ function ensurePatternLength(section, preserve = true) {
   const pat  = emptyPattern(total);
   const base = createBaseBarPattern(ts, getGroovePattern(section));
 
-  INSTRUMENTS.forEach(({ key }) => {
+  GROOVE_ROWS.forEach(key => {
     for (let idx = 0; idx < total; idx++) {
       if (preserve && Array.isArray(old[key]) && idx < old[key].length) {
-        // Preserve "a" (Auftakt), "b" (Break), true (Hit), false (leer) exactly
+        // Preserve articulation values ("a","b",">","g","o","r","x","n4",etc.) exactly
         const v = old[key][idx];
-        pat[key][idx] = (v === "a" || v === "b") ? v : !!v;
+        pat[key][idx] = (v && v !== false) ? v : false;
       } else {
-        pat[key][idx] = !!base[key][idx % stepsPer];
+        pat[key][idx] = !!(base[key]?.[idx % stepsPer]);
       }
     }
   });
