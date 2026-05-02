@@ -360,6 +360,46 @@
     /* ── GROOVE-REF BANNER ──────────────────────────────── */
     .groove-ref-banner { display:flex;align-items:center;gap:10px;background:#fef9c3;border:1.5px solid #fde047;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:10px;font-size:13px;color:#713f12;font-weight:600; }
     .groove-ref-banner span { flex:1; }
+    /* ── GROOVE LIBRARY ─────────────────────────────── */
+    .gl-tabs { display:flex;gap:6px;margin-bottom:18px; }
+    .gl-tab  { padding:7px 18px;border-radius:20px;border:1.5px solid var(--line);background:var(--soft);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--ink2); }
+    .gl-tab.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+    .gl-filter-bar { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center; }
+    .gl-filter-btn { padding:4px 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--soft);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--ink3);white-space:nowrap; }
+    .gl-filter-btn.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+    .gl-level-bar  { display:flex;align-items:center;gap:6px;margin-bottom:16px; }
+    .gl-level-btn  { padding:4px 14px;border-radius:20px;border:1.5px solid var(--line);background:var(--soft);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--ink3); }
+    .gl-level-btn.active { background:#0f3460;border-color:#0f3460;color:#fff; }
+    .gl-search { flex:1;min-width:160px;max-width:240px;border:1.5px solid var(--line);border-radius:20px;padding:5px 14px;font:inherit;font-size:12px;color:var(--ink);background:var(--white); }
+    .gl-search:focus { outline:none;border-color:var(--accent); }
+    .gl-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px; }
+    .gl-card { background:var(--white);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px 16px;transition:box-shadow .15s;position:relative; }
+    .gl-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.1); }
+    .gl-card-head { display:flex;align-items:flex-start;gap:8px;margin-bottom:8px; }
+    .gl-card-name { font-size:14px;font-weight:700;color:var(--ink);flex:1; }
+    .gl-card-style { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:10px;background:var(--soft);color:var(--ink3);white-space:nowrap; }
+    .gl-card-meta { font-size:11px;color:var(--ink3);margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap; }
+    .gl-card-desc { font-size:11px;color:var(--ink2);margin-bottom:10px;line-height:1.45; }
+    .gl-card-svg { overflow-x:auto;margin-bottom:10px; }
+    .gl-card-actions { display:flex;gap:6px;align-items:center; }
+    .gl-add-btn { padding:5px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s; }
+    .gl-add-btn:hover { background:#4338ca; }
+    .gl-add-btn.added { background:#059669;cursor:default; }
+    .gl-clave-label { font-size:9px;font-weight:700;color:#b45309;background:#fef3c7;padding:2px 6px;border-radius:8px;margin-left:auto; }
+    .gl-feel-badge { font-size:9px;font-weight:600;padding:2px 6px;border-radius:8px;background:#ede9fe;color:#5b21b6; }
+    .gl-empty { padding:40px;text-align:center;color:var(--ink3);font-size:13px; }
+    /* Style badge colors */
+    .gl-style-rock   { background:#fee2e2;color:#b91c1c; }
+    .gl-style-jazz   { background:#e0f2fe;color:#0369a1; }
+    .gl-style-funk   { background:#fef3c7;color:#92400e; }
+    .gl-style-soul   { background:#fce7f3;color:#9d174d; }
+    .gl-style-latin  { background:#d1fae5;color:#065f46; }
+    .gl-style-brazil { background:#d1fae5;color:#065f46; }
+    .gl-style-reggae { background:#ecfdf5;color:#064e3b; }
+    .gl-style-ballad { background:#ede9fe;color:#4c1d95; }
+    .gl-style-nola   { background:#fff7ed;color:#9a3412; }
+    .gl-style-country{ background:#fef9c3;color:#713f12; }
+    .gl-style-disco  { background:#fdf4ff;color:#86198f; }
     .mini-cell.readonly { cursor:not-allowed;opacity:.65;background:var(--soft) !important; }
     /* ── MINI-NOTATION ──────────────────────────────────── */
     .notation-wrap { overflow-x:auto;padding:8px 0 4px; }
@@ -1852,7 +1892,41 @@
         <div id="pdfRefDisplay" style="display:none;margin-top:10px;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;max-height:480px;"></div>
       </div>
 
-      <div id="grooveList"></div>
+      <!-- ── LIBRARY / MY PRESETS sub-tabs ── -->
+      <div class="gl-tabs">
+        <button class="gl-tab active" id="glTabLibrary" type="button">📚 Bibliothek</button>
+        <button class="gl-tab" id="glTabPresets" type="button">🎛️ Meine Presets</button>
+      </div>
+
+      <!-- Library view -->
+      <div id="grooveLibraryView">
+        <div class="gl-filter-bar">
+          <button class="gl-filter-btn active" data-glstyle="all">Alle</button>
+          <button class="gl-filter-btn" data-glstyle="Rock / Pop">Rock / Pop</button>
+          <button class="gl-filter-btn" data-glstyle="Jazz">Jazz</button>
+          <button class="gl-filter-btn" data-glstyle="Funk">Funk</button>
+          <button class="gl-filter-btn" data-glstyle="Soul">Soul</button>
+          <button class="gl-filter-btn" data-glstyle="Latin">Latin</button>
+          <button class="gl-filter-btn" data-glstyle="Brazilian">Brazilian</button>
+          <button class="gl-filter-btn" data-glstyle="Reggae">Reggae</button>
+          <button class="gl-filter-btn" data-glstyle="Ballad">Ballad</button>
+          <button class="gl-filter-btn" data-glstyle="New Orleans">New Orleans</button>
+          <button class="gl-filter-btn" data-glstyle="Country">Country</button>
+          <button class="gl-filter-btn" data-glstyle="Disco / Dance">Disco</button>
+          <input class="gl-search" id="glSearch" type="search" placeholder="Suchen (z.B. mumba, bossa)…">
+        </div>
+        <div class="gl-level-bar">
+          <span style="font-size:11px;font-weight:700;color:var(--ink3);margin-right:4px;">Ansicht:</span>
+          <button class="gl-level-btn active" data-gllevel="simple">Simple</button>
+          <button class="gl-level-btn" data-gllevel="standard">Standard</button>
+          <button class="gl-level-btn" data-gllevel="advanced">Advanced</button>
+          <span style="font-size:10px;color:var(--ink3);margin-left:8px;" id="glLevelDesc">Für schnelle Orientierung im Chart</span>
+        </div>
+        <div class="gl-grid" id="glGrid"></div>
+      </div>
+
+      <!-- My Presets view (existing) -->
+      <div id="grooveList" style="display:none;"></div>
     </div>
   </div>
 
@@ -2116,6 +2190,212 @@ const DEFAULT_GROOVE_TEMPLATES = [
   { id:"g-swing",      name:"Swing Ride",  timeSignature:"4/4", pattern:{ hh:[1,3,5,7],          sn:[3,7],   bd:[1,3,5,7], tom:[], cr:[1] } },
   { id:"g-jazzwaltz",  name:"Jazz Waltz",  timeSignature:"3/4", pattern:{ hh:[1,3,5],            sn:[3,5],   bd:[1],       tom:[], cr:[1] } },
   { id:"g-funk",       name:"Funk",        timeSignature:"4/4", pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7],   bd:[1,4,6],   tom:[], cr:[1] } }
+];
+
+// ══════════════════════════════════════════════════════
+// GROOVE LIBRARY — Stylistische Vorlagen
+// Pattern: 1-basierte Step-Indices, 1 Bar, für 4/4: max 8 Schritte
+// ══════════════════════════════════════════════════════
+const GROOVE_LIBRARY = [
+  // ── ROCK / POP ────────────────────────────────────────────────
+  { id:"lib-rock-basic",    name:"Rock Basic",      style:"Rock / Pop",    aliases:["rock beat","basic rock"],
+    timeSignature:"4/4", tempoRange:[80,140], feel:"straight",
+    description:"BD auf 1+3, SN auf 2+4 — der Klassiker",
+    sectionUsage:["Verse","Chorus","Bridge"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,5], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-rock-heavy",    name:"Rock Heavy",      style:"Rock / Pop",    aliases:["power rock","vier auf der eins"],
+    timeSignature:"4/4", tempoRange:[100,160], feel:"straight",
+    description:"BD auf allen 4 Vierteln (4 on the floor), SN 2+4",
+    sectionUsage:["Chorus","Outro"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,3,5,7], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-half-time",     name:"Half-Time",       style:"Rock / Pop",    aliases:["halftime","hip hop feel","trap"],
+    timeSignature:"4/4", tempoRange:[70,110], feel:"straight",
+    description:"SN auf Schlag 3 statt 2+4 — träger, weiter Groove",
+    sectionUsage:["Verse","Bridge"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[5], bd:[1,4], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-pop-16th",      name:"Pop 16tel",        style:"Rock / Pop",    aliases:["pop groove","16tel pop"],
+    timeSignature:"4/4", tempoRange:[90,130], feel:"straight",
+    description:"16tel HH-Groove für moderne Pop-Produktionen",
+    sectionUsage:["Verse","Chorus"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,2,5,6], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-shuffle-rock",  name:"Rock Shuffle",     style:"Rock / Pop",    aliases:["shuffle rock","blues rock"],
+    timeSignature:"4/4", tempoRange:[80,130], feel:"shuffle",
+    description:"Shuffle-Feel: triplet-basierte 8tel, BD 1+3, SN 2+4",
+    sectionUsage:["Verse","Chorus"],
+    pattern:{ hh:[1,3,5,7], sn:[3,7], bd:[1,5], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── JAZZ ──────────────────────────────────────────────────────
+  { id:"lib-jazz-swing",    name:"Jazz Swing",       style:"Jazz",          aliases:["swing","bebop","jazz beat"],
+    timeSignature:"4/4", tempoRange:[100,220], feel:"swing",
+    description:"Ride-Cymbal Swing, HH-Fuß auf 2+4, BD leicht (comping)",
+    sectionUsage:["Head","Solos","Alle Teile"],
+    pattern:{ hh:[3,7], sn:[3,7], bd:[1,5], tom:[], cr:[1,3,5,7], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-jazz-waltz",    name:"Jazz Waltz",       style:"Jazz",          aliases:["walzer","3/4 jazz","waltz"],
+    timeSignature:"3/4", tempoRange:[80,200], feel:"swing",
+    description:"Jazz-Walzer: Ride auf 1·2·3, HH-Fuß auf 2+3",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[2,3], sn:[2,3], bd:[1], tom:[], cr:[1,2,3], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-jazz-bebop",    name:"Bebop",            style:"Jazz",          aliases:["bop","fast swing","schnell"],
+    timeSignature:"4/4", tempoRange:[180,280], feel:"swing",
+    description:"Schneller Bebop-Swing, sehr lockere BD-Begleitung",
+    sectionUsage:["Solos","Head"],
+    pattern:{ hh:[3,7], sn:[3,7], bd:[1], tom:[], cr:[1,2,3,4,5,6,7,8], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-jazz-medium",   name:"Medium Swing",     style:"Jazz",          aliases:["medium jazz","medium"],
+    timeSignature:"4/4", tempoRange:[120,170], feel:"swing",
+    description:"Medium Swing: der komfortabelste Jazz-Groove",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[3,7], sn:[3,7], bd:[1,5], tom:[], cr:[1,3,5,7], ft:[] },
+    clavePattern:null },
+
+  // ── FUNK ──────────────────────────────────────────────────────
+  { id:"lib-funk-basic",    name:"Funk Basic",       style:"Funk",          aliases:["funk groove","james brown","jb"],
+    timeSignature:"4/4", tempoRange:[80,120], feel:"straight",
+    description:"Klassischer Funk: BD Anticipation auf '1-a', Ghost-SN, 16tel HH",
+    sectionUsage:["Verse","Chorus","Bridge"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,5,7], bd:[1,4,6], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-funk-nola",     name:"New Orleans Funk", style:"Funk",          aliases:["second line funk","nola funk","new orleans funk"],
+    timeSignature:"4/4", tempoRange:[90,130], feel:"straight",
+    description:"N.O. Second-Line Funk: charakteristische BD+SN Offbeat-Figuren",
+    sectionUsage:["Verse","Chorus"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,4,7,8], bd:[1,2,5], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── SOUL ──────────────────────────────────────────────────────
+  { id:"lib-soul-motown",   name:"Soul / Motown",    style:"Soul",          aliases:["motown","rnb","r&b","soul beat"],
+    timeSignature:"4/4", tempoRange:[70,110], feel:"straight",
+    description:"Motown-Soul: lockeres Timing, BD 1+3 mit leichtem Upbeat",
+    sectionUsage:["Verse","Chorus"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,5,6], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── LATIN ─────────────────────────────────────────────────────
+  { id:"lib-mambo",         name:"Mambo",            style:"Latin",         aliases:["mumba","mambo groove","salsa mambo"],
+    timeSignature:"4/4", tempoRange:[160,240], feel:"straight",
+    description:"Mambo (Alias: Mumba): Clave 3-2, Cowbell, BD auf '2-und'",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,3,5,7], sn:[4,8], bd:[1,2,5], tom:[], cr:[1], ft:[] },
+    clavePattern:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0] },
+
+  { id:"lib-salsa",         name:"Salsa",            style:"Latin",         aliases:["salsa groove","timba","son"],
+    timeSignature:"4/4", tempoRange:[170,220], feel:"straight",
+    description:"Salsa Clave 3-2: Timbales-Shell + Cowbell-Groove",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,3,5,7], sn:[3,7], bd:[1,5], tom:[], cr:[], ft:[] },
+    clavePattern:[1,0,0,1,0,0,1,0,0,0,1,0,1,0,0,0] },
+
+  { id:"lib-cha-cha",       name:"Cha-Cha",          style:"Latin",         aliases:["chacha","cha cha cha"],
+    timeSignature:"4/4", tempoRange:[110,140], feel:"straight",
+    description:"Cha-Cha-Cha: charakteristischer 'Cha-Cha-Cha' auf Schlag 4-und-1",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7,8], bd:[1,5], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  // ── BRAZILIAN ─────────────────────────────────────────────────
+  { id:"lib-bossa-nova",    name:"Bossa Nova",        style:"Brazilian",     aliases:["bossa","brasil","ipanema"],
+    timeSignature:"4/4", tempoRange:[100,160], feel:"straight",
+    description:"Bossa Nova: BD-Rhythmus + SN Cross-Stick auf Schlag 2+4",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,3,5,7], sn:[2,4,6,7], bd:[1,5], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-samba",         name:"Samba",             style:"Brazilian",     aliases:["brasil samba","samba groove"],
+    timeSignature:"4/4", tempoRange:[180,260], feel:"straight",
+    description:"Samba: Schneller 16tel-Groove, BD + SN-Surdo-Feel",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[2,3,6,7], bd:[1,2,5,6], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── REGGAE ────────────────────────────────────────────────────
+  { id:"lib-reggae-one-drop", name:"One Drop",        style:"Reggae",        aliases:["reggae","one drop","classic reggae"],
+    timeSignature:"4/4", tempoRange:[60,100], feel:"straight",
+    description:"One Drop: BD + SN gleichzeitig auf Schlag 3, kein Beat 1",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[2,4,6,8], sn:[5], bd:[5,6], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-reggae-rockers", name:"Rockers",          style:"Reggae",        aliases:["reggae rockers"],
+    timeSignature:"4/4", tempoRange:[70,100], feel:"straight",
+    description:"Rockers: BD auf allen 4 Vierteln + One-Drop SN auf 3",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[2,4,6,8], sn:[5], bd:[1,3,5,7], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-reggae-steppers", name:"Steppers",        style:"Reggae",        aliases:["four on the floor reggae","steppers"],
+    timeSignature:"4/4", tempoRange:[70,100], feel:"straight",
+    description:"Steppers: BD auf allen 4 Vierteln, Offbeat HH/Rimshot",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[2,4,6,8], sn:[3,7], bd:[1,3,5,7], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  // ── BALLAD ────────────────────────────────────────────────────
+  { id:"lib-ballad-slow",   name:"Slow Ballad",       style:"Ballad",        aliases:["ballad","slow beat","ballade","langsam"],
+    timeSignature:"4/4", tempoRange:[50,75], feel:"straight",
+    description:"Langsame Ballade: sparsame Noten, weicher Groove",
+    sectionUsage:["Verse","Intro","Outro"],
+    pattern:{ hh:[1,3,5,7], sn:[3,7], bd:[1,5], tom:[], cr:[], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-ballad-jazz",   name:"Jazz Ballad",       style:"Ballad",        aliases:["slow jazz","jazz ballade","brushes"],
+    timeSignature:"4/4", tempoRange:[50,75], feel:"swing",
+    description:"Sehr langsamer Jazz-Groove mit expressivem Brush-Feel",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[3,7], sn:[3,7], bd:[1], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── NEW ORLEANS ───────────────────────────────────────────────
+  { id:"lib-nola-2ndline",  name:"Second Line",       style:"New Orleans",   aliases:["second line","nola","brass band","new orleans"],
+    timeSignature:"4/4", tempoRange:[80,120], feel:"straight",
+    description:"N.O. Second Line: Snare-Rim Pattern + BD-Synkopierung",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[2,4,5,7,8], bd:[1,3,5], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── COUNTRY ───────────────────────────────────────────────────
+  { id:"lib-country-train", name:"Country Train",     style:"Country",       aliases:["train beat","country groove","nashville"],
+    timeSignature:"4/4", tempoRange:[90,150], feel:"straight",
+    description:"Country Train Beat: 16tel HH, SN Accent auf 2+4",
+    sectionUsage:["Verse","Chorus"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,2,5,6], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-country-shuffle", name:"Country Shuffle", style:"Country",       aliases:["shuffle","nashville shuffle","country shuffle"],
+    timeSignature:"4/4", tempoRange:[90,130], feel:"shuffle",
+    description:"Country Shuffle mit leicht swingendem 8tel-Feel",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,3,5,7], sn:[3,7], bd:[1,5], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  // ── DISCO / DANCE ─────────────────────────────────────────────
+  { id:"lib-disco",         name:"Disco",              style:"Disco / Dance", aliases:["four on the floor","disco beat","70er"],
+    timeSignature:"4/4", tempoRange:[110,140], feel:"straight",
+    description:"Disco: BD alle 4 Viertel, Offbeat Open-HH, SN 2+4",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[2,4,6,8], sn:[3,7], bd:[1,3,5,7], tom:[], cr:[1], ft:[] },
+    clavePattern:null },
+
+  { id:"lib-house",         name:"House / EDM",        style:"Disco / Dance", aliases:["house","edm","club","dance","techno"],
+    timeSignature:"4/4", tempoRange:[120,145], feel:"straight",
+    description:"House / EDM: BD auf 4 Vierteln, SN 2+4, 8tel HH",
+    sectionUsage:["Alle Teile"],
+    pattern:{ hh:[1,2,3,4,5,6,7,8], sn:[3,7], bd:[1,3,5,7], tom:[], cr:[1], ft:[] },
+    clavePattern:null }
 ];
 
 const GROOVE_STORAGE_KEY = "drumchart_grooves_v1";
@@ -3762,7 +4042,23 @@ function switchTab(name) {
   document.getElementById("tabEditor").classList.toggle("active", name === "editor");
   document.getElementById("tabPreview").classList.toggle("active",name === "preview");
   document.getElementById("tabGrooves").classList.toggle("active",name === "grooves");
-  if (name === "grooves") renderGrooveEditor();
+  if (name === "grooves") {
+    // Default: show Library tab when opening Grooves
+    var libView = document.getElementById("grooveLibraryView");
+    var preView = document.getElementById("grooveList");
+    var libBtn  = document.getElementById("glTabLibrary");
+    var preBtn  = document.getElementById("glTabPresets");
+    // If library is currently visible (or first open), render library
+    if (!preView || preView.style.display === "none" || preView.style.display === "") {
+      if (libView) libView.style.display = "";
+      if (preView) preView.style.display = "none";
+      if (libBtn) libBtn.classList.add("active");
+      if (preBtn) preBtn.classList.remove("active");
+      renderGrooveLibrary();
+    } else {
+      renderGrooveEditor();
+    }
+  }
 }
 
 // ── iREAL PARSER ─────────────────────────────────────
@@ -5313,6 +5609,57 @@ document.getElementById("perfMetroBtn").addEventListener("click", perfMetroToggl
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
 document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
+// ── Groove Library UI bindings ─────────────────────────────────────
+(function() {
+  // Sub-tabs
+  var libBtn = document.getElementById("glTabLibrary");
+  var preBtn = document.getElementById("glTabPresets");
+  var libView = document.getElementById("grooveLibraryView");
+  var preView = document.getElementById("grooveList");
+
+  function showLibTab(showLib) {
+    libBtn.classList.toggle("active", showLib);
+    preBtn.classList.toggle("active", !showLib);
+    if (libView) libView.style.display = showLib ? "" : "none";
+    if (preView) preView.style.display = showLib ? "none" : "";
+    if (showLib) renderGrooveLibrary();
+    else renderGrooveEditor();
+  }
+
+  if (libBtn) libBtn.addEventListener("click", function(){ showLibTab(true); });
+  if (preBtn) preBtn.addEventListener("click", function(){ showLibTab(false); });
+
+  // Style filter buttons
+  document.querySelectorAll("[data-glstyle]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll("[data-glstyle]").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      _glActiveStyle = btn.dataset.glstyle;
+      renderGrooveLibrary();
+    });
+  });
+
+  // Level buttons
+  document.querySelectorAll("[data-gllevel]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll("[data-gllevel]").forEach(function(b){ b.classList.remove("active"); });
+      btn.classList.add("active");
+      _glActiveLevel = btn.dataset.gllevel;
+      var descEl = document.getElementById("glLevelDesc");
+      if (descEl) descEl.textContent = GL_LEVEL_DESCS[_glActiveLevel] || "";
+      renderGrooveLibrary();
+    });
+  });
+
+  // Search
+  var searchInput = document.getElementById("glSearch");
+  if (searchInput) {
+    searchInput.addEventListener("input", function() {
+      _glSearchQuery = searchInput.value;
+      renderGrooveLibrary();
+    });
+  }
+})();
 
 document.getElementById("addSectionBtn").addEventListener("click", () => {
   song.sections.push(makeSection("Neue Section", song.timeSignature, song.style, "1"));
@@ -5356,6 +5703,208 @@ if (!store.getItem('dcb_welcomed')) {
 // ══════════════════════════════════════════════════════════════════════════════
 // GROOVE PRESET EDITOR
 // ══════════════════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GROOVE LIBRARY RENDERER
+// ══════════════════════════════════════════════════════════════════════════════
+
+var _glActiveStyle = "all";
+var _glActiveLevel = "simple";
+var _glSearchQuery = "";
+
+var GL_LEVEL_DESCS = {
+  simple:   "Für schnelle Orientierung im Chart",
+  standard: "Für normale Band-Proben",
+  advanced: "Vollständige Notation mit Ghost Notes und Clave"
+};
+
+var GL_STYLE_CLASS = {
+  "Rock / Pop":    "gl-style-rock",
+  "Jazz":          "gl-style-jazz",
+  "Funk":          "gl-style-funk",
+  "Soul":          "gl-style-soul",
+  "Latin":         "gl-style-latin",
+  "Brazilian":     "gl-style-brazil",
+  "Reggae":        "gl-style-reggae",
+  "Ballad":        "gl-style-ballad",
+  "New Orleans":   "gl-style-nola",
+  "Country":       "gl-style-country",
+  "Disco / Dance": "gl-style-disco"
+};
+
+// Rows shown per level
+var GL_LEVEL_ROWS = {
+  simple:   ["hh","sn","bd"],
+  standard: ["hh","tom","sn","ft","bd","cr"],
+  advanced: ["hh","tom","sn","ft","bd","cr"]
+};
+
+function glStyleClass(style) {
+  return GL_STYLE_CLASS[style] || "";
+}
+
+function glBuildPatternSVG(tpl, level) {
+  var ts    = tpl.timeSignature || "4/4";
+  var beats = getBeatsPerBar(ts);
+  var spb   = beats * 2;
+  var total = spb; // 1 bar for library preview
+  var rows  = GL_LEVEL_ROWS[level] || GL_LEVEL_ROWS.simple;
+
+  // Filter to only rows that have actual pattern keys
+  var displayRows = rows.filter(function(k){ return tpl.pattern[k] !== undefined; });
+
+  // Build boolean arrays (1-based to 0-based)
+  var patBool = {};
+  displayRows.forEach(function(k) {
+    patBool[k] = Array(total).fill(false);
+    (tpl.pattern[k]||[]).forEach(function(i){ var idx=i-1; if(idx>=0&&idx<total) patBool[k][idx]=true; });
+  });
+
+  // Clave row (for advanced, if present)
+  var showClave = level === "advanced" && tpl.clavePattern;
+
+  var DISP_LABELS = { hh:"HH", tom:"TT", sn:"SN", ft:"ST", bd:"BD", cr:"CR" };
+  var DISP_SYM    = { hh:"x",  tom:"circle", sn:"circle", ft:"circle", bd:"circle", cr:"x" };
+
+  var stepW   = 20;
+  var leftPad = 28;
+  var rowH    = 16;
+  var rowGap  = 16;
+  var svgH    = (displayRows.length + (showClave ? 1 : 0)) * rowGap + 14;
+  var svgW    = leftPad + total * stepW + 6;
+
+  var s = '<svg width="'+svgW+'" height="'+svgH+'" xmlns="http://www.w3.org/2000/svg" style="display:block;">';
+
+  displayRows.forEach(function(k, ri) {
+    var cy = 12 + ri * rowGap;
+    // Staff line
+    s += '<line x1="'+leftPad+'" y1="'+cy+'" x2="'+(svgW-2)+'" y2="'+cy+'" stroke="#e5e7eb" stroke-width="1"/>';
+    // Label
+    s += '<text x="2" y="'+(cy+4)+'" font-size="8" fill="#9ca3af" font-weight="700">'+DISP_LABELS[k]+'</text>';
+
+    for (var step = 0; step < total; step++) {
+      var cx = leftPad + step * stepW + stepW / 2;
+      // Beat line (every 2 steps for 4/4)
+      if (step % 2 === 0 && step > 0) {
+        s += '<line x1="'+(leftPad+step*stepW)+'" y1="'+(cy-6)+'" x2="'+(leftPad+step*stepW)+'" y2="'+(cy+6)+'" stroke="#e5e7eb" stroke-width="1"/>';
+      }
+      if (patBool[k] && patBool[k][step]) {
+        if (DISP_SYM[k] === "x") {
+          s += '<text x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle" font-size="12" fill="#111827" font-weight="700">×</text>';
+        } else {
+          s += '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="#111827"/>';
+          s += '<line x1="'+(cx+4)+'" y1="'+cy+'" x2="'+(cx+4)+'" y2="'+(cy-11)+'" stroke="#111827" stroke-width="1.5"/>';
+        }
+      } else {
+        s += '<circle cx="'+cx+'" cy="'+cy+'" r="1.5" fill="#e5e7eb"/>';
+      }
+    }
+  });
+
+  // Clave row (advanced only)
+  if (showClave) {
+    var claveY = 12 + displayRows.length * rowGap;
+    s += '<line x1="'+leftPad+'" y1="'+claveY+'" x2="'+(svgW-2)+'" y2="'+claveY+'" stroke="#fde68a" stroke-width="1"/>';
+    s += '<text x="2" y="'+(claveY+4)+'" font-size="8" fill="#b45309" font-weight="700">CL</text>';
+    var claveLen = Math.min(tpl.clavePattern.length, total);
+    for (var ci = 0; ci < claveLen; ci++) {
+      var ccx = leftPad + ci * stepW + stepW / 2;
+      if (tpl.clavePattern[ci]) {
+        s += '<rect x="'+(ccx-4)+'" y="'+(claveY-4)+'" width="8" height="8" rx="2" fill="#d97706"/>';
+      } else {
+        s += '<circle cx="'+ccx+'" cy="'+claveY+'" r="1.5" fill="#fde68a"/>';
+      }
+    }
+  }
+
+  // Bar line at start
+  s += '<line x1="'+leftPad+'" y1="4" x2="'+leftPad+'" y2="'+(svgH-4)+'" stroke="#9ca3af" stroke-width="1.5"/>';
+  s += '<line x1="'+(svgW-2)+'" y1="4" x2="'+(svgW-2)+'" y2="'+(svgH-4)+'" stroke="#9ca3af" stroke-width="2"/>';
+
+  s += '</svg>';
+  return s;
+}
+
+function glIsAdded(tpl) {
+  return drumGrooveTemplates.some(function(t){ return t.id === tpl.id || t.name === tpl.name; });
+}
+
+function glAddToPresets(tpl) {
+  if (glIsAdded(tpl)) return;
+  // Convert library template (1-bar) to groove template format (same format)
+  var copy = JSON.parse(JSON.stringify(tpl));
+  // Ensure all GROOVE_ROWS keys exist
+  GROOVE_ROWS.forEach(function(k){ if (!copy.pattern[k]) copy.pattern[k] = []; });
+  drumGrooveTemplates.push(copy);
+  saveGrooveTemplates(drumGrooveTemplates);
+  updatePresetDropdowns();
+}
+
+function renderGrooveLibrary() {
+  var grid = document.getElementById("glGrid");
+  if (!grid) return;
+
+  var query = _glSearchQuery.trim().toLowerCase();
+
+  var filtered = GROOVE_LIBRARY.filter(function(tpl) {
+    // Style filter
+    if (_glActiveStyle !== "all" && tpl.style !== _glActiveStyle) return false;
+    // Search
+    if (query) {
+      var haystack = (tpl.name + " " + tpl.style + " " + tpl.description + " " + (tpl.aliases||[]).join(" ")).toLowerCase();
+      if (haystack.indexOf(query) < 0) return false;
+    }
+    return true;
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="gl-empty">Keine Vorlagen gefunden. Suchbegriff ändern oder Filter zurücksetzen.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(function(tpl) {
+    var added = glIsAdded(tpl);
+    var styleClass = glStyleClass(tpl.style);
+    var feelBadge = tpl.feel !== "straight"
+      ? '<span class="gl-feel-badge">'+tpl.feel+'</span>' : "";
+    var claveBadge = tpl.clavePattern
+      ? '<span class="gl-clave-label">🔔 Clave</span>' : "";
+    var svgHtml = glBuildPatternSVG(tpl, _glActiveLevel);
+    var usageTags = (tpl.sectionUsage||[]).join(" · ");
+    return '<div class="gl-card">'
+      + '<div class="gl-card-head">'
+      + '<span class="gl-card-name">'+escapeHtml(tpl.name)+'</span>'
+      + '<span class="gl-card-style '+styleClass+'">'+escapeHtml(tpl.style)+'</span>'
+      + '</div>'
+      + '<div class="gl-card-meta">'
+      + '<span>'+tpl.timeSignature+'</span>'
+      + '<span>'+tpl.tempoRange[0]+'–'+tpl.tempoRange[1]+' BPM</span>'
+      + feelBadge
+      + claveBadge
+      + '</div>'
+      + '<div class="gl-card-desc">'+escapeHtml(tpl.description)+'</div>'
+      + '<div class="gl-card-svg">'+svgHtml+'</div>'
+      + '<div class="gl-card-actions">'
+      + '<button class="gl-add-btn'+(added?" added":"")+'" data-glid="'+tpl.id+'">'
+      + (added ? "✓ Im Preset" : "+ Zu Presets hinzufügen")
+      + '</button>'
+      + (usageTags ? '<span style="font-size:10px;color:var(--ink3);margin-left:auto;">'+escapeHtml(usageTags)+'</span>' : "")
+      + '</div>'
+      + '</div>';
+  }).join("");
+
+  // Bind add buttons
+  grid.querySelectorAll(".gl-add-btn[data-glid]").forEach(function(btn) {
+    if (btn.classList.contains("added")) return;
+    btn.addEventListener("click", function() {
+      var tpl = GROOVE_LIBRARY.find(function(t){ return t.id === btn.dataset.glid; });
+      if (!tpl) return;
+      glAddToPresets(tpl);
+      btn.textContent = "✓ Im Preset";
+      btn.classList.add("added");
+    });
+  });
+}
 
 var GROOVE_LABELS = { hh:"HH", sn:"SN", bd:"BD", tom:"TT", cr:"CR", ft:"ST" };
 var TS_OPTIONS_GR = ["4/4","3/4","6/8","2/4","5/4"];
