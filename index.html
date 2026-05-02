@@ -3711,7 +3711,7 @@ function renderSections() {
     btn.addEventListener("click", () => {
       const paint = btn.dataset.paint;
       sectionPaintMode[sid] = paint;
-      btn.closest(".paint-tools").querySelectorAll(".paint-btn").forEach(b => {
+      (btn.closest(".paint-tools") || btn.closest(".note-palette"))?.querySelectorAll(".paint-btn").forEach(b => {
         b.classList.toggle("active", b.dataset.paint === paint);
       });
     });
