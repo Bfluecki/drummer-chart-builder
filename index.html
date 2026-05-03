@@ -3560,8 +3560,27 @@ function renderSections() {
           </div>
           <div class="palette-sep"></div>
           <div class="palette-group">
-            <div class="pal-item paint-btn" data-paint="barRep1" data-section-id="${section.id}" title="1 Takt wiederholen — auswählen, dann Takt anklicken"><span class="pal-sym" style="font-size:18px;">𝄎</span><span class="pal-lbl">1 Takt</span></div>
-            <div class="pal-item paint-btn" data-paint="barRep2" data-section-id="${section.id}" title="2 Takte wiederholen — auswählen, dann Takt anklicken"><span class="pal-sym" style="font-size:18px;">𝄏</span><span class="pal-lbl">2 Takte</span></div>
+            <div class="pal-item paint-btn" data-paint="barRep1" data-section-id="${section.id}" title="1 Takt wiederholen — auswählen, dann Takt anklicken" style="min-width:52px;">
+              <span class="pal-sym" style="line-height:1;">
+                <svg width="24" height="20" viewBox="0 0 24 20" fill="currentColor">
+                  <circle cx="4" cy="5" r="2.5"/><circle cx="20" cy="15" r="2.5"/>
+                  <line x1="5" y1="17" x2="19" y2="3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="pal-lbl">1 Takt</span>
+            </div>
+            <div class="pal-item paint-btn" data-paint="barRep2" data-section-id="${section.id}" title="2 Takte wiederholen — auswählen, dann Takt anklicken" style="min-width:52px;">
+              <span class="pal-sym" style="line-height:1;">
+                <svg width="30" height="20" viewBox="0 0 30 20" fill="currentColor">
+                  <circle cx="3" cy="5" r="2.2"/><circle cx="13" cy="15" r="2.2"/>
+                  <line x1="4" y1="17" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="15" y1="1" x2="15" y2="19" stroke="currentColor" stroke-width="1.5"/>
+                  <circle cx="17" cy="5" r="2.2"/><circle cx="27" cy="15" r="2.2"/>
+                  <line x1="18" y1="17" x2="26" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="pal-lbl">2 Takte</span>
+            </div>
           </div>
         </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
