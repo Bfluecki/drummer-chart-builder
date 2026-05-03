@@ -5557,13 +5557,14 @@ async function ghPullSongs() {
 document.getElementById("newBtn").addEventListener("click", resetSong);
 
 // GitHub buttons
-document.getElementById("ghSaveSettings").addEventListener("click", () => {
+document.getElementById("ghSaveSettings").addEventListener("click", async () => {
   const repo  = document.getElementById("ghRepo").value.trim();
   const token = document.getElementById("ghToken").value.trim();
   if (!repo || !token) { ghUpdateStatus("Bitte Repo und Token eingeben.", false); return; }
   ghSaveSettings({ repo, token });
-  ghUpdateStatus("Einstellungen gespeichert ✓ — Verbunden mit " + repo, true);
+  ghUpdateStatus("Einstellungen gespeichert — lade Songs von GitHub…", null);
   document.getElementById("ghSetupPanel").style.display = "none";
+  await ghPullSongs(); // Auto-pull sofort nach Einstellungen speichern
 });
 document.getElementById("ghPush").addEventListener("click", ghPushSong);
 document.getElementById("ghPull").addEventListener("click", ghPullSongs);
@@ -6468,6 +6469,18 @@ syncTopFields();
 renderSections();
 renderPreview();
 renderFormBuilder();
+
+// ── AUTO-SYNC: Songs + Setlist von GitHub laden beim Start ────────────────
+(async function ghAutoSync() {
+  const s = ghLoadSettings();
+  if (!s.repo || !s.token) return; // Nicht konfiguriert — nichts tun
+  status("🔄 Sync mit GitHub…");
+  try {
+    await ghPullSongs();
+  } catch(e) {
+    status("GitHub Sync fehlgeschlagen — arbeite lokal weiter.");
+  }
+})();
 
 // ── Global Noten-Palette: drag & touch events ────────────────────────────
 (function bindGlobalPalette() {
