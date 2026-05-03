@@ -2494,7 +2494,7 @@ function createPatternForSection(ts, bars, groove = "") {
 
 
 function ensurePatternLength(section, preserve = true) {
-  const ts       = section.timeSignature || "4/4";
+  const ts       = section.timeSignature || song.timeSignature || "4/4";
   const bars     = parseBars(section.bars || "1");
   const stepsPer = getStepsPerBar(ts);
   const total    = stepsPer * bars;
@@ -3518,9 +3518,7 @@ function renderSections() {
       const presetName = e.target.value;
       const s = song.sections.find(x => x.id === e.target.dataset.preset);
       if (!s) return;
-      // Use preset name directly — getGrooveTemplate looks it up in drumGrooveTemplates
       s.groovePattern = presetName;
-      s.groove = presetName;
       const ts = s.timeSignature || song.timeSignature || "4/4";
       const bars = s.bars || "1";
       // Build pattern directly from template without going through ensurePatternLength
@@ -3553,7 +3551,6 @@ function renderSections() {
       } else {
         s.pattern = createPatternForSection(ts, bars, presetName);
       }
-      // Temporarily disable ensurePatternLength override by marking correct length
       const card = e.target.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
