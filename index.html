@@ -1628,6 +1628,8 @@
     .fb-card.fb-rep-copy:hover { opacity:1; }
     .fb-card.fb-dragging { opacity:0.35; transform:scale(0.96); }
     .fb-card.fb-drag-over { border-left:3px solid var(--accent); box-shadow:0 0 0 2px rgba(212,82,42,.2); }
+    .fb-card-rep { margin-top:4px;width:100%;padding:3px 0;border-radius:6px;border:1px dashed var(--line);background:none;color:var(--ink3);font-size:10px;cursor:pointer;transition:all .15s; }
+    .fb-card-rep:hover { border-color:var(--accent);color:var(--accent);background:rgba(212,82,42,.06); }
     .fb-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; font-family:'Syne',sans-serif; margin-bottom:2px; }
     .fb-card-name { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .fb-card-meta { font-size:10px; color:var(--ink3); line-height:1.5; }
@@ -3424,12 +3426,7 @@ function renderSections() {
             placeholder="z. B. Snare Fill on 4&#10;Crash on 1 nach Bridge…">${escapeHtml(section.cue)}</textarea>
         </div>
       </div>
-      <div class="form-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:10px;">
-        <div class="field-group">
-          <span class="field-label">Wiederholung</span>
-          <input data-id="${section.id}" data-field="repeat" type="number" min="1" max="16"
-            value="${section.repeat||1}" placeholder="1" />
-        </div>
+      <div class="form-grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;">
         <div class="field-group">
           <span class="field-label">Lead / Instrument</span>
           <input type="text" list="lead-list-${section.id}" data-id="${section.id}" data-field="ablaufInstrument"
@@ -3440,12 +3437,6 @@ function renderSections() {
           </datalist>
         </div>
         <div class="field-group">
-          <span class="field-label">Groove Referenz</span>
-          <input data-id="${section.id}" data-field="grooveRef"
-            value="${escapeHtml(section.grooveRef||"")}"
-            placeholder="z. B. A, Chorus…" />
-        </div>
-        <div class="field-group" style="grid-column:1/-1;">
           <span class="field-label">Spielhinweis / Form-Notiz</span>
           <input data-id="${section.id}" data-field="formNotes"
             value="${escapeHtml(section.formNotes||"")}"
@@ -6462,10 +6453,10 @@ function renderFormBuilder() {
   const cards = expandedCards.map(({ s, i, r, count }) => {
     const active   = s.id === fbActiveId;
     const isCopy   = r > 0;
+    const isLast   = r === count - 1;
     const badge    = normalizeFormName(s.name || "Part");
     const badgeCls = getFormClass(badge);
-    const ref  = (!isCopy && s.grooveRef) ? `↗ ${escapeHtml(s.grooveRef)}` : "";
-    const lead = s.ablaufInstrument ? `🎤 ${escapeHtml(s.ablaufInstrument)}` : "";
+    const lead  = s.ablaufInstrument ? `🎤 ${escapeHtml(s.ablaufInstrument)}` : "";
     const notes = (!isCopy && (s.formNotes || s.cue)) ? s.formNotes || s.cue : "";
     const delTitle = count > 1 ? "Wiederholung entfernen (−1)" : "Section löschen";
 
@@ -6475,9 +6466,10 @@ function renderFormBuilder() {
       <button class="fb-card-del" data-fbdel="${s.id}" data-fbrep="${r}" type="button" title="${delTitle}">×</button>
       <span class="fb-badge ${badgeCls}">${escapeHtml(badge)}</span>
       <div class="fb-card-name">${escapeHtml(s.name || "Part")}</div>
-      <div class="fb-card-meta">${s.bars} T · ${s.timeSignature || "4/4"}${ref ? "<br>" + ref : ""}</div>
+      <div class="fb-card-meta">${s.bars} T · ${s.timeSignature || "4/4"}</div>
       ${lead ? `<div class="fb-card-lead">${lead}</div>` : ""}
       ${notes ? `<div class="fb-card-notes">${escapeHtml(notes)}</div>` : ""}
+      ${isLast ? `<button class="fb-card-rep" data-fbadd="${s.id}" type="button" title="Noch einmal wiederholen">↩ +1</button>` : ""}
     </div>`;
   }).join("");
 
@@ -6492,6 +6484,20 @@ function renderFormBuilder() {
       // Scroll matching section-card into view in editor
       const secCard = document.querySelector(`.section-card[data-section-id="${fbActiveId}"]`);
       if (secCard) secCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  });
+
+  // ── Bind +1 repeat buttons ──
+  host.querySelectorAll("[data-fbadd]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const sec = song.sections.find(s => s.id === btn.dataset.fbadd);
+      if (!sec) return;
+      sec.repeat = Math.max(1, parseInt(sec.repeat) || 1) + 1;
+      renderFormBuilder();
+      renderSections();
+      renderPreview();
+      saveLocal();
     });
   });
 
