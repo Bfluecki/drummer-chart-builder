@@ -3524,8 +3524,8 @@ function renderSections() {
   // ── bind events ──
   host.querySelectorAll("input[data-id], textarea[data-id], select[data-id][data-field]").forEach(el => {
     const field = el.dataset.field;
-    // bars + timeSignature rebuild the grid — only on confirmed change, not every keystroke
-    if (field === "bars" || field === "timeSignature") {
+    // bars + timeSignature + repeat rebuild sections — only on confirmed change, not every keystroke
+    if (field === "bars" || field === "timeSignature" || field === "repeat") {
       el.addEventListener("change", handleSectionFieldChange);
     } else {
       el.addEventListener("input",  handleSectionFieldChange);
@@ -3842,9 +3842,9 @@ function handleSectionFieldChange(e) {
       }
     } else if (field === "repeat") {
       s.repeat = Math.max(1, parseInt(e.target.value) || 1);
-      e.target.value = s.repeat;
       renderSections();
       renderPreview();
+      saveLocal();
       return;
     }
 
