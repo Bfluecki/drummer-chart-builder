@@ -1135,6 +1135,17 @@
     .prev-sec-meta-label { color: var(--ink3); font-size: 11px; margin-bottom: 1px; }
     .prev-sec-meta-value { font-weight: 500; color: var(--ink); }
 
+    /* ── Wiederholungszeichen ───────────────────────── */
+    .rep-sign { font-family:'DM Mono',monospace; font-weight:900; color:var(--ink3); font-size:14px; flex-shrink:0; line-height:1; }
+    /* ── Performance Mode Ablauf ──────────────────────*/
+    .perf-ablauf { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px; }
+    .perf-abl-item { display:flex;align-items:flex-start;gap:3px; }
+    .perf-abl-sec { display:flex;flex-direction:column;align-items:center;gap:2px; }
+    .perf-abl-name { font-size:11px;color:#9ca3af;font-weight:600;text-align:center; }
+    .perf-abl-bars { font-size:10px;color:#4b5563;text-align:center; }
+    .perf-abl-lead { font-size:12px;color:#93c5fd;font-weight:700;margin-top:1px;text-align:center; }
+    .perf-rep-sign { font-family:'DM Mono',monospace;font-weight:900;color:#4b5563;font-size:14px;flex-shrink:0;margin-top:4px;line-height:1; }
+
     .grid-summary {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
@@ -3896,18 +3907,26 @@ function renderPreview() {
       const cols = song.sections.map((s, i) => {
         const badge = normalizeFormName(s.name||"Part");
         const badgeClass = getFormClass(badge);
-        const repeat = (s.repeat && s.repeat > 1) ? `<div style="font-size:10px;color:var(--ink3);">${s.repeat}x</div>` : "";
+        const hasRepeat = s.repeat && s.repeat > 1;
         const ref = s.grooveRef ? `<div style="font-size:9px;color:var(--ink3);">↗${escapeHtml(s.grooveRef)}</div>` : "";
         const lead = s.ablaufInstrument
           ? `<div style="font-size:11px;color:#1a3a5c;font-weight:700;margin-top:2px;">${escapeHtml(s.ablaufInstrument)}</div>`
           : "";
         const notes = s.formNotes ? `<div style="font-size:9px;color:var(--ink3);font-style:italic;max-width:80px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.formNotes)}</div>` : "";
-        return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;min-width:70px;">
+        const inner = `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;min-width:70px;">
           <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
           <span style="font-size:10px;color:var(--ink2);font-weight:600;">${escapeHtml(s.name||"Part")}</span>
-          <span style="font-size:10px;color:var(--ink3);">${s.bars} T${(s.repeat&&s.repeat>1)?" · "+s.repeat+"x":""}</span>
+          <span style="font-size:10px;color:var(--ink3);">${s.bars} T${hasRepeat ? " · ×"+s.repeat : ""}</span>
           ${ref}${lead}${notes}
         </div>`;
+        if (hasRepeat) {
+          return `<div style="display:flex;align-items:flex-start;gap:3px;">
+            <span class="rep-sign" style="margin-top:5px;">|:</span>
+            ${inner}
+            <span class="rep-sign" style="margin-top:5px;">:|</span>
+          </div>`;
+        }
+        return inner;
       }).join("");
       ablaufEl.innerHTML = `
         <div style="margin-top:8px;">
@@ -3924,8 +3943,10 @@ function renderPreview() {
     <div class="prev-sec-card">
       <div class="prev-sec-head">
         <span class="section-num">${i+1}</span>
+        ${s.repeat > 1 ? '<span class="rep-sign">|:</span>' : ''}
         <span class="form-badge ${getFormClass(s.name)}">${escapeHtml(normalizeFormName(s.name||"Part"))}</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:9.5pt;">${escapeHtml(s.name||"Section")}</span>
+        ${s.repeat > 1 ? `<span class="rep-sign">:|</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink3);">×${s.repeat}</span>` : ''}
       </div>
       <div class="prev-sec-meta">
         <div class="prev-sec-meta-item">
@@ -5166,6 +5187,30 @@ function perfShow() {
     data.countIn       ? `<span class="perf-pill">Count-In: ${escapeHtml(data.countIn)}</span>`  : "",
   ].filter(Boolean).join("");
   document.getElementById("perfPills").innerHTML = pills;
+
+  // Ablauf mit Wiederholungszeichen
+  const ablauf = (data.sections || []).map(s => {
+    const badge      = normalizeFormName(s.name || "Part");
+    const badgeClass = getFormClass(badge);
+    const bars       = parseBars(s.bars || "1");
+    const hasRepeat  = s.repeat && s.repeat > 1;
+    const lead       = s.ablaufInstrument
+      ? `<div class="perf-abl-lead">${escapeHtml(s.ablaufInstrument)}</div>` : "";
+    const inner = `<div class="perf-abl-sec">
+      <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
+      <div class="perf-abl-name">${escapeHtml(s.name || "Part")}</div>
+      <div class="perf-abl-bars">${bars} T${hasRepeat ? " · ×"+s.repeat : ""}</div>
+      ${lead}
+    </div>`;
+    if (hasRepeat) {
+      return `<div class="perf-abl-item">
+        <span class="perf-rep-sign">|:</span>${inner}<span class="perf-rep-sign">:|</span>
+      </div>`;
+    }
+    return `<div class="perf-abl-item">${inner}</div>`;
+  }).join("");
+  const ablaufEl = document.getElementById("perfAblauf");
+  if (ablaufEl) ablaufEl.innerHTML = ablauf || "";
 
   const sections = (data.sections || []).map(s => {
     const bars   = parseBars(s.bars || "1");
@@ -6535,6 +6580,7 @@ renderFormBuilder();
     <div class="perf-title"  id="perfTitle">—</div>
     <div class="perf-artist" id="perfArtist">—</div>
     <div class="perf-pills"  id="perfPills"></div>
+    <div class="perf-ablauf" id="perfAblauf"></div>
     <div class="perf-sections" id="perfSections"></div>
   </div>
   <div class="perf-metro">
