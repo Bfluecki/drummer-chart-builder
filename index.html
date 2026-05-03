@@ -1626,6 +1626,8 @@
     .fb-card.fb-active { border-color:var(--accent); box-shadow:0 0 0 3px rgba(212,82,42,.15); }
     .fb-card.fb-rep-copy { border-style:dashed; opacity:0.75; }
     .fb-card.fb-rep-copy:hover { opacity:1; }
+    .fb-card.fb-dragging { opacity:0.35; transform:scale(0.96); }
+    .fb-card.fb-drag-over { border-left:3px solid var(--accent); box-shadow:0 0 0 2px rgba(212,82,42,.2); }
     .fb-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; font-family:'Syne',sans-serif; margin-bottom:2px; }
     .fb-card-name { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .fb-card-meta { font-size:10px; color:var(--ink3); line-height:1.5; }
@@ -6468,6 +6470,7 @@ function renderFormBuilder() {
     const delTitle = count > 1 ? "Wiederholung entfernen (−1)" : "Section löschen";
 
     return `<div class="fb-card${active ? " fb-active" : ""}${isCopy ? " fb-rep-copy" : ""}"
+      draggable="true"
       data-fbid="${s.id}" data-fbrep="${r}" title="${escapeHtml(s.name)}${isCopy ? ' · Wiederholung ' + (r+1) : ''}">
       <button class="fb-card-del" data-fbdel="${s.id}" data-fbrep="${r}" type="button" title="${delTitle}">×</button>
       <span class="fb-badge ${badgeCls}">${escapeHtml(badge)}</span>
@@ -6527,6 +6530,50 @@ function renderFormBuilder() {
     setTimeout(() => {
       host.scrollLeft = host.scrollWidth;
     }, 50);
+  });
+
+  // ── Drag & Drop reorder ──
+  let fbDragId = null;
+  host.querySelectorAll(".fb-card[data-fbid]").forEach(card => {
+    card.addEventListener("dragstart", e => {
+      fbDragId = card.dataset.fbid;
+      card.classList.add("fb-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", fbDragId);
+    });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("fb-dragging");
+      host.querySelectorAll(".fb-drag-over").forEach(c => c.classList.remove("fb-drag-over"));
+      fbDragId = null;
+    });
+    card.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (card.dataset.fbid !== fbDragId) {
+        host.querySelectorAll(".fb-drag-over").forEach(c => c.classList.remove("fb-drag-over"));
+        card.classList.add("fb-drag-over");
+      }
+    });
+    card.addEventListener("dragleave", e => {
+      if (!card.contains(e.relatedTarget)) card.classList.remove("fb-drag-over");
+    });
+    card.addEventListener("drop", e => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove("fb-drag-over");
+      const targetId = card.dataset.fbid;
+      if (!fbDragId || fbDragId === targetId) return;
+      const srcIdx = song.sections.findIndex(s => s.id === fbDragId);
+      const tgtIdx = song.sections.findIndex(s => s.id === targetId);
+      if (srcIdx < 0 || tgtIdx < 0) return;
+      const [moved] = song.sections.splice(srcIdx, 1);
+      song.sections.splice(tgtIdx, 0, moved);
+      renderFormBuilder();
+      renderSections();
+      renderPreview();
+      saveLocal();
+      status("Section verschoben.");
+    });
   });
 }
 
