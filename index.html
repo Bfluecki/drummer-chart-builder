@@ -292,6 +292,7 @@
     /* ── RESTS ─────────────────────────────────────────── */
     .mini-cell.rest-q  { background:#fef3c7 !important;color:#92400e !important;font-size:14px;font-weight:700; }
     .mini-cell.rest-e  { background:#fef3c7 !important;color:#92400e !important;font-size:13px;font-weight:700; }
+    .mini-cell.rest-s  { background:#fef3c7 !important;color:#92400e !important;font-size:11px;font-weight:700; }
     .mini-cell.rest-h  { background:#fef9e7 !important;color:#92400e !important;font-size:13px;font-weight:700; }
     .mini-cell.rest-w  { background:#fef9e7 !important;color:#92400e !important;font-size:12px;font-weight:700; }
     /* groove editor cell articulations */
@@ -1869,6 +1870,9 @@
         <div class="palette-sep"></div>
         <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">Ganze</span></div>
         <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">Halbe</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">Viertel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">Achtel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">16tel</span></div>
       </div>
 
       <div id="sections"></div>
@@ -2722,6 +2726,7 @@ function cellValToState(v) {
   // Rests (Pausen)
   if (v === "p4")   return "rest-q";
   if (v === "p8")   return "rest-e";
+  if (v === "p16")  return "rest-s";
   if (v === "p2")   return "rest-h";
   if (v === "p1")   return "rest-w";
   return (v && v !== false) ? "on" : "";
@@ -2745,6 +2750,7 @@ function cellValToIcon(v) {
   // Rests (Pausen)
   if (v === "p4")   return "𝄽";
   if (v === "p8")   return "𝄾";
+  if (v === "p16")  return "𝄿";
   if (v === "p2")   return "𝄼";
   if (v === "p1")   return "𝄻";
   return (v && v !== false) ? "●" : "·";
@@ -3082,10 +3088,10 @@ function renderGrid(section) {
     barLabelHtml += `<div style="display:flex;flex-direction:column;gap:1px;width:${groupW}px;">
       <div style="display:flex;align-items:center;gap:4px;">
         <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--ink3);">Takt ${bar+1}</span>
-        <button class="bar-rep-btn${repTyp?' active':''}" data-barrep="${bar}" data-sid="${section.id}"
-          title="Takt-Wiederholung: ${repTyp==='1'?'1 Takt':'repTyp'==='2'?'2 Takte':'keine'} — klicken zum Wechseln">
+        ${bar > 0 ? `<button class="bar-rep-btn${repTyp?' active':''}" data-barrep="${bar}" data-sid="${section.id}"
+          title="${repTyp==='1'?'Wiederholt Takt '+(bar)+' (1 Takt)':repTyp==='2'?'Wiederholt Takte '+(bar-1)+'+'+bar+' (2 Takte)':'Takt-Wiederholung: klicken für 𝄎 (1 Takt) oder 𝄏 (2 Takte)'}">
           ${repTyp === '1' ? '𝄎 1T' : repTyp === '2' ? '𝄏 2T' : '%'}
-        </button>
+        </button>` : ''}
       </div>
       <input class="bar-note-input"
         data-section-id="${section.id}"
@@ -3503,6 +3509,9 @@ function renderSections() {
           <div class="palette-group">
             <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">Ganze</span></div>
             <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">Halbe</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">Viertel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">Achtel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">16tel</span></div>
           </div>
         </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
