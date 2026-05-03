@@ -1456,6 +1456,34 @@
     #notationSheet .ns-head { display:flex;align-items:center;gap:8px;padding:5px 0 4px;border-bottom:2px solid var(--ink);margin-bottom:6px; }
     #notationSheet .ns-head-right { margin-left:auto;font-size:9px;color:var(--ink3);font-family:'DM Mono',monospace;text-align:right; }
     #notationSheet .ns-notation { overflow-x:auto; }
+
+    /* ── Chart Layout View ── */
+    #layoutSheet { }
+    .ls-row {
+      display:flex;align-items:stretch;border-bottom:1.5px solid var(--line);
+      min-height:56px;break-inside:avoid;page-break-inside:avoid;
+    }
+    .ls-row:first-child { border-top:1.5px solid var(--line); }
+    .ls-label {
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
+      min-width:52px;max-width:52px;padding:4px 3px;border-right:1.5px solid var(--line);
+      gap:3px;flex-shrink:0;
+    }
+    .ls-label .form-badge { font-size:8pt;min-width:28px;text-align:center; }
+    .ls-label .ls-repnum { font-size:8px;color:var(--ink3);font-family:'DM Mono',monospace; }
+    .ls-meta {
+      display:flex;flex-direction:column;justify-content:center;padding:3px 6px;
+      border-right:1.5px solid var(--line);min-width:72px;max-width:80px;flex-shrink:0;
+    }
+    .ls-meta-name { font-family:'Syne',sans-serif;font-weight:800;font-size:9pt;line-height:1.1; }
+    .ls-meta-info { font-size:7.5px;color:var(--ink3);margin-top:2px;line-height:1.3; }
+    .ls-notation { flex:1;overflow-x:auto;display:flex;align-items:center;padding:2px 4px; }
+    .ls-notation svg { display:block; }
+    .ls-section-sep {
+      display:flex;align-items:center;gap:6px;padding:5px 0 2px;
+      font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--ink3);text-transform:uppercase;
+    }
+    .ls-section-sep::after { content:'';flex:1;height:1px;background:var(--line); }
     #flowSheet {
       display: block;
     }
@@ -2001,6 +2029,7 @@
         <div class="prev-subtabs no-print" style="display:flex;gap:6px;margin:10px 0 6px;">
           <button class="prev-subtab active" id="prevTabGrid" type="button">⊞ Grid</button>
           <button class="prev-subtab" id="prevTabNotation" type="button">𝅘𝅥 Notation</button>
+          <button class="prev-subtab" id="prevTabLayout" type="button">📋 Chart</button>
         </div>
 
         <!-- ── MAIN: Ablauf full width ── -->
@@ -2016,6 +2045,12 @@
           <div class="a4-right" style="width:100%;display:none;" id="prevNotationView">
             <div class="a4-col-title">Ablauf · Notation</div>
             <div id="notationSheet"></div>
+          </div>
+
+          <!-- Chart Layout full width -->
+          <div class="a4-right" style="width:100%;display:none;" id="prevLayoutView">
+            <div class="a4-col-title">Ablauf · Chart Layout</div>
+            <div id="layoutSheet"></div>
           </div>
 
         </div>
@@ -4193,6 +4228,10 @@ function renderPreview() {
 
   renderFlowSheet();
   renderNotationSheet();
+  // only re-render layout if tab is active (lazy)
+  if (document.getElementById("prevLayoutView")?.style.display !== "none") {
+    renderLayoutSheet();
+  }
   renderFormBuilder();
   autoSaveOnChange();
 }
@@ -4229,18 +4268,76 @@ function renderNotationSheet() {
   }).join("");
 }
 
+// ── CHART LAYOUT SHEET (3. Preview-Ansicht) ──────────
+function renderLayoutSheet() {
+  const host = document.getElementById("layoutSheet");
+  if (!host) return;
+
+  const globalTs = song.timeSignature || "4/4";
+  let html = "";
+  let lastSectionId = null;
+
+  // Build expanded list respecting repeat counts (same as Form Builder)
+  const expanded = [];
+  song.sections.forEach(s => {
+    const count = Math.max(1, parseInt(s.repeat) || 1);
+    for (let r = 0; r < count; r++) expanded.push({ s, r, count });
+  });
+
+  expanded.forEach(({ s, r, count }) => {
+    const formName  = normalizeFormName(s.name || "Part");
+    const formClass = getFormClass(formName);
+    const bars      = parseBars(s.bars || "1");
+    const ts        = s.timeSignature || globalTs;
+    const metaParts = [
+      s.groovePattern || "",
+      s.dynamics      || "",
+      s.cue           || "",
+    ].filter(Boolean).join(" · ");
+
+    // Section separator on first occurrence
+    if (s.id !== lastSectionId) {
+      lastSectionId = s.id;
+      html += `<div class="ls-section-sep">${escapeHtml(s.name || "Section")} &nbsp;${bars} Takt${bars!==1?"e":""} · ${ts}${metaParts ? " · "+escapeHtml(metaParts) : ""}</div>`;
+    }
+
+    // Render notation SVG compact
+    const notesSvg = renderMiniNotation(s);
+
+    const repLabel = count > 1 ? `<span class="ls-repnum">${r+1}/${count}</span>` : "";
+
+    html += `<div class="ls-row">
+      <div class="ls-label">
+        <span class="form-badge ${formClass}">${escapeHtml(formName)}</span>
+        ${repLabel}
+      </div>
+      <div class="ls-meta">
+        <div class="ls-meta-name">${escapeHtml(s.name || "Section")}</div>
+        <div class="ls-meta-info">${bars}T · ${ts}${s.ablaufInstrument ? `<br>🎤 ${escapeHtml(s.ablaufInstrument)}` : ""}</div>
+      </div>
+      <div class="ls-notation">${notesSvg}</div>
+    </div>`;
+  });
+
+  host.innerHTML = html || `<p style="color:var(--ink3);font-size:11px;">Keine Sections vorhanden.</p>`;
+}
+
 // ── PREVIEW SUB-TAB SWITCHING ────────────────────────
 function _switchPrevTab(tab) {
-  const isGrid = tab === "grid";
   const gv = document.getElementById("prevGridView");
   const nv = document.getElementById("prevNotationView");
-  if (gv) gv.style.display = isGrid ? "" : "none";
-  if (nv) nv.style.display = isGrid ? "none" : "";
-  document.getElementById("prevTabGrid")?.classList.toggle("active", isGrid);
-  document.getElementById("prevTabNotation")?.classList.toggle("active", !isGrid);
+  const lv = document.getElementById("prevLayoutView");
+  if (gv) gv.style.display = tab === "grid" ? "" : "none";
+  if (nv) nv.style.display = tab === "notation" ? "" : "none";
+  if (lv) lv.style.display = tab === "layout" ? "" : "none";
+  document.getElementById("prevTabGrid")?.classList.toggle("active", tab === "grid");
+  document.getElementById("prevTabNotation")?.classList.toggle("active", tab === "notation");
+  document.getElementById("prevTabLayout")?.classList.toggle("active", tab === "layout");
+  if (tab === "layout") renderLayoutSheet();
 }
 document.getElementById("prevTabGrid")?.addEventListener("click", () => _switchPrevTab("grid"));
 document.getElementById("prevTabNotation")?.addEventListener("click", () => _switchPrevTab("notation"));
+document.getElementById("prevTabLayout")?.addEventListener("click", () => _switchPrevTab("layout"));
 
 // ── PERSISTENCE ──────────────────────────────────────
 function saveLocal() {
