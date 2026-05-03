@@ -345,6 +345,8 @@
     /* same for in-card palette */
     .pal-item[data-pval="n4"]:hover,.pal-item[data-pval="n8"]:hover,.pal-item[data-pval="n16"]:hover,
     .pal-item[data-pval^="n"]:hover,.pal-item[data-pval^="n"].active { background:#0f3460;border-color:#0f3460;color:#fff; }
+    .pal-item[data-paint="barRep1"]:hover,.pal-item[data-paint="barRep1"].active,
+    .pal-item[data-paint="barRep2"]:hover,.pal-item[data-paint="barRep2"].active { background:#1a3a5c;border-color:#1a3a5c;color:#fff; }
     .pal-item[data-pval^="p"]:hover,.pal-item[data-pval^="p"].active { background:#d97706;border-color:#d97706;color:#fff; }
     /* ── TAGS ───────────────────────────────────────────── */
     .tags-row { display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px; }
@@ -2136,10 +2138,11 @@ const INSTRUMENTS = [
 ];
 const GROOVE_ROWS = ["hh","sn","bd","tom","cr","ft"];
 
-// Paint mode per section: sectionId → "a" | "b" | "off"
+// Paint mode per section: sectionId → "a" | "b" | "off" | "barRep1" | "barRep2"
 const sectionPaintMode = {};
+let _globalPaintMode = "hit";
 function getPaintMode(sectionId) {
-  return sectionPaintMode[sectionId] || "hit";
+  return sectionPaintMode[sectionId] || _globalPaintMode || "hit";
 }
 
 const PRESET_TO_GROOVE = {
@@ -3128,7 +3131,8 @@ function renderGrid(section) {
         // Takt-Wiederholung: Symbol statt Zellen
         const showSvg = key === 'hh'; // nur in erster Zeile das Symbol
         cellsHtml += `<div class="cell-group" style="width:${groupW}px;align-items:center;justify-content:center;background:rgba(0,0,0,.025);border-radius:6px;border:1px dashed var(--line);">
-          <div class="bar-rep-overlay" style="color:var(--ink2);">
+          <div class="bar-rep-overlay" data-barrepclick="${section.id}" data-barrepbar="${bar}" data-barreptype="${repTyp}"
+            style="color:var(--ink2);cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;height:100%;">
             ${showSvg ? barRepSvg(repTyp) : ''}
           </div>
         </div>`;
@@ -3216,11 +3220,32 @@ function _applyPaintToCell(el) {
   const { sectionId, inst, step } = el.dataset;
   if (sectionId !== _dragSectionId) return;
   const s = song.sections.find(x => x.id === sectionId);
-  if (!s || !s.pattern || !s.pattern[inst]) return;
+  if (!s) return;
+
+  // ── Bar-level repeat: affects whole bar, not just cell ──
+  if (_dragFirstVal === 'barRep1' || _dragFirstVal === 'barRep2') {
+    const ts = s.timeSignature || song.timeSignature || "4/4";
+    const stepsPerBar = getStepsPerBar(ts);
+    const bar = Math.floor(Number(step) / stepsPerBar);
+    if (!s.barRepeats) s.barRepeats = [];
+    const repVal = _dragFirstVal === 'barRep1' ? '1' : '2';
+    s.barRepeats[bar] = (s.barRepeats[bar] === repVal) ? null : repVal;
+    const card = el.closest("[data-section-id]");
+    if (card) {
+      const scrollEl = card.querySelector(".grid-scroll");
+      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+      bindGridEvents(card, s);
+    }
+    renderPreview(); saveLocal();
+    return;
+  }
+
+  // ── Normal cell paint ──
+  if (!s.pattern || !s.pattern[inst]) return;
   s.pattern[inst][Number(step)] = _dragFirstVal;
-  const v     = _dragFirstVal;
-  const state = cellValToState(v);
-  const icon  = cellValToIcon(v);
+  const v      = _dragFirstVal;
+  const state  = cellValToState(v);
+  const icon   = cellValToIcon(v);
   const isPlus = Number(step) % 2 === 1;
   el.className = "mini-cell" + (state ? " " + state : "");
   el.style.cssText = `width:30px;height:30px;border-radius:5px;border-style:${isPlus?"dashed":"solid"};`;
@@ -3341,7 +3366,7 @@ function bindGridEvents(container, s) {
       sec.chordBars[bar] = e.target.value;
     });
   });
-  // Takt-Wiederholung Toggle
+  // Takt-Wiederholung Toggle (% button im Bar-Header)
   container.querySelectorAll(".bar-rep-btn[data-barrep]").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
@@ -3351,8 +3376,36 @@ function bindGridEvents(container, s) {
       if (!sec.barRepeats) sec.barRepeats = [];
       const cur = sec.barRepeats[bar] || null;
       sec.barRepeats[bar] = cur === null ? '1' : cur === '1' ? '2' : null;
-      // Nur Grid neu zeichnen — nicht renderSections()
       const card = btn.closest("[data-section-id]");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(sec);
+        bindGridEvents(card, sec);
+      }
+      renderPreview();
+      saveLocal();
+    });
+  });
+
+  // Klick auf Takt-Wiederholungs-Overlay → mit Palette-Modus anwenden oder entfernen
+  container.querySelectorAll(".bar-rep-overlay[data-barrepclick]").forEach(overlay => {
+    overlay.addEventListener("click", e => {
+      e.stopPropagation();
+      const sid  = overlay.dataset.barrepclick;
+      const bar  = Number(overlay.dataset.barrepbar);
+      const sec  = song.sections.find(x => x.id === sid);
+      if (!sec) return;
+      if (!sec.barRepeats) sec.barRepeats = [];
+      const mode = _globalPaintMode;
+      if (mode === 'barRep1') {
+        sec.barRepeats[bar] = (sec.barRepeats[bar] === '1') ? null : '1';
+      } else if (mode === 'barRep2') {
+        sec.barRepeats[bar] = (sec.barRepeats[bar] === '2') ? null : '2';
+      } else {
+        // Kein barRep-Modus → Overlay entfernen
+        sec.barRepeats[bar] = null;
+      }
+      const card = overlay.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
         if (scrollEl) scrollEl.innerHTML = renderGrid(sec);
@@ -3504,6 +3557,11 @@ function renderSections() {
             <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">Viertel</span></div>
             <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">Achtel</span></div>
             <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">16tel</span></div>
+          </div>
+          <div class="palette-sep"></div>
+          <div class="palette-group">
+            <div class="pal-item paint-btn" data-paint="barRep1" data-section-id="${section.id}" title="1 Takt wiederholen — auswählen, dann Takt anklicken"><span class="pal-sym" style="font-size:18px;">𝄎</span><span class="pal-lbl">1 Takt</span></div>
+            <div class="pal-item paint-btn" data-paint="barRep2" data-section-id="${section.id}" title="2 Takte wiederholen — auswählen, dann Takt anklicken"><span class="pal-sym" style="font-size:18px;">𝄏</span><span class="pal-lbl">2 Takte</span></div>
           </div>
         </div>`}
         <div class="grid-scroll">${renderGrid(section)}</div>
@@ -3782,7 +3840,9 @@ function renderSections() {
     btn.addEventListener("click", () => {
       const paint = btn.dataset.paint;
       sectionPaintMode[sid] = paint;
-      (btn.closest(".paint-tools") || btn.closest(".note-palette"))?.querySelectorAll(".paint-btn").forEach(b => {
+      _globalPaintMode = paint;
+      // Update active state across ALL palettes
+      document.querySelectorAll(".paint-btn[data-paint]").forEach(b => {
         b.classList.toggle("active", b.dataset.paint === paint);
       });
     });
