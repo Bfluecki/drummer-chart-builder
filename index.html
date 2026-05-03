@@ -1993,6 +1993,14 @@
   </div>
 
   <div id="previewView" class="hide">
+
+    <!-- ── PREVIEW SUB-TABS (oben, immer sichtbar) ── -->
+    <div class="no-print" style="display:flex;justify-content:center;gap:8px;padding:12px 0 4px;background:var(--bg);">
+      <button class="prev-subtab active" id="prevTabGrid" type="button">⊞ Grid</button>
+      <button class="prev-subtab" id="prevTabNotation" type="button">𝅘𝅥 Notation</button>
+      <button class="prev-subtab" id="prevTabLayout" type="button">📋 Chart</button>
+    </div>
+
     <div class="a4-wrap no-print-margin">
 
       <div class="a4-page" id="a4Page">
@@ -2024,13 +2032,6 @@
 
         <!-- ── ABLAUF + LEAD ── -->
         <div id="pAblaufLine" style="display:none;margin:6px 0 2px;font-size:11px;color:var(--ink3);"></div>
-
-        <!-- ── PREVIEW SUB-TABS ── -->
-        <div class="prev-subtabs no-print" style="display:flex;gap:6px;margin:10px 0 6px;">
-          <button class="prev-subtab active" id="prevTabGrid" type="button">⊞ Grid</button>
-          <button class="prev-subtab" id="prevTabNotation" type="button">𝅘𝅥 Notation</button>
-          <button class="prev-subtab" id="prevTabLayout" type="button">📋 Chart</button>
-        </div>
 
         <!-- ── MAIN: Ablauf full width ── -->
         <div class="a4-body" style="grid-template-columns:1fr;">
