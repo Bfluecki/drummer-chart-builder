@@ -1861,10 +1861,8 @@
         <div class="pal-item global-pal-item" data-gpval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
         <div class="pal-item global-pal-item" data-gpval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
         <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">𝄻 Pause</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">𝄼 Pause</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">𝄽 Pause</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">𝄾 Pause</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">Ganze</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">Halbe</span></div>
       </div>
 
       <div id="sections"></div>
@@ -3307,11 +3305,14 @@ function renderSections() {
         <div class="section-top-left">
           <span class="drag-handle" title="Verschieben">⠿</span>
           <span class="section-num">${index+1}</span>
+          <span class="rep-sign rep-sign-left" style="${section.repeat > 1 ? '' : 'display:none'}">|:</span>
           <span class="form-badge ${getFormClass(section.name)}">${escapeHtml(normalizeFormName(section.name||"Part"))}</span>
           <input data-id="${section.id}" data-field="name"
             value="${escapeHtml(section.name)}"
             placeholder="Section-Name (A, B, Intro, Chorus…)"
             style="width:200px;" />
+          <span class="rep-sign rep-sign-right" style="${section.repeat > 1 ? '' : 'display:none'}">:|</span>
+          <span class="rep-count" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink3);${section.repeat > 1 ? '' : 'display:none'}">×${section.repeat}</span>
         </div>
         <div style="display:flex;gap:6px;">
           <button data-duplicate="${section.id}" class="btn btn-outline btn-sm" type="button">⧉ Kopieren</button>
@@ -3768,6 +3769,23 @@ function handleSectionFieldChange(e) {
         if (badge) {
           badge.textContent = normalizeFormName(s.name || "Part");
           badge.className   = "form-badge " + getFormClass(s.name);
+        }
+      }
+    } else if (field === "repeat") {
+      s.repeat = Math.max(1, parseInt(s.repeat) || 1);
+      const card = e.target.closest(".section-card");
+      if (card) {
+        const left  = card.querySelector(".rep-sign-left");
+        const right = card.querySelector(".rep-sign-right");
+        const count = card.querySelector(".rep-count");
+        if (s.repeat > 1) {
+          if (left)  { left.textContent = "|:"; left.style.display = ""; }
+          if (right) { right.textContent = ":|"; right.style.display = ""; }
+          if (count) { count.textContent = "×" + s.repeat; count.style.display = ""; }
+        } else {
+          if (left)  left.style.display  = "none";
+          if (right) right.style.display = "none";
+          if (count) count.style.display = "none";
         }
       }
     }
