@@ -3924,6 +3924,14 @@ function renderSections() {
   });
 
   host.querySelectorAll(".mini-cell").forEach(cell => bindMiniCell(cell));
+
+  // bind bar-rep-btn and other grid-level events for every section card
+  host.querySelectorAll(".section-card[data-section-id]").forEach(card => {
+    const sid = card.dataset.sectionId;
+    const sec = song.sections.find(x => x.id === sid);
+    if (sec) bindGridEvents(card, sec);
+  });
+
   renderAblauf();
   renderFormBuilder();
 }
