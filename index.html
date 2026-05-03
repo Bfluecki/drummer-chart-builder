@@ -4508,6 +4508,11 @@ function librarySaveCurrent(name) {
   librarySave(songs);
   libraryRenderList();
   status(`"${name.trim()}" gespeichert ✓`);
+  // Auto-push to GitHub if configured (silent, non-blocking)
+  const ghCfg = ghLoadSettings();
+  if (ghCfg.repo && ghCfg.token) {
+    ghPushSong().catch(() => {}); // silent — lokal ist bereits gespeichert
+  }
 }
 
 function libraryDeleteSong(name) {
