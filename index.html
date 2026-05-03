@@ -1624,6 +1624,8 @@
     .fb-card { display:flex; flex-direction:column; gap:4px; background:var(--white); border:2px solid var(--line); border-radius:var(--r-md); padding:10px 10px 8px; min-width:110px; max-width:140px; cursor:pointer; transition:border-color .15s,box-shadow .15s; position:relative; user-select:none; -webkit-user-select:none; }
     .fb-card:hover { border-color:var(--ink2); box-shadow:var(--shadow-sm); }
     .fb-card.fb-active { border-color:var(--accent); box-shadow:0 0 0 3px rgba(212,82,42,.15); }
+    .fb-card.fb-rep-copy { border-style:dashed; opacity:0.75; }
+    .fb-card.fb-rep-copy:hover { opacity:1; }
     .fb-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10px; font-weight:700; font-family:'Syne',sans-serif; margin-bottom:2px; }
     .fb-card-name { font-family:'Syne',sans-serif; font-weight:700; font-size:12px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .fb-card-meta { font-size:10px; color:var(--ink3); line-height:1.5; }
@@ -3374,14 +3376,11 @@ function renderSections() {
         <div class="section-top-left">
           <span class="drag-handle" title="Verschieben">⠿</span>
           <span class="section-num">${index+1}</span>
-          <span class="rep-sign rep-sign-left" style="${section.repeat > 1 ? '' : 'display:none'}">|:</span>
           <span class="form-badge ${getFormClass(section.name)}">${escapeHtml(normalizeFormName(section.name||"Part"))}</span>
           <input data-id="${section.id}" data-field="name"
             value="${escapeHtml(section.name)}"
             placeholder="Section-Name (A, B, Intro, Chorus…)"
             style="width:200px;" />
-          <span class="rep-sign rep-sign-right" style="${section.repeat > 1 ? '' : 'display:none'}">:|</span>
-          <span class="rep-count" style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink3);${section.repeat > 1 ? '' : 'display:none'}">×${section.repeat}</span>
         </div>
         <div style="display:flex;gap:6px;">
           <button data-duplicate="${section.id}" class="btn btn-outline btn-sm" type="button">⧉ Kopieren</button>
@@ -3981,29 +3980,25 @@ function renderPreview() {
   if (ablaufEl) {
     if (song.sections.length) {
 
-      const cols = song.sections.map((s, i) => {
+      // Expand each section by repeat count → N bubbles
+      const cols = song.sections.flatMap((s, i) => {
         const badge = normalizeFormName(s.name||"Part");
         const badgeClass = getFormClass(badge);
-        const hasRepeat = s.repeat && s.repeat > 1;
-        const ref = s.grooveRef ? `<div style="font-size:9px;color:var(--ink3);">↗${escapeHtml(s.grooveRef)}</div>` : "";
+        const count = Math.max(1, parseInt(s.repeat) || 1);
+        const ref  = s.grooveRef ? `<div style="font-size:9px;color:var(--ink3);">↗${escapeHtml(s.grooveRef)}</div>` : "";
         const lead = s.ablaufInstrument
           ? `<div style="font-size:11px;color:#1a3a5c;font-weight:700;margin-top:2px;">${escapeHtml(s.ablaufInstrument)}</div>`
           : "";
         const notes = s.formNotes ? `<div style="font-size:9px;color:var(--ink3);font-style:italic;max-width:80px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(s.formNotes)}</div>` : "";
-        const inner = `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;min-width:70px;">
-          <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
-          <span style="font-size:10px;color:var(--ink2);font-weight:600;">${escapeHtml(s.name||"Part")}</span>
-          <span style="font-size:10px;color:var(--ink3);">${s.bars} T${hasRepeat ? " · ×"+s.repeat : ""}</span>
-          ${ref}${lead}${notes}
-        </div>`;
-        if (hasRepeat) {
-          return `<div style="display:flex;align-items:flex-start;gap:3px;">
-            <span class="rep-sign" style="margin-top:5px;">|:</span>
-            ${inner}
-            <span class="rep-sign" style="margin-top:5px;">:|</span>
+        return Array.from({length: count}, (_, r) => {
+          const isCopy = r > 0;
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:1px;min-width:60px;${isCopy ? 'opacity:0.6;' : ''}">
+            <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
+            <span style="font-size:10px;color:var(--ink2);font-weight:600;">${escapeHtml(s.name||"Part")}</span>
+            <span style="font-size:10px;color:var(--ink3);">${s.bars} T</span>
+            ${!isCopy ? ref+lead+notes : ''}
           </div>`;
-        }
-        return inner;
+        });
       }).join("");
       ablaufEl.innerHTML = `
         <div style="margin-top:8px;">
@@ -4020,10 +4015,9 @@ function renderPreview() {
     <div class="prev-sec-card">
       <div class="prev-sec-head">
         <span class="section-num">${i+1}</span>
-        ${s.repeat > 1 ? '<span class="rep-sign">|:</span>' : ''}
         <span class="form-badge ${getFormClass(s.name)}">${escapeHtml(normalizeFormName(s.name||"Part"))}</span>
         <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:9.5pt;">${escapeHtml(s.name||"Section")}</span>
-        ${s.repeat > 1 ? `<span class="rep-sign">:|</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink3);">×${s.repeat}</span>` : ''}
+        ${s.repeat > 1 ? `<span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--ink3);background:var(--soft);padding:2px 6px;border-radius:10px;">×${s.repeat}</span>` : ''}
       </div>
       <div class="prev-sec-meta">
         <div class="prev-sec-meta-item">
@@ -5278,18 +5272,18 @@ function perfShow() {
     const hasRepeat  = s.repeat && s.repeat > 1;
     const lead       = s.ablaufInstrument
       ? `<div class="perf-abl-lead">${escapeHtml(s.ablaufInstrument)}</div>` : "";
-    const inner = `<div class="perf-abl-sec">
-      <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
-      <div class="perf-abl-name">${escapeHtml(s.name || "Part")}</div>
-      <div class="perf-abl-bars">${bars} T${hasRepeat ? " · ×"+s.repeat : ""}</div>
-      ${lead}
-    </div>`;
-    if (hasRepeat) {
-      return `<div class="perf-abl-item">
-        <span class="perf-rep-sign">|:</span>${inner}<span class="perf-rep-sign">:|</span>
+    const count = Math.max(1, parseInt(s.repeat) || 1);
+    return Array.from({length: count}, (_, r) => {
+      const isCopy = r > 0;
+      return `<div class="perf-abl-item"${isCopy ? ' style="opacity:0.55;"' : ''}>
+        <div class="perf-abl-sec">
+          <span class="form-badge ${badgeClass}" style="font-size:10px;padding:3px 10px;">${escapeHtml(badge)}</span>
+          <div class="perf-abl-name">${escapeHtml(s.name || "Part")}</div>
+          <div class="perf-abl-bars">${bars} T</div>
+          ${!isCopy ? lead : ''}
+        </div>
       </div>`;
-    }
-    return `<div class="perf-abl-item">${inner}</div>`;
+    }).join("");
   }).join("");
   const ablaufEl = document.getElementById("perfAblauf");
   if (ablaufEl) ablaufEl.innerHTML = ablauf || "";
@@ -6454,20 +6448,31 @@ function renderFormBuilder() {
     fbActiveId = sections[0].id;
   }
 
-  const cards = sections.map((s, i) => {
-    const active = s.id === fbActiveId;
-    const badge = normalizeFormName(s.name || "Part");
-    const badgeCls = getFormClass(badge);
-    const repeat = (s.repeat && s.repeat > 1) ? `${s.repeat}x · ` : "";
-    const ref = s.grooveRef ? `↗ ${escapeHtml(s.grooveRef)}` : "";
-    const lead = s.ablaufInstrument ? `🎤 ${escapeHtml(s.ablaufInstrument)}` : "";
-    const notes = s.formNotes || s.cue || "";
+  // Expand sections by repeat count → N cards per section
+  let expandedCards = [];
+  sections.forEach((s, i) => {
+    const count = Math.max(1, parseInt(s.repeat) || 1);
+    for (let r = 0; r < count; r++) {
+      expandedCards.push({ s, i, r, count });
+    }
+  });
 
-    return `<div class="fb-card${active ? " fb-active" : ""}" data-fbid="${s.id}" title="${escapeHtml(s.name)}">
-      <button class="fb-card-del" data-fbdel="${s.id}" type="button" title="Löschen">×</button>
+  const cards = expandedCards.map(({ s, i, r, count }) => {
+    const active   = s.id === fbActiveId;
+    const isCopy   = r > 0;
+    const badge    = normalizeFormName(s.name || "Part");
+    const badgeCls = getFormClass(badge);
+    const ref  = (!isCopy && s.grooveRef) ? `↗ ${escapeHtml(s.grooveRef)}` : "";
+    const lead = s.ablaufInstrument ? `🎤 ${escapeHtml(s.ablaufInstrument)}` : "";
+    const notes = (!isCopy && (s.formNotes || s.cue)) ? s.formNotes || s.cue : "";
+    const delTitle = count > 1 ? "Wiederholung entfernen (−1)" : "Section löschen";
+
+    return `<div class="fb-card${active ? " fb-active" : ""}${isCopy ? " fb-rep-copy" : ""}"
+      data-fbid="${s.id}" data-fbrep="${r}" title="${escapeHtml(s.name)}${isCopy ? ' · Wiederholung ' + (r+1) : ''}">
+      <button class="fb-card-del" data-fbdel="${s.id}" data-fbrep="${r}" type="button" title="${delTitle}">×</button>
       <span class="fb-badge ${badgeCls}">${escapeHtml(badge)}</span>
       <div class="fb-card-name">${escapeHtml(s.name || "Part")}</div>
-      <div class="fb-card-meta">${repeat}${s.bars} Takte · ${s.timeSignature || "4/4"}${ref ? "<br>" + ref : ""}</div>
+      <div class="fb-card-meta">${s.bars} T · ${s.timeSignature || "4/4"}${ref ? "<br>" + ref : ""}</div>
       ${lead ? `<div class="fb-card-lead">${lead}</div>` : ""}
       ${notes ? `<div class="fb-card-notes">${escapeHtml(notes)}</div>` : ""}
     </div>`;
@@ -6491,13 +6496,23 @@ function renderFormBuilder() {
   host.querySelectorAll("[data-fbdel]").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
-      const id = btn.dataset.fbdel;
-      if (song.sections.length <= 1) return;
-      song.sections = song.sections.filter(s => s.id !== id);
-      if (fbActiveId === id) fbActiveId = song.sections[0]?.id || null;
+      const id  = btn.dataset.fbdel;
+      const sec = song.sections.find(s => s.id === id);
+      if (!sec) return;
+      const cur = Math.max(1, parseInt(sec.repeat) || 1);
+      if (cur > 1) {
+        // Reduce repeat count by 1
+        sec.repeat = cur - 1;
+      } else {
+        // Delete section entirely
+        if (song.sections.length <= 1) return;
+        song.sections = song.sections.filter(s => s.id !== id);
+        if (fbActiveId === id) fbActiveId = song.sections[0]?.id || null;
+      }
       renderFormBuilder();
       renderSections();
       renderPreview();
+      saveLocal();
     });
   });
 
