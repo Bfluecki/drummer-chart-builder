@@ -1449,6 +1449,13 @@
       break-inside: avoid;
     }
 
+    .prev-subtab { padding:5px 14px;border-radius:20px;border:1.5px solid var(--line);background:var(--white);font-size:11px;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .15s; }
+    .prev-subtab:hover { border-color:var(--ink2);color:var(--ink2); }
+    .prev-subtab.active { background:var(--ink);border-color:var(--ink);color:#fff; }
+    #notationSheet .ns-section { margin-bottom:18px; }
+    #notationSheet .ns-head { display:flex;align-items:center;gap:8px;padding:5px 0 4px;border-bottom:2px solid var(--ink);margin-bottom:6px; }
+    #notationSheet .ns-head-right { margin-left:auto;font-size:9px;color:var(--ink3);font-family:'DM Mono',monospace;text-align:right; }
+    #notationSheet .ns-notation { overflow-x:auto; }
     #flowSheet {
       display: block;
     }
@@ -1990,13 +1997,25 @@
         <!-- ── ABLAUF + LEAD ── -->
         <div id="pAblaufLine" style="display:none;margin:6px 0 2px;font-size:11px;color:var(--ink3);"></div>
 
+        <!-- ── PREVIEW SUB-TABS ── -->
+        <div class="prev-subtabs no-print" style="display:flex;gap:6px;margin:10px 0 6px;">
+          <button class="prev-subtab active" id="prevTabGrid" type="button">⊞ Grid</button>
+          <button class="prev-subtab" id="prevTabNotation" type="button">𝅘𝅥 Notation</button>
+        </div>
+
         <!-- ── MAIN: Ablauf full width ── -->
         <div class="a4-body" style="grid-template-columns:1fr;">
 
           <!-- Groove Grid Ablauf full width -->
-          <div class="a4-right" style="width:100%;">
+          <div class="a4-right" style="width:100%;" id="prevGridView">
             <div class="a4-col-title">Ablauf · Groove Grid</div>
             <div id="flowSheet"></div>
+          </div>
+
+          <!-- Notation Ablauf full width -->
+          <div class="a4-right" style="width:100%;display:none;" id="prevNotationView">
+            <div class="a4-col-title">Ablauf · Notation</div>
+            <div id="notationSheet"></div>
           </div>
 
         </div>
@@ -4165,9 +4184,55 @@ function renderPreview() {
     song.importedChordText || "Noch kein iReal-Import geladen.";
 
   renderFlowSheet();
+  renderNotationSheet();
   renderFormBuilder();
   autoSaveOnChange();
 }
+
+// ── NOTATION SHEET (2. Preview-Ansicht) ──────────────
+function renderNotationSheet() {
+  const host = document.getElementById("notationSheet");
+  if (!host) return;
+
+  host.innerHTML = song.sections.map(section => {
+    const formName  = normalizeFormName(section.name || "Part");
+    const formClass = getFormClass(formName);
+    const bars      = parseBars(section.bars || "1");
+    const ts        = section.timeSignature || song.timeSignature || "4/4";
+    const metaParts = [
+      section.groovePattern || "",
+      section.groove        || "",
+      section.dynamics      || "",
+      section.cue           || "",
+    ].filter(Boolean).join(" · ");
+    const lead = section.ablaufInstrument ? `🎤 ${escapeHtml(section.ablaufInstrument)}` : "";
+    const notesSvg = renderMiniNotation(section);
+
+    return `<div class="ns-section">
+      <div class="ns-head">
+        <span class="form-badge ${formClass}" style="font-size:9pt;">${escapeHtml(formName)}</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:11pt;">${escapeHtml(section.name||"Section")}</span>
+        <span style="font-size:9px;color:var(--ink3);">${bars} Takt${bars!==1?"e":""} · ${ts}</span>
+        ${section.formNotes ? `<span style="font-size:9px;color:var(--ink3);font-style:italic;">· ${escapeHtml(section.formNotes)}</span>` : ""}
+        <div class="ns-head-right">${metaParts}${lead ? (metaParts?" · ":"") + lead : ""}</div>
+      </div>
+      <div class="ns-notation">${notesSvg}</div>
+    </div>`;
+  }).join("");
+}
+
+// ── PREVIEW SUB-TAB SWITCHING ────────────────────────
+function _switchPrevTab(tab) {
+  const isGrid = tab === "grid";
+  const gv = document.getElementById("prevGridView");
+  const nv = document.getElementById("prevNotationView");
+  if (gv) gv.style.display = isGrid ? "" : "none";
+  if (nv) nv.style.display = isGrid ? "none" : "";
+  document.getElementById("prevTabGrid")?.classList.toggle("active", isGrid);
+  document.getElementById("prevTabNotation")?.classList.toggle("active", !isGrid);
+}
+document.getElementById("prevTabGrid")?.addEventListener("click", () => _switchPrevTab("grid"));
+document.getElementById("prevTabNotation")?.addEventListener("click", () => _switchPrevTab("notation"));
 
 // ── PERSISTENCE ──────────────────────────────────────
 function saveLocal() {
