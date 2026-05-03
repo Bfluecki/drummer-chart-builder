@@ -2780,6 +2780,7 @@ function renderDrumNotationSVG(options) {
   var bars     = options.bars || 2;
   var spb      = options.spb; // steps per bar
   var patVal   = options.patVal; // function(rowKey, stepIndex) → value
+  var barReps  = options.barRepeats || []; // array of null|'1'|'2' per bar
   var ti       = options.ti !== undefined ? options.ti : -1;
   var interactive = !!options.interactive;
 
@@ -2800,6 +2801,10 @@ function renderDrumNotationSVG(options) {
     { key:"bd",  y:84,  label:"BD", sym:"circle"  }
   ];
 
+  var staffTop    = DISP[0].y - 8;
+  var staffBottom = DISP[DISP.length - 1].y + 8;
+  var staffMid    = (staffTop + staffBottom) / 2;
+
   var s = '<svg width="'+svgW+'" height="'+svgH+'" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;"'
         + (interactive ? ' class="gv-notation-svg" data-ti="'+ti+'"' : '')
         + '>';
@@ -2810,32 +2815,63 @@ function renderDrumNotationSVG(options) {
   });
 
   for (var bar = 0; bar < bars; bar++) {
-    var bx = leftPad + bar * (barW + barGap);
+    var bx     = leftPad + bar * (barW + barGap);
+    var repTyp = barReps[bar] || null;
+
     // Bar line
-    s += '<line x1="'+bx+'" y1="'+(DISP[0].y-8)+'" x2="'+bx+'" y2="'+(DISP[DISP.length-1].y+8)+'" stroke="#9ca3af" stroke-width="1.5"/>';
+    s += '<line x1="'+bx+'" y1="'+staffTop+'" x2="'+bx+'" y2="'+staffBottom+'" stroke="#9ca3af" stroke-width="1.5"/>';
 
-    for (var step = 0; step < spb; step++) {
-      var idx = bar * spb + step;
-      var cx  = bx + step * stepW + stepW / 2;
+    if (repTyp) {
+      // ── Takt-Wiederholungs-Symbol ──────────────────────────────
+      var cx  = bx + barW / 2;
+      var r   = 4;   // dot radius
+      var col = '#374151';
+      // light background tint
+      s += '<rect x="'+bx+'" y="'+staffTop+'" width="'+barW+'" height="'+(staffBottom-staffTop)+'" fill="rgba(0,0,0,0.03)" rx="3"/>';
 
-      DISP.forEach(function(row) {
-        var val = patVal(row.key, idx);
-        s += svgNoteSymbol(val, cx, row.y, row.sym);
+      if (repTyp === '1') {
+        // Single slash: dot top-right, dot bottom-left, diagonal line
+        s += '<circle cx="'+(cx+10)+'" cy="'+(staffMid-14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<circle cx="'+(cx-10)+'" cy="'+(staffMid+14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<line x1="'+(cx-12)+'" y1="'+(staffMid+18)+'" x2="'+(cx+12)+'" y2="'+(staffMid-18)+'" stroke="'+col+'" stroke-width="3" stroke-linecap="round"/>';
+      } else if (repTyp === '2') {
+        // Double slash: two dots, two lines, thin divider in middle
+        var lx = cx - 14;
+        var rx2 = cx + 14;
+        s += '<circle cx="'+(lx+8)+'"  cy="'+(staffMid-14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<circle cx="'+(lx-8)+'"  cy="'+(staffMid+14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<line x1="'+(lx-10)+'" y1="'+(staffMid+18)+'" x2="'+(lx+10)+'" y2="'+(staffMid-18)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>';
+        // thin bar
+        s += '<line x1="'+cx+'" y1="'+(staffTop+4)+'" x2="'+cx+'" y2="'+(staffBottom-4)+'" stroke="'+col+'" stroke-width="1.2" opacity="0.4"/>';
+        s += '<circle cx="'+(rx2-8)+'"  cy="'+(staffMid-14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<circle cx="'+(rx2+8)+'"  cy="'+(staffMid+14)+'" r="'+r+'" fill="'+col+'"/>';
+        s += '<line x1="'+(rx2-10)+'" y1="'+(staffMid+18)+'" x2="'+(rx2+10)+'" y2="'+(staffMid-18)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>';
+      }
 
-        // Interactive hit area
-        if (interactive) {
-          var rx = bx + step * stepW;
-          var ry = row.y - rowH / 2;
-          s += '<rect class="gv-note-cell" data-ti="'+ti+'" data-row="'+row.key+'" data-step="'+idx+'"'
-             + ' x="'+rx+'" y="'+ry+'" width="'+stepW+'" height="'+rowH+'"'
-             + ' fill="transparent" style="cursor:pointer;" rx="3"/>';
-        }
-      });
+    } else {
+      // ── Normal notes ──────────────────────────────────────────
+      for (var step = 0; step < spb; step++) {
+        var idx = bar * spb + step;
+        var cx2 = bx + step * stepW + stepW / 2;
+
+        DISP.forEach(function(row) {
+          var val = patVal(row.key, idx);
+          s += svgNoteSymbol(val, cx2, row.y, row.sym);
+
+          if (interactive) {
+            var rx3 = bx + step * stepW;
+            var ry  = row.y - rowH / 2;
+            s += '<rect class="gv-note-cell" data-ti="'+ti+'" data-row="'+row.key+'" data-step="'+idx+'"'
+               + ' x="'+rx3+'" y="'+ry+'" width="'+stepW+'" height="'+rowH+'"'
+               + ' fill="transparent" style="cursor:pointer;" rx="3"/>';
+          }
+        });
+      }
     }
   }
 
   // Final bar line
-  s += '<line x1="'+(svgW-4)+'" y1="'+(DISP[0].y-8)+'" x2="'+(svgW-4)+'" y2="'+(DISP[DISP.length-1].y+8)+'" stroke="#9ca3af" stroke-width="2"/>';
+  s += '<line x1="'+(svgW-4)+'" y1="'+staffTop+'" x2="'+(svgW-4)+'" y2="'+staffBottom+'" stroke="#9ca3af" stroke-width="2"/>';
 
   // Row labels on left
   DISP.forEach(function(row) {
@@ -2967,6 +3003,7 @@ function renderMiniNotation(section) {
 
   return renderDrumNotationSVG({
     ts: ts, bars: bars, spb: stepsPer,
+    barRepeats: section.barRepeats || [],
     patVal: function(k, idx) {
       return (pat[k] || [])[idx] || false;
     }
