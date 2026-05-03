@@ -1135,8 +1135,14 @@
     .prev-sec-meta-label { color: var(--ink3); font-size: 11px; margin-bottom: 1px; }
     .prev-sec-meta-value { font-weight: 500; color: var(--ink); }
 
-    /* ── Wiederholungszeichen ───────────────────────── */
-    .rep-sign { font-family:'DM Mono',monospace; font-weight:900; color:var(--ink3); font-size:14px; flex-shrink:0; line-height:1; }
+    /* ── Section-Wiederholungszeichen |: :| ────────── */
+    .rep-sign { font-family:'DM Mono',monospace; font-weight:900; color:var(--ink2); font-size:16px; flex-shrink:0; line-height:1; padding:0 2px; }
+    /* ── Takt-Wiederholung 𝄎 𝄏 ─────────────────────── */
+    .bar-rep-btn { background:none;border:1px dashed var(--line);border-radius:4px;cursor:pointer;padding:1px 4px;font-size:9px;color:var(--ink3);line-height:1;flex-shrink:0; }
+    .bar-rep-btn:hover { border-color:var(--ink2);color:var(--ink2); }
+    .bar-rep-btn.active { border-color:var(--accent);color:var(--accent);background:rgba(210,82,42,.07); }
+    .bar-rep-overlay { display:flex;align-items:center;justify-content:center;height:30px;width:100%; }
+    .bar-rep-svg { opacity:.7; }
     /* ── Performance Mode Ablauf ──────────────────────*/
     .perf-ablauf { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px; }
     .perf-abl-item { display:flex;align-items:flex-start;gap:3px; }
@@ -2572,6 +2578,7 @@ function makeSection(name = "", timeSignature = "4/4", style = "Pop", bars = "2"
     tags: [],              // Tags z.B. ["Swing","Brushes"]
     formNotes: "",         // Spielhinweis im Form Builder
     ablaufInstrument: "",  // Lead-Instrument
+    barRepeats: [],        // Takt-Wiederholung: null | '1' | '2' pro Takt
     pattern: createPatternForSection(timeSignature, bars, groovePattern)
   };
 }
@@ -3020,6 +3027,22 @@ function renderTagsRow(sectionId) {
   }
 }
 
+// ── Takt-Wiederholung SVG-Symbole ────────────────────
+function barRepSvg(type) {
+  if (type === '1') return `<svg class="bar-rep-svg" width="22" height="28" viewBox="0 0 22 28">
+    <circle cx="5" cy="7"  r="3" fill="currentColor"/>
+    <circle cx="17" cy="21" r="3" fill="currentColor"/>
+    <line x1="4" y1="24" x2="18" y2="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  if (type === '2') return `<svg class="bar-rep-svg" width="28" height="28" viewBox="0 0 28 28">
+    <circle cx="4"  cy="7"  r="3" fill="currentColor"/>
+    <circle cx="24" cy="21" r="3" fill="currentColor"/>
+    <line x1="3"  y1="24" x2="13" y2="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="15" y1="24" x2="25" y2="4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>`;
+  return '';
+}
+
 function renderGrid(section) {
   const ts       = section.timeSignature || song.timeSignature || "4/4";
   const beats    = getBeatsPerBar(ts);
@@ -3047,15 +3070,23 @@ function renderGrid(section) {
 
   // Combined bar-header row: takt number + input + step labels, all in one structure
   // Uses same cell-group widths as the instrument rows for pixel-perfect alignment
+  const barReps = section.barRepeats || [];
+  const groupW  = stepsPer * 30 + (stepsPer - 1) * 2;
+
   let barLabelHtml = `<div class="grid-row"><div class="grid-inst-label"></div><div class="grid-cells">`;
   for (let bar = 0; bar < bars; bar++) {
-    const val = (section.chordBars && section.chordBars[bar]) ? section.chordBars[bar] : "";
-    // cell-group: same structure as instrument rows
+    const val    = (section.chordBars && section.chordBars[bar]) ? section.chordBars[bar] : "";
+    const repTyp = barReps[bar] || null;
     barLabelHtml += `<div class="cell-group" style="flex-direction:column;gap:2px;align-items:stretch;">`;
-    // Row 1: takt number + input spanning full bar width
-    const groupW = stepsPer * 30 + (stepsPer - 1) * 2;
+    // Row 1: takt number + repeat toggle + chord input
     barLabelHtml += `<div style="display:flex;flex-direction:column;gap:1px;width:${groupW}px;">
-      <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--ink3);">Takt ${bar+1}</span>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="font-family:'DM Mono',monospace;font-size:8px;color:var(--ink3);">Takt ${bar+1}</span>
+        <button class="bar-rep-btn${repTyp?' active':''}" data-barrep="${bar}" data-sid="${section.id}"
+          title="Takt-Wiederholung: ${repTyp==='1'?'1 Takt':'repTyp'==='2'?'2 Takte':'keine'} — klicken zum Wechseln">
+          ${repTyp === '1' ? '𝄎 1T' : repTyp === '2' ? '𝄏 2T' : '%'}
+        </button>
+      </div>
       <input class="bar-note-input"
         data-section-id="${section.id}"
         data-bar="${bar}"
@@ -3064,7 +3095,7 @@ function renderGrid(section) {
         style="width:100%;font-size:10px;font-weight:700;padding:2px 5px;height:22px;border-radius:5px;border:1px solid var(--line);background:var(--soft);font-family:'DM Sans',sans-serif;color:var(--ink);box-sizing:border-box;"
       />
     </div>`;
-    // Row 2: step labels (1 + 2 + 3 + 4 +)
+    // Row 2: step labels
     barLabelHtml += `<div style="display:flex;gap:2px;">`;
     for (let step = 0; step < stepsPer; step++) {
       const isPlus = step % 2 === 1;
@@ -3080,22 +3111,33 @@ function renderGrid(section) {
   let instHtml = INSTRUMENTS.map(({ key, label }) => {
     let cellsHtml = `<div class="grid-cells">`;
     for (let bar = 0; bar < bars; bar++) {
-      cellsHtml += `<div class="cell-group">`;
-      for (let step = 0; step < stepsPer; step++) {
-        const idx      = bar * stepsPer + step;
-        const isPlus   = step % 2 === 1;
-        const cellVal   = (effectivePat[key] || [])[idx];
-        const cellState = cellValToState(cellVal);
-        const cellIcon  = cellValToIcon(cellVal);
-        cellsHtml += `<div class="mini-cell ${cellState}${isInherited?" readonly":""}"
-          style="width:30px;height:30px;border-radius:5px;${isPlus?"border-style:dashed;":""}"
-          data-section-id="${section.id}"
-          data-inst="${key}"
-          data-step="${idx}"
-          ${isInherited?'data-readonly="true"':''}
-        >${cellIcon}</div>`;
+      const repTyp = barReps[bar] || null;
+      if (repTyp) {
+        // Takt-Wiederholung: Symbol statt Zellen
+        const showSvg = key === 'hh'; // nur in erster Zeile das Symbol
+        cellsHtml += `<div class="cell-group" style="width:${groupW}px;align-items:center;justify-content:center;background:rgba(0,0,0,.025);border-radius:6px;border:1px dashed var(--line);">
+          <div class="bar-rep-overlay" style="color:var(--ink2);">
+            ${showSvg ? barRepSvg(repTyp) : ''}
+          </div>
+        </div>`;
+      } else {
+        cellsHtml += `<div class="cell-group">`;
+        for (let step = 0; step < stepsPer; step++) {
+          const idx      = bar * stepsPer + step;
+          const isPlus   = step % 2 === 1;
+          const cellVal   = (effectivePat[key] || [])[idx];
+          const cellState = cellValToState(cellVal);
+          const cellIcon  = cellValToIcon(cellVal);
+          cellsHtml += `<div class="mini-cell ${cellState}${isInherited?" readonly":""}"
+            style="width:30px;height:30px;border-radius:5px;${isPlus?"border-style:dashed;":""}"
+            data-section-id="${section.id}"
+            data-inst="${key}"
+            data-step="${idx}"
+            ${isInherited?'data-readonly="true"':''}
+          >${cellIcon}</div>`;
+        }
+        cellsHtml += `</div>`;
       }
-      cellsHtml += `</div>`;
       if (bar < bars-1) cellsHtml += `<div style="width:8px;"></div>`;
     }
     cellsHtml += `</div>`;
@@ -3285,6 +3327,27 @@ function bindGridEvents(container, s) {
       if (!sec) return;
       if (!sec.chordBars) sec.chordBars = [];
       sec.chordBars[bar] = e.target.value;
+    });
+  });
+  // Takt-Wiederholung Toggle
+  container.querySelectorAll(".bar-rep-btn[data-barrep]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const bar = Number(btn.dataset.barrep);
+      const sec = song.sections.find(x => x.id === btn.dataset.sid);
+      if (!sec) return;
+      if (!sec.barRepeats) sec.barRepeats = [];
+      const cur = sec.barRepeats[bar] || null;
+      sec.barRepeats[bar] = cur === null ? '1' : cur === '1' ? '2' : null;
+      // Nur Grid neu zeichnen — nicht renderSections()
+      const card = btn.closest("[data-section-id]");
+      if (card) {
+        const scrollEl = card.querySelector(".grid-scroll");
+        if (scrollEl) scrollEl.innerHTML = renderGrid(sec);
+        bindGridEvents(card, sec);
+      }
+      renderPreview();
+      saveLocal();
     });
   });
 }
@@ -3772,22 +3835,11 @@ function handleSectionFieldChange(e) {
         }
       }
     } else if (field === "repeat") {
-      s.repeat = Math.max(1, parseInt(s.repeat) || 1);
-      const card = e.target.closest(".section-card");
-      if (card) {
-        const left  = card.querySelector(".rep-sign-left");
-        const right = card.querySelector(".rep-sign-right");
-        const count = card.querySelector(".rep-count");
-        if (s.repeat > 1) {
-          if (left)  { left.textContent = "|:"; left.style.display = ""; }
-          if (right) { right.textContent = ":|"; right.style.display = ""; }
-          if (count) { count.textContent = "×" + s.repeat; count.style.display = ""; }
-        } else {
-          if (left)  left.style.display  = "none";
-          if (right) right.style.display = "none";
-          if (count) count.style.display = "none";
-        }
-      }
+      s.repeat = Math.max(1, parseInt(e.target.value) || 1);
+      e.target.value = s.repeat;
+      renderSections();
+      renderPreview();
+      return;
     }
 
     renderPreview();
