@@ -3952,7 +3952,7 @@ function renderSections() {
 
   // Paint mode buttons
   host.querySelectorAll(".paint-btn[data-section-id]").forEach(btn => {
-    const sid = btn.dataset.psid;
+    const sid = btn.dataset.sectionId;
     // Set initial active state from stored mode
     const currentMode = sectionPaintMode[sid] || "hit";
     btn.classList.toggle("active", btn.dataset.paint === currentMode);
