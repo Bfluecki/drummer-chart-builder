@@ -1455,7 +1455,10 @@
     #notationSheet .ns-section { margin-bottom:18px; }
     #notationSheet .ns-head { display:flex;align-items:center;gap:8px;padding:5px 0 4px;border-bottom:2px solid var(--ink);margin-bottom:6px; }
     #notationSheet .ns-head-right { margin-left:auto;font-size:9px;color:var(--ink3);font-family:'DM Mono',monospace;text-align:right; }
-    #notationSheet .ns-notation { overflow-x:auto; }
+    #notationSheet .ns-notation { overflow-x:hidden; }
+    #notationSheet .ns-notation svg { display:block; }
+    /* A4 page: all notation SVGs must fit within the page width */
+    .a4-page svg { max-width:100% !important; }
 
     /* ── Chart Layout View ── */
     #layoutSheet { }
@@ -1604,9 +1607,14 @@
         box-shadow: none !important;
         border-radius: 0 !important;
         background: #fff !important;
+        overflow: hidden !important;
         /* Boost base font size for print legibility */
         font-size: 9pt !important;
       }
+      /* All SVGs must fit within the print page */
+      .a4-page svg { max-width:100% !important; width:100% !important; }
+      .a4-page .ns-notation { overflow-x:hidden !important; }
+      #flowSheet > div > div { overflow:hidden !important; }
 
       /* Typography — sharper and larger for print */
       .a4-title    { font-size: 22pt !important; }
@@ -2860,7 +2868,8 @@ function renderDrumNotationSVG(options) {
   var staffBottom = DISP[DISP.length - 1].y + 8;
   var staffMid    = (staffTop + staffBottom) / 2;
 
-  var s = '<svg width="'+svgW+'" height="'+svgH+'" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;"'
+  var s = '<svg viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg"'
+        + ' style="display:block;width:100%;max-width:'+svgW+'px;overflow:visible;"'
         + (interactive ? ' class="gv-notation-svg" data-ti="'+ti+'"' : '')
         + '>';
 
@@ -3059,7 +3068,7 @@ function renderMiniNotation(section, barsPerRow) {
   const barReps = section.barRepeats || [];
 
   // Split bars into rows of BPR
-  let html = '<div style="display:flex;flex-direction:column;gap:2px;">';
+  let html = '<div style="display:flex;flex-direction:column;gap:2px;width:100%;overflow:hidden;">';
   for (let rowStart = 0; rowStart < bars; rowStart += BPR) {
     const rowBars = Math.min(BPR, bars - rowStart);
     html += renderDrumNotationSVG({
@@ -4095,7 +4104,7 @@ function renderFlowSheet() {
           labelRow += `<div style="flex:1;text-align:center;font-family:'DM Mono',monospace;font-size:6px;font-weight:700;color:${isPlus?"#bbb":"#666"};">${stepLabels[step]}</div>`;
         }
 
-        cols += `<div style="flex:1;display:flex;flex-direction:column;gap:2px;${!isLast?"margin-right:4px":""}">
+        cols += `<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;${!isLast?"margin-right:4px":""}">
           <div style="font-family:'DM Mono',monospace;font-size:6.5px;font-weight:700;color:#888;">T.${barIdx+1}</div>
           <div style="font-size:8px;font-weight:800;color:#111;min-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(note)}&nbsp;</div>
           <div style="display:flex;gap:1px;">${labelRow}</div>
@@ -4103,7 +4112,7 @@ function renderFlowSheet() {
         </div>`;
       }
 
-      rowsHtml += `<div style="display:flex;margin-bottom:6px;">${cols}</div>`;
+      rowsHtml += `<div style="display:flex;width:100%;overflow:hidden;margin-bottom:6px;">${cols}</div>`;
     }
 
     return `<div style="margin-bottom:10px;page-break-inside:avoid;">
