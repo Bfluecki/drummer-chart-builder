@@ -3043,11 +3043,12 @@ function renderGrooveNotationInteractive(tpl, ti) {
   });
 }
 
-// ── MINI-NOTATION (SVG) ────────────────────────────────────────────
-function renderMiniNotation(section) {
+// ── MINI-NOTATION (SVG) — 4 Takte pro Zeile ───────────────────────
+function renderMiniNotation(section, barsPerRow) {
   const ts       = section.timeSignature || "4/4";
   const bars     = parseBars(section.bars || "1");
   const stepsPer = getStepsPerBar(ts);
+  const BPR      = barsPerRow || 4; // Takte pro Zeile
   // Use effective pattern (grooveRef or own)
   let pat = section.pattern;
   if (section.grooveRef) {
@@ -3055,14 +3056,22 @@ function renderMiniNotation(section) {
     if (ref) { ensurePatternLength(ref, true); pat = ref.pattern; }
   }
   ensurePatternLength(section, true);
+  const barReps = section.barRepeats || [];
 
-  return renderDrumNotationSVG({
-    ts: ts, bars: bars, spb: stepsPer,
-    barRepeats: section.barRepeats || [],
-    patVal: function(k, idx) {
-      return (pat[k] || [])[idx] || false;
-    }
-  });
+  // Split bars into rows of BPR
+  let html = '<div style="display:flex;flex-direction:column;gap:2px;">';
+  for (let rowStart = 0; rowStart < bars; rowStart += BPR) {
+    const rowBars = Math.min(BPR, bars - rowStart);
+    html += renderDrumNotationSVG({
+      ts, bars: rowBars, spb: stepsPer,
+      barRepeats: barReps.slice(rowStart, rowStart + rowBars),
+      patVal: function(k, idx) {
+        return (pat[k] || [])[rowStart * stepsPer + idx] || false;
+      }
+    });
+  }
+  html += '</div>';
+  return html;
 }
 
 // ── GROOVE-REF DETACH ──────────────────────────────────────────────
