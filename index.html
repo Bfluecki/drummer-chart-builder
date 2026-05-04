@@ -6246,6 +6246,11 @@ document.getElementById("perfExit").addEventListener("click", perfClose);
 document.getElementById("perfPrev").addEventListener("click", () => perfNavigate(-1));
 document.getElementById("perfNext").addEventListener("click", () => perfNavigate(1));
 document.getElementById("perfMetroBtn").addEventListener("click", perfMetroToggle);
+document.getElementById("perfBpmM5").addEventListener("click", () => perfBpmAdjust(-5));
+document.getElementById("perfBpmM1").addEventListener("click", () => perfBpmAdjust(-1));
+document.getElementById("perfBpmP1").addEventListener("click", () => perfBpmAdjust(+1));
+document.getElementById("perfBpmP5").addEventListener("click", () => perfBpmAdjust(+5));
+document.getElementById("perfTapBtn").addEventListener("click", perfTap);
 document.getElementById("perfSearchBtn").addEventListener("click", perfSearchOpen);
 document.getElementById("perfSearchClose").addEventListener("click", perfSearchClose);
 document.getElementById("perfSearchInput").addEventListener("input", e => perfSearchQuery(e.target.value));
@@ -7314,12 +7319,12 @@ renderFormBuilder();
 
   <!-- BPM / Metro row -->
   <div class="perf-bpm-row">
-    <button class="perf-bpm-adj lg" onclick="perfBpmAdjust(-5)">−5</button>
-    <button class="perf-bpm-adj"    onclick="perfBpmAdjust(-1)">−1</button>
+    <button class="perf-bpm-adj lg" id="perfBpmM5">−5</button>
+    <button class="perf-bpm-adj"    id="perfBpmM1">−1</button>
     <div id="perfBpmDisplay" class="perf-bpm-display" title="BPM anpassen">♩ — BPM</div>
-    <button class="perf-bpm-adj"    onclick="perfBpmAdjust(+1)">+1</button>
-    <button class="perf-bpm-adj lg" onclick="perfBpmAdjust(+5)">+5</button>
-    <button class="perf-tap-btn" id="perfTapBtn" onclick="perfTap()">TAP</button>
+    <button class="perf-bpm-adj"    id="perfBpmP1">+1</button>
+    <button class="perf-bpm-adj lg" id="perfBpmP5">+5</button>
+    <button class="perf-tap-btn" id="perfTapBtn">TAP</button>
     <button id="perfMetroBtn" class="perf-metro-btn" type="button">▶ Metro</button>
     <div id="perfMetroDot" class="perf-metro-dot"></div>
   </div>
