@@ -1717,6 +1717,67 @@
     .fb-add-btn { display:flex; align-items:center; justify-content:center; min-width:44px; height:56px; border:2px dashed var(--line); border-radius:var(--r-md); background:transparent; color:var(--ink3); font-size:22px; cursor:pointer; transition:border-color .15s,color .15s; align-self:center; flex-shrink:0; }
     .fb-add-btn:hover { border-color:var(--ink2); color:var(--ink); }
 
+    /* ── SYNC STATUS ─────────────────────────────────── */
+    .sync-dot { display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+    .sync-dot.local_only  { background:#6b7280; }
+    .sync-dot.synced      { background:#22c55e; }
+    .sync-dot.modified    { background:#f59e0b; }
+    .sync-dot.syncing     { background:#3b82f6;animation:syncPulse 1s ease-in-out infinite; }
+    .sync-dot.conflict    { background:#ef4444; }
+    .sync-dot.error       { background:#ef4444;opacity:.6; }
+    @keyframes syncPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .sync-badge { display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;border-radius:10px;padding:2px 7px;letter-spacing:.02em; }
+    .sync-badge.local_only { background:#f3f4f6;color:#6b7280; }
+    .sync-badge.synced     { background:#dcfce7;color:#16a34a; }
+    .sync-badge.modified   { background:#fef9c3;color:#ca8a04; }
+    .sync-badge.syncing    { background:#dbeafe;color:#2563eb; }
+    .sync-badge.conflict   { background:#fee2e2;color:#dc2626; }
+    .sync-badge.error      { background:#fee2e2;color:#dc2626;opacity:.8; }
+    #syncStatusPill { font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:5px;padding:0 4px; }
+
+    /* ── SONGS TAB ───────────────────────────────────── */
+    #songsView { padding:16px; }
+    .songs-toolbar { display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px; }
+    .songs-search { flex:1;min-width:180px;padding:7px 12px;border:1px solid var(--line);border-radius:var(--r-md);font:inherit;font-size:13px;background:var(--bg);color:var(--ink); }
+    .songs-filter-row { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px; }
+    .songs-filter-btn { padding:4px 10px;border:1px solid var(--line);border-radius:20px;font:inherit;font-size:11px;font-weight:600;background:var(--bg);color:var(--ink3);cursor:pointer;transition:all .15s; }
+    .songs-filter-btn.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+    .songs-list { display:flex;flex-direction:column;gap:6px; }
+    .songs-item { display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-radius:var(--r-md);border:1px solid var(--line);cursor:pointer;transition:border-color .15s; }
+    .songs-item:hover { border-color:var(--accent); }
+    .songs-item-info { flex:1;min-width:0; }
+    .songs-item-title { font-weight:700;font-size:14px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .songs-item-meta { font-size:11px;color:var(--ink3);margin-top:2px; }
+    .songs-item-actions { display:flex;gap:6px;flex-shrink:0; }
+    .songs-empty { text-align:center;padding:40px 20px;color:var(--ink3);font-size:14px; }
+
+    /* ── CONFLICT DIALOG ─────────────────────────────── */
+    #conflictDialog { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:20px; }
+    #conflictDialog.open { display:flex; }
+    .conflict-box { background:var(--panel);border-radius:var(--r-lg);padding:24px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    .conflict-title { font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px; }
+    .conflict-desc { font-size:13px;color:var(--ink2);margin-bottom:20px;line-height:1.5; }
+    .conflict-dates { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px; }
+    .conflict-date-box { background:var(--bg);border-radius:var(--r-md);padding:10px 12px;border:1px solid var(--line); }
+    .conflict-date-label { font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px; }
+    .conflict-date-val { font-size:12px;color:var(--ink);font-family:'DM Mono',monospace; }
+    .conflict-actions { display:flex;flex-direction:column;gap:8px; }
+    .conflict-btn { padding:10px 16px;border-radius:var(--r-md);font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;text-align:left;transition:background .15s; }
+    .conflict-btn.keep-local { background:#d1fae5;color:#065f46; }
+    .conflict-btn.keep-local:hover { background:#a7f3d0; }
+    .conflict-btn.take-github { background:#dbeafe;color:#1e3a8a; }
+    .conflict-btn.take-github:hover { background:#bfdbfe; }
+    .conflict-btn.save-copy { background:#f3f4f6;color:#374151; }
+    .conflict-btn.save-copy:hover { background:#e5e7eb; }
+
+    /* ── PERF SYNC DOT ───────────────────────────────── */
+    .perf-sync-wrap { display:flex;align-items:center;gap:6px;margin-left:6px; }
+    .perf-sync-dot { width:8px;height:8px;border-radius:50%;background:#6b7280; }
+    .perf-sync-dot.synced   { background:#22c55e; }
+    .perf-sync-dot.modified { background:#f59e0b; }
+    .perf-sync-dot.syncing  { background:#3b82f6;animation:syncPulse 1s ease-in-out infinite; }
+    .perf-sync-dot.conflict { background:#ef4444; }
+
   </style>
 </head>
 <body>
@@ -1780,10 +1841,12 @@
       <button id="btnBpmPlus" class="metro-adj" type="button">+</button>
     </div>
     <span id="statusText">Bereit.</span>
+    <span id="syncStatusPill" title="Sync-Status"></span>
   </div>
 
   <!-- TABS -->
   <div class="tabs no-print">
+    <button id="tabSongs" class="btn-tab" type="button">🎵 Songs</button>
     <button id="tabEditor" class="btn-tab active" type="button">Editor</button>
     <button id="tabPreview" class="btn-tab" type="button">Preview</button>
     <button id="tabGrooves" class="btn-tab" type="button">🥁 Grooves</button>
@@ -2033,6 +2096,25 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════ -->
+  <!-- SONGS VIEW                                    -->
+  <!-- ════════════════════════════════════════════ -->
+  <div id="songsView" class="hide">
+    <div class="songs-toolbar">
+      <input id="songsSearch" class="songs-search" type="search" placeholder="Songs suchen: Titel, Artist, Style, Tags…" autocomplete="off" />
+      <button id="songsNewBtn" class="btn btn-accent btn-sm" type="button">＋ Neuer Song</button>
+      <button id="songsSyncAllBtn" class="btn btn-outline btn-sm" type="button">☁ Alle syncen</button>
+    </div>
+    <div class="songs-filter-row" id="songsFilterRow">
+      <button class="songs-filter-btn active" data-sfstatus="all">Alle</button>
+      <button class="songs-filter-btn" data-sfstatus="local_only">🔘 Nur lokal</button>
+      <button class="songs-filter-btn" data-sfstatus="modified">🟡 Geändert</button>
+      <button class="songs-filter-btn" data-sfstatus="synced">🟢 Synced</button>
+      <button class="songs-filter-btn" data-sfstatus="conflict">🔴 Konflikt</button>
+    </div>
+    <div id="songsList" class="songs-list"></div>
+  </div>
+
   <div id="previewView" class="hide">
 
     <!-- ── PREVIEW SUB-TABS (oben, immer sichtbar) ── -->
@@ -2171,6 +2253,29 @@
     <!-- Footer -->
     <div style="padding:8px 24px;border-top:1px solid var(--line);font-size:10px;color:var(--ink3);">
       Songs lokal + GitHub gespeichert · bfluecki.github.io/drummer-chart-builder
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFLICT DIALOG ─────────────────────────────── -->
+<div id="conflictDialog">
+  <div class="conflict-box">
+    <div class="conflict-title">⚠️ Sync-Konflikt</div>
+    <div class="conflict-desc" id="conflictDesc">Eine neuere Version dieses Songs existiert auf GitHub. Was möchtest du tun?</div>
+    <div class="conflict-dates">
+      <div class="conflict-date-box">
+        <div class="conflict-date-label">📱 Lokal</div>
+        <div class="conflict-date-val" id="conflictLocalDate">—</div>
+      </div>
+      <div class="conflict-date-box">
+        <div class="conflict-date-label">☁ GitHub</div>
+        <div class="conflict-date-val" id="conflictGhDate">—</div>
+      </div>
+    </div>
+    <div class="conflict-actions">
+      <button class="conflict-btn keep-local" id="conflictKeepLocal">✅ Meine lokale Version behalten (lokal pushen)</button>
+      <button class="conflict-btn take-github" id="conflictTakeGithub">⬇ GitHub-Version übernehmen (lokal ersetzen)</button>
+      <button class="conflict-btn save-copy" id="conflictSaveCopy">📋 Als Kopie speichern (beide behalten)</button>
     </div>
   </div>
 </div>
@@ -4417,26 +4522,30 @@ function saveLocal() {
 async function saveFull() {
   if (!song.title) { status("Bitte zuerst einen Songtitel eingeben."); return; }
   saveLocal();
-  // In Bibliothek speichern (lokal, ohne GitHub-Trigger)
-  const songs   = libraryLoad();
-  const idx     = songs.findIndex(s => s.name === song.title);
-  const entry   = { name: song.title, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(song)) };
+  // In Bibliothek speichern mit syncStatus=modified
+  const songs = libraryLoad();
+  const idx   = songs.findIndex(s => s.name === song.title);
+  const now   = new Date().toISOString();
+  const prev  = idx >= 0 ? songs[idx] : {};
+  const entry = {
+    id:              prev.id || uid(),
+    name:            song.title,
+    savedAt:         new Date().toLocaleString("de-CH"),
+    localModifiedAt: now,
+    githubSyncedAt:  prev.githubSyncedAt || null,
+    syncStatus:      SYNC_STATUS.MODIFIED,
+    data:            JSON.parse(JSON.stringify(song))
+  };
   if (idx >= 0) songs[idx] = entry; else songs.unshift(entry);
   librarySave(songs);
   libraryRenderList();
-  // GitHub Push (wenn konfiguriert)
+  syncQueueAdd(song.title);
+  syncUpdatePill();
+  // GitHub Push (wenn konfiguriert) — non-blocking queue
   const ghCfg = ghLoadSettings();
   if (ghCfg.repo && ghCfg.token) {
-    const btn = document.getElementById("saveBtn");
-    if (btn) { btn.textContent = "⏳ Speichern…"; btn.disabled = true; }
-    try {
-      await ghPushSong();
-      status("✓ " + song.title + " — lokal + GitHub gespeichert");
-    } catch(e) {
-      status("Lokal gespeichert · GitHub Fehler: " + e.message);
-    } finally {
-      if (btn) { btn.textContent = "💾 Speichern"; btn.disabled = false; }
-    }
+    status("✓ " + song.title + " gespeichert · GitHub sync läuft…");
+    syncProcessQueue().catch(() => {});
   } else {
     status("✓ " + song.title + " gespeichert (lokal · GitHub nicht konfiguriert)");
   }
@@ -4501,12 +4610,17 @@ function resetSong() {
 
 // ── TABS ─────────────────────────────────────────────
 function switchTab(name) {
+  document.getElementById("songsView").classList.toggle("hide",   name !== "songs");
   document.getElementById("editorView").classList.toggle("hide",  name !== "editor");
   document.getElementById("previewView").classList.toggle("hide", name !== "preview");
   document.getElementById("grooveView").classList.toggle("hide",  name !== "grooves");
+  document.getElementById("tabSongs").classList.toggle("active",  name === "songs");
   document.getElementById("tabEditor").classList.toggle("active", name === "editor");
   document.getElementById("tabPreview").classList.toggle("active",name === "preview");
   document.getElementById("tabGrooves").classList.toggle("active",name === "grooves");
+  if (name === "songs") {
+    renderSongsTab();
+  }
   if (name === "grooves") {
     // Default: show Library tab when opening Grooves
     var libView = document.getElementById("grooveLibraryView");
@@ -4912,7 +5026,131 @@ async function importMusicXMLFile(e) {
 }
 
 // ── SONG LIBRARY ─────────────────────────────────────
-const LIB_KEY = "drummer_chart_library_v1";
+const LIB_KEY       = "drummer_chart_library_v1";
+const SYNC_QUEUE_KEY = "dcb_sync_queue";
+const SYNC_STATUS = {
+  LOCAL_ONLY: "local_only",
+  SYNCED:     "synced",
+  MODIFIED:   "modified",
+  SYNCING:    "syncing",
+  CONFLICT:   "conflict",
+  ERROR:      "error"
+};
+
+// ── Sync Queue helpers ────────────────────────────────
+function syncQueueLoad() {
+  try { return JSON.parse(store.getItem(SYNC_QUEUE_KEY) || "[]"); } catch { return []; }
+}
+function syncQueueSave(q) { store.setItem(SYNC_QUEUE_KEY, JSON.stringify(q)); }
+function syncQueueAdd(songName) {
+  const q = syncQueueLoad();
+  if (!q.includes(songName)) { q.push(songName); syncQueueSave(q); }
+}
+function syncQueueRemove(songName) {
+  syncQueueSave(syncQueueLoad().filter(n => n !== songName));
+}
+
+// ── Sync status helpers ───────────────────────────────
+function syncSetStatus(songName, status_) {
+  const songs = libraryLoad();
+  const idx = songs.findIndex(s => s.name === songName);
+  if (idx < 0) return;
+  songs[idx].syncStatus = status_;
+  librarySave(songs);
+  syncUpdatePill();
+  if (document.getElementById("songsView") && !document.getElementById("songsView").classList.contains("hide")) {
+    renderSongsTab();
+  }
+}
+
+function syncGetStatus(entry) {
+  return entry.syncStatus || SYNC_STATUS.LOCAL_ONLY;
+}
+
+// Update statusbar sync pill
+function syncUpdatePill() {
+  const pill = document.getElementById("syncStatusPill");
+  if (!pill) return;
+  const songs = libraryLoad();
+  if (!songs.length) { pill.innerHTML = ""; return; }
+  const counts = { syncing:0, conflict:0, modified:0, local_only:0, synced:0, error:0 };
+  songs.forEach(s => { const st = syncGetStatus(s); if (counts[st] !== undefined) counts[st]++; });
+  const ghCfg = ghLoadSettings();
+  if (!ghCfg.repo || !ghCfg.token) { pill.innerHTML = ""; return; }
+  let label = "", cls = SYNC_STATUS.SYNCED;
+  if (counts.syncing)   { label = "⏳ Sync…";   cls = SYNC_STATUS.SYNCING; }
+  else if (counts.conflict) { label = `⚠ ${counts.conflict} Konflikt`; cls = SYNC_STATUS.CONFLICT; }
+  else if (counts.modified) { label = `✏ ${counts.modified} geändert`; cls = SYNC_STATUS.MODIFIED; }
+  else if (counts.local_only) { label = `🔘 ${counts.local_only} lokal`; cls = SYNC_STATUS.LOCAL_ONLY; }
+  else { label = "✓ Synced"; cls = SYNC_STATUS.SYNCED; }
+  pill.innerHTML = `<span class="sync-dot ${cls}"></span>${label}`;
+}
+
+// Update perf mode sync dot for current song
+function syncUpdatePerfDot(songName) {
+  const dot   = document.getElementById("perfSyncDot");
+  const label = document.getElementById("perfSyncLabel");
+  if (!dot) return;
+  const songs = libraryLoad();
+  const entry = songs.find(s => s.name === songName);
+  const st = entry ? syncGetStatus(entry) : SYNC_STATUS.LOCAL_ONLY;
+  dot.className = "perf-sync-dot " + st;
+  const labels = { local_only:"Lokal", synced:"Synced", modified:"Geändert", syncing:"Syncing…", conflict:"Konflikt!", error:"Fehler" };
+  if (label) label.textContent = labels[st] || "";
+}
+
+// ── Library migration (add id + syncStatus to old entries) ───
+function libraryMigrate() {
+  const songs = libraryLoad();
+  let changed = false;
+  songs.forEach(s => {
+    if (!s.id) { s.id = uid(); changed = true; }
+    if (!s.syncStatus) { s.syncStatus = SYNC_STATUS.LOCAL_ONLY; changed = true; }
+    if (!s.localModifiedAt) { s.localModifiedAt = s.savedAt || new Date().toISOString(); changed = true; }
+  });
+  if (changed) librarySave(songs);
+}
+
+// ── Push one song to GitHub and update its sync status ───────
+let _syncLoopRunning = false;
+
+async function syncPushOne(songName) {
+  syncSetStatus(songName, SYNC_STATUS.SYNCING);
+  try {
+    await ghPushSong(songName);
+    const songs = libraryLoad();
+    const idx = songs.findIndex(s => s.name === songName);
+    if (idx >= 0) {
+      songs[idx].syncStatus = SYNC_STATUS.SYNCED;
+      songs[idx].githubSyncedAt = new Date().toISOString();
+      librarySave(songs);
+    }
+    syncQueueRemove(songName);
+    syncUpdatePill();
+    if (!document.getElementById("songsView").classList.contains("hide")) renderSongsTab();
+  } catch(e) {
+    syncSetStatus(songName, SYNC_STATUS.ERROR);
+  }
+}
+
+// ── Background sync loop ──────────────────────────────────────
+async function syncProcessQueue() {
+  const ghCfg = ghLoadSettings();
+  if (!ghCfg.repo || !ghCfg.token) return;
+  const q = syncQueueLoad();
+  if (!q.length) return;
+  for (const name of [...q]) {
+    await syncPushOne(name);
+    await new Promise(r => setTimeout(r, 400)); // small gap between pushes
+  }
+}
+
+function syncStartBackgroundLoop() {
+  if (_syncLoopRunning) return;
+  _syncLoopRunning = true;
+  setInterval(() => { syncProcessQueue().catch(() => {}); }, 30000);
+  window.addEventListener("online", () => { syncProcessQueue().catch(() => {}); });
+}
 
 function libraryLoad() {
   try { return JSON.parse(store.getItem(LIB_KEY) || "[]"); }
@@ -4927,21 +5165,26 @@ function librarySaveCurrent(name) {
   if (!name.trim()) return;
   const songs = libraryLoad();
   const existing = songs.findIndex(s => s.name === name.trim());
+  const now = new Date().toISOString();
+  const existingEntry = existing >= 0 ? songs[existing] : {};
   const entry = {
-    name:    name.trim(),
-    savedAt: new Date().toLocaleString("de-CH"),
-    data:    JSON.parse(JSON.stringify(song))
+    id:              existingEntry.id || uid(),
+    name:            name.trim(),
+    savedAt:         new Date().toLocaleString("de-CH"),
+    localModifiedAt: now,
+    githubSyncedAt:  existingEntry.githubSyncedAt || null,
+    syncStatus:      SYNC_STATUS.MODIFIED,
+    data:            JSON.parse(JSON.stringify(song))
   };
   if (existing >= 0) songs[existing] = entry;
   else songs.unshift(entry);
   librarySave(songs);
   libraryRenderList();
+  syncQueueAdd(name.trim());
+  syncUpdatePill();
   status(`"${name.trim()}" gespeichert ✓`);
-  // Auto-push to GitHub if configured (silent, non-blocking)
-  const ghCfg = ghLoadSettings();
-  if (ghCfg.repo && ghCfg.token) {
-    ghPushSong().catch(() => {}); // silent — lokal ist bereits gespeichert
-  }
+  // Queue-based push (non-blocking)
+  syncProcessQueue().catch(() => {});
 }
 
 function libraryDeleteSong(name) {
@@ -5018,6 +5261,79 @@ function libraryOpen() {
 
 function libraryClose() {
   document.getElementById("libraryModal").style.display = "none";
+}
+
+// ── SONGS TAB ─────────────────────────────────────────
+let _songsFilterStatus = "all";
+let _songsSearchQuery  = "";
+
+function renderSongsTab() {
+  const listEl = document.getElementById("songsList");
+  if (!listEl) return;
+  const songs  = libraryLoad();
+  const q      = _songsSearchQuery.trim().toLowerCase();
+  const ghCfg  = ghLoadSettings();
+
+  // Filter
+  let filtered = songs.filter(s => {
+    const st = syncGetStatus(s);
+    if (_songsFilterStatus !== "all" && st !== _songsFilterStatus) return false;
+    if (!q) return true;
+    const d = s.data || {};
+    const searchable = [
+      s.name, d.title, d.artist, d.style, d.feel, d.tempo, d.timeSignature, d.version,
+      d.notes, d.keyCue, d.form,
+      ...(d.sections || []).map(sec => [sec.name, sec.groove, sec.groovePattern, sec.notes].join(" "))
+    ].join(" ").toLowerCase();
+    return searchable.includes(q);
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="songs-empty">${songs.length ? "Keine Songs gefunden." : "Noch keine Songs gespeichert.<br>Erstelle einen Song im Editor und speichere ihn."}</div>`;
+    return;
+  }
+
+  const syncLabels = { local_only:"Lokal", synced:"☁ Synced", modified:"✏ Geändert", syncing:"⏳ Sync…", conflict:"⚠ Konflikt", error:"✕ Fehler" };
+
+  listEl.innerHTML = filtered.map(s => {
+    const d   = s.data || {};
+    const st  = syncGetStatus(s);
+    const meta = [d.artist, d.style, d.tempo ? d.tempo+" BPM" : null, (d.sections||[]).length+" Sektionen"]
+                   .filter(Boolean).join(" · ");
+    return `<div class="songs-item" data-songname="${escapeHtml(s.name)}">
+      <span class="sync-dot ${st}" title="${syncLabels[st]||st}"></span>
+      <div class="songs-item-info">
+        <div class="songs-item-title">${escapeHtml(s.name)}</div>
+        <div class="songs-item-meta">${escapeHtml(meta)} · <span class="sync-badge ${st}">${syncLabels[st]||st}</span></div>
+      </div>
+      <div class="songs-item-actions">
+        ${ghCfg.repo && ghCfg.token && st !== SYNC_STATUS.SYNCED ? `<button class="btn btn-outline btn-sm songs-sync-btn" data-songname="${escapeHtml(s.name)}" title="Zu GitHub syncen" type="button">☁</button>` : ""}
+        <button class="btn btn-dark btn-sm songs-load-btn" data-songname="${escapeHtml(s.name)}" type="button">Laden</button>
+        <button class="btn btn-danger btn-sm songs-del-btn" data-songname="${escapeHtml(s.name)}" type="button">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  // Bind events
+  listEl.querySelectorAll(".songs-item").forEach(row => {
+    row.addEventListener("click", e => {
+      if (e.target.classList.contains("songs-load-btn") || e.target.classList.contains("songs-del-btn") || e.target.classList.contains("songs-sync-btn")) return;
+      libraryLoadSong(row.dataset.songname);
+    });
+  });
+  listEl.querySelectorAll(".songs-load-btn").forEach(btn => {
+    btn.addEventListener("click", () => libraryLoadSong(btn.dataset.songname));
+  });
+  listEl.querySelectorAll(".songs-del-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (!confirm(`"${btn.dataset.songname}" löschen?`)) return;
+      libraryDeleteSong(btn.dataset.songname);
+      renderSongsTab();
+    });
+  });
+  listEl.querySelectorAll(".songs-sync-btn").forEach(btn => {
+    btn.addEventListener("click", () => syncPushOne(btn.dataset.songname));
+  });
 }
 
 // ── METRONOM ─────────────────────────────────────────
@@ -5754,6 +6070,8 @@ function perfShow() {
 
   document.getElementById("perfTitle").textContent  = data.title  || entry?.name || "—";
   document.getElementById("perfArtist").textContent = data.artist || "";
+  // Sync dot for this song
+  syncUpdatePerfDot(data.title || entry?.name || "");
 
   const pills = [
     data.tempo         ? `<span class="perf-pill accent">♩ ${escapeHtml(String(data.tempo))} BPM</span>` : "",
@@ -6057,33 +6375,38 @@ async function ghApiRequest(path, method = "GET", body = null) {
 
 let _ghPushing = false; // re-entrancy guard
 
-async function ghPushSong() {
+async function ghPushSong(overrideName) {
   if (_ghPushing) return; // prevent concurrent pushes → SHA conflict
-  if (!song.title) { ghUpdateStatus("Kein Song geladen.", false); return; }
+  // Determine which song to push — either the explicitly named one, or the active editor song
+  const pushName = overrideName || song.title;
+  if (!pushName) { ghUpdateStatus("Kein Song geladen.", false); return; }
   _ghPushing = true;
   ghUpdateStatus("Speichere auf GitHub…");
   try {
-    // ── Song file ────────────────────────────────────────────────────
-    const filename = "songs/" + (song.title || "song")
+    // ── Determine song data ────────────────────────────────────────────
+    let pushData;
+    if (overrideName) {
+      const lib = libraryLoad();
+      const entry = lib.find(s => s.name === overrideName);
+      if (!entry) throw new Error("Song nicht in Bibliothek: " + overrideName);
+      pushData = entry.data;
+    } else {
+      pushData = song;
+    }
+
+    // ── Song file ─────────────────────────────────────────────────────
+    const filename = "songs/" + pushName
       .replace(/[^a-zA-Z0-9äöüÄÖÜ\s\-]/g, "")
       .replace(/\s+/g, "-").toLowerCase() + ".json";
 
-    // Ensure local library is up to date (idempotent — no push trigger)
-    const songs    = libraryLoad();
-    const existing = songs.findIndex(s => s.name === song.title);
-    const libEntry = { name: song.title, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(song)) };
-    if (existing >= 0) songs[existing] = libEntry; else songs.unshift(libEntry);
-    librarySave(songs);
-    libraryRenderList();
-
-    const ghEntry    = libEntry;
-    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(ghEntry, null, 2))));
+    const libEntry   = { name: pushName, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(pushData)) };
+    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(libEntry, null, 2))));
 
     // Always fetch fresh SHA immediately before PUT
     let sha = null;
     try { sha = (await ghApiRequest("/contents/" + filename)).sha; } catch {}
     const putBody = {
-      message: `Song: ${song.title} (${new Date().toLocaleString("de-CH")})`,
+      message: `Song: ${pushName} (${new Date().toLocaleString("de-CH")})`,
       content: contentB64,
     };
     if (sha) putBody.sha = sha;
@@ -6093,13 +6416,12 @@ async function ghPushSong() {
       await ghApiRequest("/contents/" + filename, "PUT", putBody);
     } catch(e) {
       if (e.message && e.message.includes("but expected")) {
-        // Re-fetch SHA and retry
         try { putBody.sha = (await ghApiRequest("/contents/" + filename)).sha; } catch {}
         await ghApiRequest("/contents/" + filename, "PUT", putBody);
       } else { throw e; }
     }
 
-    // ── Setlists file ────────────────────────────────────────────────
+    // ── Setlists file ─────────────────────────────────────────────────
     try {
       const slAll     = setlistsLoad();
       const slContent = btoa(unescape(encodeURIComponent(JSON.stringify(slAll, null, 2))));
@@ -6110,11 +6432,12 @@ async function ghPushSong() {
       await ghApiRequest("/contents/setlists.json", "PUT", slBody);
     } catch {}
 
-    ghUpdateStatus("✓ " + song.title + " gespeichert.", true);
-    status("Song + Setlisten auf GitHub gespeichert ✓");
+    ghUpdateStatus("✓ " + pushName + " gespeichert.", true);
+    if (!overrideName) status("Song + Setlisten auf GitHub gespeichert ✓");
   } catch(err) {
     ghUpdateStatus("Fehler: " + err.message, false);
-    status("GitHub Fehler: " + err.message);
+    if (!overrideName) status("GitHub Fehler: " + err.message);
+    throw err; // re-throw so syncPushOne can catch it
   } finally {
     _ghPushing = false;
   }
@@ -6144,17 +6467,39 @@ async function ghPullSongs() {
       if (!file.name.endsWith(".json")) continue;
       try {
         const resp = await fetch(file.download_url);
-        const entry = await resp.json();
-        if (!entry.name || !entry.data) continue;
-        const idx = songs.findIndex(s => s.name === entry.name);
-        if (idx >= 0) songs[idx] = entry;
-        else songs.unshift(entry);
+        const ghEntry = await resp.json();
+        if (!ghEntry.name || !ghEntry.data) continue;
+        const idx = songs.findIndex(s => s.name === ghEntry.name);
+        if (idx >= 0) {
+          const local = songs[idx];
+          const localMod  = local.localModifiedAt  ? new Date(local.localModifiedAt)  : null;
+          const ghSynced  = local.githubSyncedAt   ? new Date(local.githubSyncedAt)   : null;
+          const localSt   = syncGetStatus(local);
+          // Conflict: local was modified AFTER last known GitHub sync
+          if (localSt === SYNC_STATUS.MODIFIED && localMod && ghSynced && localMod > ghSynced) {
+            songs[idx].syncStatus = SYNC_STATUS.CONFLICT;
+            songs[idx]._ghConflictData = ghEntry; // stash for dialog
+          } else if (localSt !== SYNC_STATUS.MODIFIED) {
+            // Safe to overwrite — local has no unsaved changes vs GitHub
+            songs[idx] = { ...ghEntry, id: local.id || uid(), syncStatus: SYNC_STATUS.SYNCED, githubSyncedAt: new Date().toISOString() };
+          }
+          // If localSt === MODIFIED but no timestamps → keep local, mark conflict for safety
+          else if (localSt === SYNC_STATUS.MODIFIED) {
+            songs[idx].syncStatus = SYNC_STATUS.CONFLICT;
+            songs[idx]._ghConflictData = ghEntry;
+          }
+        } else {
+          songs.unshift({ ...ghEntry, id: uid(), syncStatus: SYNC_STATUS.SYNCED, githubSyncedAt: new Date().toISOString() });
+        }
         count++;
       } catch {}
     }
 
     librarySave(songs);
     libraryRenderList();
+    syncUpdatePill();
+    // Show conflict dialog if any conflicts were detected
+    conflictCheckAndPrompt();
 
     // Pull setlists
     try {
@@ -6303,9 +6648,105 @@ document.getElementById("perfSearchInput").addEventListener("input", e => perfSe
 document.getElementById("perfFromEditorBtn").addEventListener("click", () => {
   perfOpenSingle(song);
 });
+document.getElementById("tabSongs").addEventListener("click",  () => switchTab("songs"));
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
 document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
+
+// ── Songs tab toolbar bindings ────────────────────────────────
+document.getElementById("songsSearch").addEventListener("input", e => {
+  _songsSearchQuery = e.target.value;
+  renderSongsTab();
+});
+document.getElementById("songsNewBtn").addEventListener("click", () => {
+  switchTab("editor");
+});
+document.getElementById("songsSyncAllBtn").addEventListener("click", async () => {
+  const songs = libraryLoad();
+  songs.forEach(s => { if (syncGetStatus(s) !== SYNC_STATUS.SYNCED) syncQueueAdd(s.name); });
+  await syncProcessQueue();
+  renderSongsTab();
+});
+document.getElementById("songsFilterRow").addEventListener("click", e => {
+  const btn = e.target.closest("[data-sfstatus]");
+  if (!btn) return;
+  _songsFilterStatus = btn.dataset.sfstatus;
+  document.querySelectorAll("[data-sfstatus]").forEach(b => b.classList.toggle("active", b === btn));
+  renderSongsTab();
+});
+
+// ── Conflict Dialog bindings ──────────────────────────────────
+let _conflictSongName = null;
+function conflictOpen(songName) {
+  _conflictSongName = songName;
+  const songs = libraryLoad();
+  const entry = songs.find(s => s.name === songName);
+  if (!entry) return;
+  const gh = entry._ghConflictData || {};
+  document.getElementById("conflictDesc").textContent = `"${songName}" wurde lokal geändert, aber auf GitHub gibt es eine andere Version.`;
+  document.getElementById("conflictLocalDate").textContent = entry.localModifiedAt || entry.savedAt || "—";
+  document.getElementById("conflictGhDate").textContent    = gh.savedAt || "—";
+  document.getElementById("conflictDialog").classList.add("open");
+}
+function conflictClose() {
+  document.getElementById("conflictDialog").classList.remove("open");
+  _conflictSongName = null;
+}
+document.getElementById("conflictKeepLocal").addEventListener("click", async () => {
+  if (!_conflictSongName) return;
+  conflictClose();
+  await syncPushOne(_conflictSongName);
+  renderSongsTab();
+});
+document.getElementById("conflictTakeGithub").addEventListener("click", () => {
+  if (!_conflictSongName) return;
+  const songs = libraryLoad();
+  const idx = songs.findIndex(s => s.name === _conflictSongName);
+  if (idx < 0) { conflictClose(); return; }
+  const gh = songs[idx]._ghConflictData;
+  if (gh) {
+    songs[idx] = { ...gh, id: songs[idx].id || uid(), syncStatus: SYNC_STATUS.SYNCED, githubSyncedAt: new Date().toISOString() };
+    delete songs[idx]._ghConflictData;
+    librarySave(songs);
+    syncQueueRemove(_conflictSongName);
+    libraryRenderList();
+    renderSongsTab();
+    syncUpdatePill();
+    status(`GitHub-Version von "${_conflictSongName}" übernommen.`);
+  }
+  conflictClose();
+});
+document.getElementById("conflictSaveCopy").addEventListener("click", () => {
+  if (!_conflictSongName) return;
+  const songs = libraryLoad();
+  const idx = songs.findIndex(s => s.name === _conflictSongName);
+  if (idx < 0) { conflictClose(); return; }
+  const copyName = _conflictSongName + " (Kopie " + new Date().toLocaleString("de-CH") + ")";
+  const copy = JSON.parse(JSON.stringify(songs[idx]));
+  copy.name = copyName;
+  copy.id   = uid();
+  copy.syncStatus = SYNC_STATUS.LOCAL_ONLY;
+  delete copy._ghConflictData;
+  songs.splice(idx + 1, 0, copy);
+  // Reset original to GitHub version
+  const gh = songs[idx]._ghConflictData;
+  if (gh) {
+    songs[idx] = { ...gh, id: songs[idx].id, syncStatus: SYNC_STATUS.SYNCED, githubSyncedAt: new Date().toISOString() };
+  }
+  librarySave(songs);
+  libraryRenderList();
+  renderSongsTab();
+  syncUpdatePill();
+  status(`Kopie "${copyName}" erstellt.`);
+  conflictClose();
+});
+
+// Check for conflicts on songs tab open (show dialog for first conflict)
+function conflictCheckAndPrompt() {
+  const songs = libraryLoad();
+  const conflicted = songs.find(s => syncGetStatus(s) === SYNC_STATUS.CONFLICT);
+  if (conflicted) conflictOpen(conflicted.name);
+}
 // ── Groove Library UI bindings ─────────────────────────────────────
 (function() {
   // Sub-tabs
@@ -7198,6 +7639,11 @@ document.getElementById("formStyleSuggest")?.addEventListener("change", e => {
 });
 
 
+// ── Boot: migrate library data + init sync ────────────────────
+libraryMigrate();
+syncUpdatePill();
+syncStartBackgroundLoop();
+
 loadLocal();
 bindTopFields();
 syncTopFields();
@@ -7215,6 +7661,9 @@ renderFormBuilder();
   status("🔄 Sync mit GitHub…");
   try {
     await ghPullSongs();
+    syncUpdatePill();
+    // Process any queued songs that couldn't push before
+    await syncProcessQueue();
     status("✓ Sync mit GitHub abgeschlossen");
   } catch(e) {
     status("GitHub Sync fehlgeschlagen — arbeite lokal weiter.");
@@ -7338,6 +7787,10 @@ renderFormBuilder();
     <div class="perf-topbar-left">
       <span class="perf-counter" id="perfCounter">1 / 1</span>
       <button class="perf-search-btn" id="perfSearchBtn" title="Song suchen">🔍 Suchen</button>
+      <div class="perf-sync-wrap" title="Sync-Status">
+        <div class="perf-sync-dot" id="perfSyncDot"></div>
+        <span id="perfSyncLabel" style="font-size:11px;color:#6b7280;"></span>
+      </div>
     </div>
     <button class="perf-exit" id="perfExit">✕ Beenden</button>
   </div>
