@@ -6026,54 +6026,69 @@ async function ghApiRequest(path, method = "GET", body = null) {
   return resp.status === 204 ? null : resp.json();
 }
 
+let _ghPushing = false; // re-entrancy guard
+
 async function ghPushSong() {
+  if (_ghPushing) return; // prevent concurrent pushes → SHA conflict
   if (!song.title) { ghUpdateStatus("Kein Song geladen.", false); return; }
+  _ghPushing = true;
   ghUpdateStatus("Speichere auf GitHub…");
   try {
+    // ── Song file ────────────────────────────────────────────────────
     const filename = "songs/" + (song.title || "song")
       .replace(/[^a-zA-Z0-9äöüÄÖÜ\s\-]/g, "")
       .replace(/\s+/g, "-").toLowerCase() + ".json";
-    const entry = {
-      name:    song.title,
-      savedAt: new Date().toLocaleString("de-CH"),
-      data:    JSON.parse(JSON.stringify(song))
-    };
-    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(entry, null, 2))));
 
-    // Check if file exists (to get SHA for update)
+    // Update local library FIRST (without triggering another push)
+    const songs    = libraryLoad();
+    const existing = songs.findIndex(s => s.name === song.title);
+    const libEntry = { name: song.title, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(song)) };
+    if (existing >= 0) songs[existing] = libEntry; else songs.unshift(libEntry);
+    librarySave(songs); // direct save, no push trigger
+    libraryRenderList();
+    saveLocal();
+
+    const ghEntry    = libEntry;
+    const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(ghEntry, null, 2))));
+
+    // Always fetch fresh SHA immediately before PUT
     let sha = null;
-    try {
-      const existing = await ghApiRequest("/contents/" + filename);
-      sha = existing.sha;
-    } catch {}
-
-    const body = {
-      message: "Song: " + song.title + " (" + new Date().toLocaleString("de-CH") + ")",
+    try { sha = (await ghApiRequest("/contents/" + filename)).sha; } catch {}
+    const putBody = {
+      message: `Song: ${song.title} (${new Date().toLocaleString("de-CH")})`,
       content: contentB64,
     };
-    if (sha) body.sha = sha;
+    if (sha) putBody.sha = sha;
 
-    await ghApiRequest("/contents/" + filename, "PUT", body);
+    // Retry once on SHA conflict (stale cache race)
+    try {
+      await ghApiRequest("/contents/" + filename, "PUT", putBody);
+    } catch(e) {
+      if (e.message && e.message.includes("but expected")) {
+        // Re-fetch SHA and retry
+        try { putBody.sha = (await ghApiRequest("/contents/" + filename)).sha; } catch {}
+        await ghApiRequest("/contents/" + filename, "PUT", putBody);
+      } else { throw e; }
+    }
 
-    // Also update local library
-    librarySaveCurrent(song.title);
-
-    // Push setlists
+    // ── Setlists file ────────────────────────────────────────────────
     try {
       const slAll     = setlistsLoad();
       const slContent = btoa(unescape(encodeURIComponent(JSON.stringify(slAll, null, 2))));
       let slSha = null;
-      try { const ex = await ghApiRequest("/contents/setlists.json"); slSha = ex.sha; } catch {}
+      try { slSha = (await ghApiRequest("/contents/setlists.json")).sha; } catch {}
       const slBody = { message: "Setlists aktualisiert", content: slContent };
       if (slSha) slBody.sha = slSha;
       await ghApiRequest("/contents/setlists.json", "PUT", slBody);
     } catch {}
 
-    ghUpdateStatus("✓ " + song.title + " + Setlisten auf GitHub gespeichert.", true);
+    ghUpdateStatus("✓ " + song.title + " gespeichert.", true);
     status("Song + Setlisten auf GitHub gespeichert ✓");
   } catch(err) {
     ghUpdateStatus("Fehler: " + err.message, false);
     status("GitHub Fehler: " + err.message);
+  } finally {
+    _ghPushing = false;
   }
 }
 
