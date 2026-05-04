@@ -4413,6 +4413,35 @@ function saveLocal() {
   status("Lokal gespeichert ✓");
 }
 
+// Full save: lokal + Bibliothek + GitHub (wenn konfiguriert)
+async function saveFull() {
+  if (!song.title) { status("Bitte zuerst einen Songtitel eingeben."); return; }
+  saveLocal();
+  // In Bibliothek speichern (lokal, ohne GitHub-Trigger)
+  const songs   = libraryLoad();
+  const idx     = songs.findIndex(s => s.name === song.title);
+  const entry   = { name: song.title, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(song)) };
+  if (idx >= 0) songs[idx] = entry; else songs.unshift(entry);
+  librarySave(songs);
+  libraryRenderList();
+  // GitHub Push (wenn konfiguriert)
+  const ghCfg = ghLoadSettings();
+  if (ghCfg.repo && ghCfg.token) {
+    const btn = document.getElementById("saveBtn");
+    if (btn) { btn.textContent = "⏳ Speichern…"; btn.disabled = true; }
+    try {
+      await ghPushSong();
+      status("✓ " + song.title + " — lokal + GitHub gespeichert");
+    } catch(e) {
+      status("Lokal gespeichert · GitHub Fehler: " + e.message);
+    } finally {
+      if (btn) { btn.textContent = "💾 Speichern"; btn.disabled = false; }
+    }
+  } else {
+    status("✓ " + song.title + " gespeichert (lokal · GitHub nicht konfiguriert)");
+  }
+}
+
 function loadLocal() {
   const raw = store.getItem(STORAGE_KEY);
   if (!raw) return;
@@ -6039,14 +6068,13 @@ async function ghPushSong() {
       .replace(/[^a-zA-Z0-9äöüÄÖÜ\s\-]/g, "")
       .replace(/\s+/g, "-").toLowerCase() + ".json";
 
-    // Update local library FIRST (without triggering another push)
+    // Ensure local library is up to date (idempotent — no push trigger)
     const songs    = libraryLoad();
     const existing = songs.findIndex(s => s.name === song.title);
     const libEntry = { name: song.title, savedAt: new Date().toLocaleString("de-CH"), data: JSON.parse(JSON.stringify(song)) };
     if (existing >= 0) songs[existing] = libEntry; else songs.unshift(libEntry);
-    librarySave(songs); // direct save, no push trigger
+    librarySave(songs);
     libraryRenderList();
-    saveLocal();
 
     const ghEntry    = libEntry;
     const contentB64 = btoa(unescape(encodeURIComponent(JSON.stringify(ghEntry, null, 2))));
@@ -6161,7 +6189,10 @@ document.getElementById("ghSaveSettings").addEventListener("click", async () => 
   ghSaveSettings({ repo, token });
   ghUpdateStatus("Einstellungen gespeichert — lade Songs von GitHub…", null);
   document.getElementById("ghSetupPanel").style.display = "none";
-  await ghPullSongs(); // Auto-pull sofort nach Einstellungen speichern
+  // Show GitHub icon on Save button
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.textContent = "💾 Speichern ☁";
+  await ghPullSongs();
 });
 document.getElementById("ghPush").addEventListener("click", ghPushSong);
 document.getElementById("ghPull").addEventListener("click", ghPullSongs);
@@ -6231,7 +6262,7 @@ document.getElementById("librarySaveName").addEventListener("keydown", e => {
     librarySaveCurrent(name);
   }
 });
-document.getElementById("saveBtn").addEventListener("click", saveLocal);
+document.getElementById("saveBtn").addEventListener("click", saveFull);
 document.getElementById("exportBtn").addEventListener("click", exportJson);
 document.getElementById("printBtn").addEventListener("click", () => window.print());
 document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
@@ -7178,9 +7209,13 @@ renderFormBuilder();
 (async function ghAutoSync() {
   const s = ghLoadSettings();
   if (!s.repo || !s.token) return; // Nicht konfiguriert — nichts tun
+  // Show GitHub icon on Save button
+  const saveBtn = document.getElementById("saveBtn");
+  if (saveBtn) saveBtn.textContent = "💾 Speichern ☁";
   status("🔄 Sync mit GitHub…");
   try {
     await ghPullSongs();
+    status("✓ Sync mit GitHub abgeschlossen");
   } catch(e) {
     status("GitHub Sync fehlgeschlagen — arbeite lokal weiter.");
   }
