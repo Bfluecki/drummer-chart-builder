@@ -5505,8 +5505,9 @@ function perfOpen() {
 
 // Open directly with a single song (e.g. from editor)
 function perfOpenSingle(data) {
-  if (!data || !data.title) { status("Speichere den Song zuerst, bevor du ihn live abspielst."); return; }
-  perfSongList = [{ name: data.title || "Song", data: JSON.parse(JSON.stringify(data)) }];
+  if (!data) return;
+  const name = data.title || "Song";
+  perfSongList = [{ name, data: JSON.parse(JSON.stringify(data)) }];
   perfIndex = 0;
   _perfActivate();
 }
@@ -7267,7 +7268,7 @@ renderFormBuilder();
 </div>
 
 <!-- ── PERFORMANCE MODE ───────────────────────────────────────── -->
-<div id="perfMode" class="perf-overlay" style="display:none;position:relative;">
+<div id="perfMode" class="perf-overlay" style="display:none;">
 
   <!-- Song-Search overlay (inside perf-mode) -->
   <div id="perfSearchOverlay" class="perf-search-overlay" style="display:none;">
