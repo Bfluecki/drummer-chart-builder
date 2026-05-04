@@ -232,33 +232,65 @@
 
     /* ── PERFORMANCE MODE ───────────────────────────────── */
     .perf-overlay { position:fixed;inset:0;background:#0f1117;z-index:1200;display:flex;flex-direction:column;overflow:hidden; }
-    .perf-topbar { display:flex;align-items:center;justify-content:space-between;padding:16px 20px;flex-shrink:0; }
+    .perf-topbar { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 20px;flex-shrink:0; }
+    .perf-topbar-left { display:flex;align-items:center;gap:8px; }
     .perf-counter { font-family:'DM Mono',monospace;font-size:14px;color:#6b7280;letter-spacing:.04em; }
     .perf-exit { background:#1f2937;border:none;color:#9ca3af;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer; }
     .perf-exit:hover { background:#374151;color:#fff; }
-    .perf-main { flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 32px;overflow:hidden; }
-    .perf-title { font-size:clamp(32px,6vw,72px);font-weight:800;color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:6px; }
-    .perf-artist { font-size:clamp(16px,2.5vw,28px);color:#9ca3af;font-weight:400;margin-bottom:20px; }
-    .perf-pills { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px; }
-    .perf-pill { background:#1f2937;color:#d1d5db;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:600; }
+    .perf-search-btn { background:#1f2937;border:none;color:#9ca3af;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer; }
+    .perf-search-btn:hover { background:#374151;color:#fff; }
+    .perf-live-btn { background:#1e3a5f;border:none;color:#93c5fd;border-radius:10px;padding:8px 14px;font:600 13px inherit;cursor:pointer; }
+    .perf-live-btn:hover { background:#1e40af;color:#fff; }
+    .perf-main { flex:1;display:flex;flex-direction:column;padding:4px 24px 8px;overflow-y:auto;overflow-x:hidden; }
+    .perf-title { font-size:clamp(26px,5vw,60px);font-weight:800;color:#fff;line-height:1.1;letter-spacing:-1px;margin-bottom:4px; }
+    .perf-artist { font-size:clamp(13px,2vw,22px);color:#9ca3af;font-weight:400;margin-bottom:12px; }
+    .perf-pills { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px; }
+    .perf-pill { background:#1f2937;color:#d1d5db;border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600; }
     .perf-pill.accent { background:#1e3a5f;color:#93c5fd; }
-    .perf-sections { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px; }
+    .perf-sections { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px; }
     .perf-sec { background:#1f2937;border-radius:8px;padding:6px 12px;font-size:13px;color:#e5e7eb;display:flex;flex-direction:column;align-items:center;gap:2px; }
     .perf-sec-name { font-weight:700; }
     .perf-sec-bars { font-size:11px;color:#6b7280; }
-    .perf-navrow { display:flex;align-items:center;justify-content:center;gap:20px;padding:16px 20px;flex-shrink:0; }
-    .perf-nav-btn { background:#1f2937;border:none;color:#fff;border-radius:14px;font-size:22px;cursor:pointer;width:64px;height:64px;display:flex;align-items:center;justify-content:center;transition:background .15s;touch-action:manipulation; }
-    .perf-nav-btn:hover { background:#374151; }
-    .perf-nav-btn:disabled { opacity:.3;cursor:default; }
-    .perf-song-num { font-family:'DM Mono',monospace;font-size:16px;color:#6b7280;min-width:60px;text-align:center; }
-    .perf-metro { display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 20px;flex-shrink:0; }
-    .perf-metro-btn { background:#1f2937;border:none;color:#fff;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;padding:10px 22px;touch-action:manipulation;transition:background .15s;min-width:110px; }
+    /* Notation in Perf Mode */
+    .perf-notation { margin:8px 0 4px; }
+    .perf-notation-sec { margin-bottom:10px; }
+    .perf-notation-lbl { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#4b5563;margin-bottom:3px; }
+    .perf-notation-wrap { overflow:hidden;border-radius:4px; }
+    /* BPM Row */
+    .perf-bpm-row { display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 16px;flex-shrink:0;flex-wrap:wrap;border-top:1px solid #1f2937; }
+    .perf-bpm-adj { background:#1f2937;border:none;color:#9ca3af;border-radius:8px;font:700 13px 'DM Mono',monospace;cursor:pointer;padding:0 10px;touch-action:manipulation;transition:background .1s;min-width:36px;height:36px;display:flex;align-items:center;justify-content:center; }
+    .perf-bpm-adj:hover { background:#374151;color:#fff; }
+    .perf-bpm-adj.lg { min-width:44px;font-size:12px; }
+    .perf-bpm-display { font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:#e5e7eb;min-width:96px;text-align:center;cursor:pointer;padding:4px 8px;border-radius:8px;user-select:none; }
+    .perf-bpm-display:hover { background:#1f2937; }
+    .perf-tap-btn { background:#374151;border:none;color:#d1d5db;border-radius:8px;font:700 12px inherit;cursor:pointer;padding:6px 12px;touch-action:manipulation;transition:background .1s;height:36px; }
+    .perf-tap-btn:hover { background:#4b5563;color:#fff; }
+    .perf-tap-btn.flashing { background:#f97316;color:#fff; }
+    .perf-metro-btn { background:#1f2937;border:none;color:#fff;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;padding:8px 18px;touch-action:manipulation;transition:background .15s;height:36px; }
     .perf-metro-btn:hover { background:#374151; }
     .perf-metro-btn.running { background:#16a34a; }
     .perf-metro-bpm { font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:#e5e7eb;min-width:100px;text-align:center; }
-    .perf-metro-dot { width:20px;height:20px;border-radius:50%;background:#374151;transition:background .06s,transform .06s;flex-shrink:0; }
+    .perf-metro-dot { width:16px;height:16px;border-radius:50%;background:#374151;transition:background .06s,transform .06s;flex-shrink:0; }
     .perf-metro-dot.beat   { background:#f97316;transform:scale(1.3); }
     .perf-metro-dot.accent { background:#ef4444;transform:scale(1.6); }
+    .perf-navrow { display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 20px;flex-shrink:0;border-top:1px solid #1f2937; }
+    .perf-nav-btn { background:#1f2937;border:none;color:#fff;border-radius:14px;font-size:20px;cursor:pointer;width:56px;height:56px;display:flex;align-items:center;justify-content:center;transition:background .15s;touch-action:manipulation; }
+    .perf-nav-btn:hover { background:#374151; }
+    .perf-nav-btn:disabled { opacity:.3;cursor:default; }
+    .perf-song-num { font-family:'DM Mono',monospace;font-size:15px;color:#6b7280;min-width:60px;text-align:center; }
+    /* Search overlay inside perf mode */
+    .perf-search-overlay { position:absolute;inset:0;background:rgba(15,17,23,.97);z-index:20;display:flex;flex-direction:column;padding:16px 20px; }
+    .perf-search-topbar { display:flex;align-items:center;gap:10px;margin-bottom:12px; }
+    .perf-search-input { flex:1;background:#1f2937;border:2px solid #374151;border-radius:12px;color:#fff;font:inherit;font-size:17px;padding:10px 16px;outline:none; }
+    .perf-search-input:focus { border-color:#3b82f6; }
+    .perf-search-close { background:#1f2937;border:none;color:#9ca3af;border-radius:10px;padding:8px 14px;font:inherit;font-size:13px;cursor:pointer;flex-shrink:0; }
+    .perf-search-close:hover { background:#374151;color:#fff; }
+    .perf-search-results { flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px; }
+    .perf-search-item { background:#1f2937;border-radius:10px;padding:12px 16px;cursor:pointer;transition:background .12s;border:1px solid transparent; }
+    .perf-search-item:hover { background:#374151;border-color:#4b5563; }
+    .perf-search-item-title { font-weight:700;font-size:15px;color:#e5e7eb; }
+    .perf-search-item-meta { font-size:12px;color:#6b7280;margin-top:2px; }
+    .perf-search-empty { color:#4b5563;font-size:14px;text-align:center;padding:32px 0; }
     /* Named setlists */
     .sl-namebar { display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap; }
     .sl-name-input { flex:1;min-width:160px;border:1.5px solid var(--line);border-radius:var(--r-sm);padding:8px 12px;font:inherit;font-size:14px;background:var(--white);color:var(--ink); }
@@ -1722,6 +1754,7 @@
       <button id="saveBtn" class="btn btn-ghost" type="button">💾 Speichern</button>
       <button id="songsBtn" class="btn btn-ghost" type="button">📚 Songs</button>
       <button id="setlistBtn" class="btn btn-ghost" type="button">📋 Setlist</button>
+      <button id="perfFromEditorBtn" class="btn btn-accent" type="button" title="Aktuellen Song im Performance-Modus öffnen">▶ Live</button>
       <button id="exportBtn" class="btn btn-ghost" type="button">↑ JSON Export</button>
       <label class="upload-label">↓ JSON Import<input id="importInput" type="file" accept="application/json" /></label>
       <label class="upload-label">📄 iReal PDF/TXT<input id="irealInput" type="file" accept=".pdf,.txt" /></label>
@@ -2846,6 +2879,20 @@ function renderDrumNotationSVG(options) {
   var barReps  = options.barRepeats || []; // array of null|'1'|'2' per bar
   var ti       = options.ti !== undefined ? options.ti : -1;
   var interactive = !!options.interactive;
+  var dark     = !!options.dark; // dark-mode colours (performance mode)
+
+  // Colour palette — light vs dark
+  var C = dark ? {
+    staff:    "#2d3748", barLine: "#4b5563", note: "#f3f4f6",
+    accent:   "#93c5fd", ghost:   "#6b7280", brk: "#f472b6",
+    auftakt:  "#c4b5fd", label:   "#9ca3af", repDot: "#6b7280",
+    repTint:  "rgba(255,255,255,0.04)", restCol: "#fbbf24"
+  } : {
+    staff:    "#d1d5db", barLine: "#9ca3af", note: "#111827",
+    accent:   "#1d4ed8", ghost:   "#9ca3af", brk: "#db2777",
+    auftakt:  "#7c3aed", label:   "#4b5563", repDot: "#374151",
+    repTint:  "rgba(0,0,0,0.03)",            restCol: "#d97706"
+  };
 
   var stepW    = 22;
   var leftPad  = 36; // wider for 2-char labels
@@ -2875,7 +2922,12 @@ function renderDrumNotationSVG(options) {
 
   // Staff lines
   DISP.forEach(function(row) {
-    s += '<line x1="'+leftPad+'" y1="'+row.y+'" x2="'+(svgW-4)+'" y2="'+row.y+'" stroke="#d1d5db" stroke-width="1"/>';
+    s += '<line x1="'+leftPad+'" y1="'+row.y+'" x2="'+(svgW-4)+'" y2="'+row.y+'" stroke="'+C.staff+'" stroke-width="1"/>';
+  });
+
+  // Row labels
+  DISP.forEach(function(row) {
+    s += '<text x="2" y="'+(row.y+4)+'" font-size="8" fill="'+C.label+'" font-weight="700">'+row.label+'</text>';
   });
 
   for (var bar = 0; bar < bars; bar++) {
@@ -2883,15 +2935,15 @@ function renderDrumNotationSVG(options) {
     var repTyp = barReps[bar] || null;
 
     // Bar line
-    s += '<line x1="'+bx+'" y1="'+staffTop+'" x2="'+bx+'" y2="'+staffBottom+'" stroke="#9ca3af" stroke-width="1.5"/>';
+    s += '<line x1="'+bx+'" y1="'+staffTop+'" x2="'+bx+'" y2="'+staffBottom+'" stroke="'+C.barLine+'" stroke-width="1.5"/>';
 
     if (repTyp) {
       // ── Takt-Wiederholungs-Symbol ──────────────────────────────
       var cx  = bx + barW / 2;
       var r   = 4;   // dot radius
-      var col = '#374151';
+      var col = C.repDot;
       // light background tint
-      s += '<rect x="'+bx+'" y="'+staffTop+'" width="'+barW+'" height="'+(staffBottom-staffTop)+'" fill="rgba(0,0,0,0.03)" rx="3"/>';
+      s += '<rect x="'+bx+'" y="'+staffTop+'" width="'+barW+'" height="'+(staffBottom-staffTop)+'" fill="'+C.repTint+'" rx="3"/>';
 
       if (repTyp === '1') {
         // Single slash: dot top-right, dot bottom-left, diagonal line
@@ -2920,7 +2972,7 @@ function renderDrumNotationSVG(options) {
 
         DISP.forEach(function(row) {
           var val = patVal(row.key, idx);
-          s += svgNoteSymbol(val, cx2, row.y, row.sym);
+          s += svgNoteSymbol(val, cx2, row.y, row.sym, C);
 
           if (interactive) {
             var rx3 = bx + step * stepW;
@@ -2935,29 +2987,26 @@ function renderDrumNotationSVG(options) {
   }
 
   // Final bar line
-  s += '<line x1="'+(svgW-4)+'" y1="'+staffTop+'" x2="'+(svgW-4)+'" y2="'+staffBottom+'" stroke="#9ca3af" stroke-width="2"/>';
-
-  // Row labels on left
-  DISP.forEach(function(row) {
-    s += '<text x="2" y="'+(row.y+4)+'" font-size="9" fill="#9ca3af" font-weight="600">'+row.label+'</text>';
-  });
+  s += '<line x1="'+(svgW-4)+'" y1="'+staffTop+'" x2="'+(svgW-4)+'" y2="'+staffBottom+'" stroke="'+C.barLine+'" stroke-width="2"/>';
 
   s += '</svg>';
   return s;
 }
 
 // ── SVG NOTE SYMBOL helper ─────────────────────────────────────────
-function svgNoteSymbol(val, cx, cy, defaultSym) {
+function svgNoteSymbol(val, cx, cy, defaultSym, C) {
   if (!val || val === false) return "";
-  var col = val === "b" ? "#db2777" : val === "a" ? "#7c3aed" : "#111827";
+  // Fallback colours when called without palette (e.g. old call sites)
+  if (!C) C = { note:"#111827", accent:"#1d4ed8", ghost:"#9ca3af", brk:"#db2777", auftakt:"#7c3aed", restCol:"#d97706" };
+  var col = val === "b" ? C.brk : val === "a" ? C.auftakt : C.note;
   // Rests
-  if (val === "p4") return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="13" fill="#d97706">𝄽</text>';
-  if (val === "p8") return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="12" fill="#d97706">𝄾</text>';
-  if (val === "p2") return '<rect x="'+(cx-5)+'" y="'+(cy-3)+'" width="10" height="4" fill="#d97706" rx="1"/>';
-  if (val === "p1") return '<rect x="'+(cx-6)+'" y="'+(cy+2)+'" width="12" height="4" fill="#d97706" rx="1"/>';
+  if (val === "p4") return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="13" fill="'+C.restCol+'">𝄽</text>';
+  if (val === "p8") return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="12" fill="'+C.restCol+'">𝄾</text>';
+  if (val === "p2") return '<rect x="'+(cx-5)+'" y="'+(cy-3)+'" width="10" height="4" fill="'+C.restCol+'" rx="1"/>';
+  if (val === "p1") return '<rect x="'+(cx-6)+'" y="'+(cy+2)+'" width="12" height="4" fill="'+C.restCol+'" rx="1"/>';
   // HH always gets × symbol
   if (defaultSym === "x") {
-    var symCol = val === "b" ? "#db2777" : val === "a" ? "#7c3aed" : val === "o" ? "#7c3aed" : "#111827";
+    var symCol = val === "b" ? C.brk : val === "a" ? C.auftakt : val === "o" ? C.auftakt : C.note;
     return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="14" fill="'+symCol+'" font-weight="700">×</text>';
   }
   // Half note: open circle + stem
@@ -2991,17 +3040,17 @@ function svgNoteSymbol(val, cx, cy, defaultSym) {
   }
   // Ghost note: small open circle
   if (val === "g") {
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="none" stroke="#9ca3af" stroke-width="1.5"/>'
-         + '<line x1="'+(cx+4)+'" y1="'+cy+'" x2="'+(cx+4)+'" y2="'+(cy-14)+'" stroke="#9ca3af" stroke-width="1"/>';
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="none" stroke="'+C.ghost+'" stroke-width="1.5"/>'
+         + '<line x1="'+(cx+4)+'" y1="'+cy+'" x2="'+(cx+4)+'" y2="'+(cy-14)+'" stroke="'+C.ghost+'" stroke-width="1"/>';
   }
   // Accent
   if (val === ">") {
-    return head + stem + '<text x="'+(cx-8)+'" y="'+(cy+4)+'" font-size="9" fill="#1d4ed8" font-weight="900">&gt;</text>';
+    return head + stem + '<text x="'+(cx-8)+'" y="'+(cy+4)+'" font-size="9" fill="'+C.accent+'" font-weight="900">&gt;</text>';
   }
   // Break marker
   if (val === "b") {
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="none" stroke="#db2777" stroke-width="1.5"/>'
-         + '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="#db2777" stroke-width="1.5"/>';
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="none" stroke="'+C.brk+'" stroke-width="1.5"/>'
+         + '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="'+C.brk+'" stroke-width="1.5"/>';
   }
   // Default: filled circle + stem (standard quarter/hit)
   return head + stem;
@@ -5439,50 +5488,64 @@ function setlistRender() {
 }
 
 // ── PERFORMANCE MODE ──────────────────────────────────────────────
-let perfIndex = 0;
+let perfIndex    = 0;
+let perfSongList = null; // null = use setlist, array = custom list [{name,data}]
+let _perfTapTimes = [];
+let _perfTapTimer = null;
 
+// Open from setlist
 function perfOpen() {
   const list = setlistLoad();
   if (!list.length) { status("Setlist ist leer."); return; }
+  perfSongList = null; // use setlist mode
   perfIndex = 0;
   setlistClose();
+  _perfActivate();
+}
+
+// Open directly with a single song (e.g. from editor)
+function perfOpenSingle(data) {
+  if (!data || !data.title) { status("Speichere den Song zuerst, bevor du ihn live abspielst."); return; }
+  perfSongList = [{ name: data.title || "Song", data: JSON.parse(JSON.stringify(data)) }];
+  perfIndex = 0;
+  _perfActivate();
+}
+
+function _perfActivate() {
   document.getElementById("perfMode").style.display = "flex";
   perfShow();
-
-  // Keyboard navigation
   document.addEventListener("keydown", perfKeyHandler);
-
-  // Touch swipe
-  let touchX = null;
-  const overlay = document.getElementById("perfMode");
-  overlay.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
-  overlay.addEventListener("touchend",   e => {
-    if (touchX === null) return;
-    const dx = e.changedTouches[0].clientX - touchX;
-    if (Math.abs(dx) > 50) { dx < 0 ? perfNavigate(1) : perfNavigate(-1); }
-    touchX = null;
-  });
 }
 
 function perfClose() {
   if (metroActive) metroStop();
   document.getElementById("perfMode").style.display = "none";
   document.removeEventListener("keydown", perfKeyHandler);
+  perfSongList = null;
   const btn = document.getElementById("perfMetroBtn");
   if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
 }
 
-function perfSyncMetroSong() {
-  // Sync metroBPM + song.timeSignature from currently shown perf song
+function _perfCurrentData() {
+  if (perfSongList) {
+    return { entry: perfSongList[perfIndex], data: perfSongList[perfIndex]?.data };
+  }
   const list    = setlistLoad();
   const lib     = libraryLoad();
   const entry   = list[perfIndex];
   const libItem = lib.find(s => s.name === entry?.name);
-  const data    = libItem?.data;
+  return { entry, data: libItem?.data };
+}
+
+function _perfListLength() {
+  return perfSongList ? perfSongList.length : setlistLoad().length;
+}
+
+function perfSyncMetroSong() {
+  const { data } = _perfCurrentData();
   if (!data) return;
   const tempo = Number(data.tempo);
   if (tempo > 0) metroBPM = tempo;
-  // Override the global timeSignature so metroSchedule counts correctly
   song.timeSignature = data.timeSignature || "4/4";
 }
 
@@ -5501,73 +5564,181 @@ function perfMetroToggle() {
 }
 
 function perfKeyHandler(e) {
+  if (document.getElementById("perfSearchOverlay")?.style.display !== "none") return;
   if (e.key === "ArrowRight" || e.key === "ArrowDown") perfNavigate(1);
   else if (e.key === "ArrowLeft" || e.key === "ArrowUp") perfNavigate(-1);
   else if (e.key === "Escape") perfClose();
 }
 
 function perfNavigate(dir) {
-  const list = setlistLoad();
-  perfIndex = Math.max(0, Math.min(list.length - 1, perfIndex + dir));
+  const len = _perfListLength();
+  perfIndex = Math.max(0, Math.min(len - 1, perfIndex + dir));
   perfShow();
 }
 
+// BPM adjust
+function perfBpmAdjust(delta) {
+  const { data } = _perfCurrentData();
+  const cur = Number(data?.tempo) || metroBPM || 120;
+  const next = Math.max(20, Math.min(300, cur + delta));
+  metroBPM = next;
+  perfBpmUpdateDisplay(next);
+  if (metroActive) { metroStop(); metroStart(false); }
+  // Save back to library entry
+  if (data) {
+    data.tempo = String(next);
+    _perfSaveBpmToLibrary(data);
+  }
+}
+
+function perfBpmUpdateDisplay(bpm) {
+  const el = document.getElementById("perfBpmDisplay");
+  if (el) el.textContent = `♩ ${bpm} BPM`;
+}
+
+function _perfSaveBpmToLibrary(data) {
+  const songs   = libraryLoad();
+  const idx     = songs.findIndex(s => s.name === data.title);
+  if (idx < 0) return;
+  songs[idx].data = data;
+  librarySave(songs);
+  saveLocal();
+  // Push to GitHub (silent)
+  const ghCfg = ghLoadSettings();
+  if (ghCfg.repo && ghCfg.token) ghPushSong().catch(() => {});
+}
+
+// Tap tempo in perf mode
+function perfTap() {
+  const now = Date.now();
+  _perfTapTimes.push(now);
+  // Clear taps older than 3s
+  _perfTapTimes = _perfTapTimes.filter(t => now - t < 3000);
+  clearTimeout(_perfTapTimer);
+  _perfTapTimer = setTimeout(() => { _perfTapTimes = []; }, 2500);
+
+  // Flash the tap button
+  const btn = document.getElementById("perfTapBtn");
+  if (btn) { btn.classList.add("flashing"); setTimeout(() => btn.classList.remove("flashing"), 150); }
+
+  if (_perfTapTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < _perfTapTimes.length; i++) intervals.push(_perfTapTimes[i] - _perfTapTimes[i-1]);
+    const avg = intervals.reduce((a,b) => a+b, 0) / intervals.length;
+    const bpm = Math.round(60000 / avg);
+    if (bpm >= 20 && bpm <= 300) {
+      metroBPM = bpm;
+      perfBpmUpdateDisplay(bpm);
+      if (metroActive) { metroStop(); metroStart(false); }
+      const { data } = _perfCurrentData();
+      if (data) { data.tempo = String(bpm); _perfSaveBpmToLibrary(data); }
+    }
+  }
+}
+
+// ── Song Search inside Performance Mode ──────────────────────────
+function perfSearchOpen() {
+  const overlay = document.getElementById("perfSearchOverlay");
+  if (!overlay) return;
+  overlay.style.display = "flex";
+  const inp = document.getElementById("perfSearchInput");
+  if (inp) { inp.value = ""; inp.focus(); }
+  perfSearchQuery("");
+}
+
+function perfSearchClose() {
+  const overlay = document.getElementById("perfSearchOverlay");
+  if (overlay) overlay.style.display = "none";
+}
+
+function perfSearchQuery(q) {
+  const lib = libraryLoad();
+  const term = q.trim().toLowerCase();
+  const results = term
+    ? lib.filter(s =>
+        (s.name || "").toLowerCase().includes(term) ||
+        (s.data?.artist || "").toLowerCase().includes(term) ||
+        (s.data?.style  || "").toLowerCase().includes(term))
+    : lib;
+
+  const host = document.getElementById("perfSearchResults");
+  if (!host) return;
+  if (!results.length) {
+    host.innerHTML = `<div class="perf-search-empty">Keine Songs gefunden</div>`;
+    return;
+  }
+  host.innerHTML = results.map(s => {
+    const d = s.data || {};
+    const meta = [d.artist, d.style, d.tempo ? d.tempo + " BPM" : ""].filter(Boolean).join(" · ");
+    return `<div class="perf-search-item" data-songname="${escapeHtml(s.name)}">
+      <div class="perf-search-item-title">${escapeHtml(s.name)}</div>
+      ${meta ? `<div class="perf-search-item-meta">${escapeHtml(meta)}</div>` : ""}
+    </div>`;
+  }).join("");
+  host.querySelectorAll(".perf-search-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const name = el.dataset.songname;
+      const found = lib.find(s => s.name === name);
+      if (found?.data) {
+        perfSongList = [{ name, data: found.data }];
+        perfIndex = 0;
+        perfSearchClose();
+        perfShow();
+      }
+    });
+  });
+}
+
 function perfShow() {
-  const list    = setlistLoad();
-  const lib     = libraryLoad();
-  const entry   = list[perfIndex];
-  const libItem = lib.find(s => s.name === entry?.name);
-  const data    = libItem?.data;
+  const len = _perfListLength();
+  const { entry, data } = _perfCurrentData();
 
-  document.getElementById("perfCounter").textContent = `${perfIndex + 1} / ${list.length}`;
-  document.getElementById("perfSongNum").textContent  = `${perfIndex + 1} / ${list.length}`;
+  document.getElementById("perfCounter").textContent = `${perfIndex + 1} / ${len}`;
+  document.getElementById("perfSongNum").textContent  = `${perfIndex + 1} / ${len}`;
   document.getElementById("perfPrev").disabled = perfIndex === 0;
-  document.getElementById("perfNext").disabled = perfIndex === list.length - 1;
+  document.getElementById("perfNext").disabled = perfIndex === len - 1;
 
-  // Update metro BPM display + time signature
+  // BPM display + sync
   const perfTempo = Number(data?.tempo) || 0;
   const perfTS    = data?.timeSignature || "4/4";
-  const bpmEl = document.getElementById("perfMetroBpm");
-  if (bpmEl) bpmEl.textContent = perfTempo ? `${perfTempo} BPM` : "— BPM";
+  const bpmVal    = perfTempo || metroBPM || 120;
+  perfBpmUpdateDisplay(bpmVal);
+  metroBPM = bpmVal;
+
   if (metroActive) {
-    const changed = perfTempo > 0 && perfTempo !== metroBPM || perfTS !== song.timeSignature;
-    if (changed) {
-      if (perfTempo > 0) metroBPM = perfTempo;
-      song.timeSignature = perfTS;
-      metroStop();
-      metroStart(false);
-    }
+    const changed = (perfTempo > 0 && perfTempo !== metroBPM) || perfTS !== song.timeSignature;
+    if (changed) { metroStop(); song.timeSignature = perfTS; metroStart(false); }
   } else {
-    // Keep song.timeSignature in sync even when stopped
     song.timeSignature = perfTS;
   }
 
   if (!data) {
-    document.getElementById("perfTitle").textContent  = entry?.name || "—";
-    document.getElementById("perfArtist").textContent = "Nicht in Bibliothek";
-    document.getElementById("perfPills").innerHTML    = "";
-    document.getElementById("perfSections").innerHTML = "";
+    document.getElementById("perfTitle").textContent   = entry?.name || "—";
+    document.getElementById("perfArtist").textContent  = "Nicht in Bibliothek";
+    document.getElementById("perfPills").innerHTML     = "";
+    document.getElementById("perfAblauf").innerHTML    = "";
+    document.getElementById("perfNotation").innerHTML  = "";
+    document.getElementById("perfSections").innerHTML  = "";
     return;
   }
 
-  document.getElementById("perfTitle").textContent  = data.title  || entry.name;
+  document.getElementById("perfTitle").textContent  = data.title  || entry?.name || "—";
   document.getElementById("perfArtist").textContent = data.artist || "";
 
   const pills = [
-    data.tempo         ? `<span class="perf-pill accent">♩ ${escapeHtml(data.tempo)} BPM</span>` : "",
-    data.style         ? `<span class="perf-pill">${escapeHtml(data.style)}</span>`               : "",
-    data.feel          ? `<span class="perf-pill">${escapeHtml(data.feel)}</span>`                : "",
-    data.timeSignature ? `<span class="perf-pill">${escapeHtml(data.timeSignature)}</span>`       : "",
-    data.countIn       ? `<span class="perf-pill">Count-In: ${escapeHtml(data.countIn)}</span>`  : "",
+    data.tempo         ? `<span class="perf-pill accent">♩ ${escapeHtml(String(data.tempo))} BPM</span>` : "",
+    data.style         ? `<span class="perf-pill">${escapeHtml(data.style)}</span>`   : "",
+    data.feel          ? `<span class="perf-pill">${escapeHtml(data.feel)}</span>`    : "",
+    data.timeSignature ? `<span class="perf-pill">${escapeHtml(data.timeSignature)}</span>` : "",
+    data.countIn       ? `<span class="perf-pill">Count-In: ${escapeHtml(String(data.countIn))}</span>` : "",
   ].filter(Boolean).join("");
   document.getElementById("perfPills").innerHTML = pills;
 
-  // Ablauf mit Wiederholungszeichen
+  // Ablauf
   const ablauf = (data.sections || []).map(s => {
     const badge      = normalizeFormName(s.name || "Part");
     const badgeClass = getFormClass(badge);
     const bars       = parseBars(s.bars || "1");
-    const hasRepeat  = s.repeat && s.repeat > 1;
     const lead       = s.ablaufInstrument
       ? `<div class="perf-abl-lead">${escapeHtml(s.ablaufInstrument)}</div>` : "";
     const count = Math.max(1, parseInt(s.repeat) || 1);
@@ -5586,6 +5757,38 @@ function perfShow() {
   const ablaufEl = document.getElementById("perfAblauf");
   if (ablaufEl) ablaufEl.innerHTML = ablauf || "";
 
+  // ── Notation (dark theme) ────────────────────────────────────────
+  const notationEl = document.getElementById("perfNotation");
+  if (notationEl) {
+    const notSections = (data.sections || []).filter((s, i) => i === 0 || s.name !== data.sections[i-1]?.name);
+    notationEl.innerHTML = notSections.map(s => {
+      ensurePatternLength(s, true);
+      const bars     = parseBars(s.bars || "1");
+      const ts       = s.timeSignature || data.timeSignature || "4/4";
+      const stepsPer = getStepsPerBar(ts);
+      const BPR      = 4;
+      let svg = "";
+      for (let rowStart = 0; rowStart < bars; rowStart += BPR) {
+        const rowBars = Math.min(BPR, bars - rowStart);
+        const barReps = (s.barRepeats || []).slice(rowStart, rowStart + rowBars);
+        svg += renderDrumNotationSVG({
+          ts, bars: rowBars, spb: stepsPer, dark: true,
+          barRepeats: barReps,
+          patVal: (k, idx) => (s.pattern?.[k] || [])[rowStart * stepsPer + idx] || false
+        });
+      }
+      const badge      = normalizeFormName(s.name || "Part");
+      const badgeClass = getFormClass(badge);
+      return `<div class="perf-notation-sec">
+        <div class="perf-notation-lbl">
+          <span class="form-badge ${badgeClass}" style="font-size:8px;padding:2px 8px;">${escapeHtml(badge)}</span>
+          <span style="margin-left:6px;">${escapeHtml(s.name || "Part")} · ${bars} Takt${bars!==1?"e":""} · ${ts}</span>
+        </div>
+        <div class="perf-notation-wrap">${svg}</div>
+      </div>`;
+    }).join("");
+  }
+
   const sections = (data.sections || []).map(s => {
     const bars   = parseBars(s.bars || "1");
     const repeat = s.repeat && s.repeat > 1 ? ` ×${s.repeat}` : "";
@@ -5595,6 +5798,10 @@ function perfShow() {
     </div>`;
   }).join("");
   document.getElementById("perfSections").innerHTML = sections || `<span style="color:#6b7280;font-size:13px;">Keine Sections</span>`;
+
+  // scroll to top
+  const scroll = document.getElementById("perfMainScroll");
+  if (scroll) scroll.scrollTop = 0;
 }
 
 // ── AUTO-SAVE ─────────────────────────────────────────
@@ -6023,6 +6230,27 @@ document.getElementById("perfExit").addEventListener("click", perfClose);
 document.getElementById("perfPrev").addEventListener("click", () => perfNavigate(-1));
 document.getElementById("perfNext").addEventListener("click", () => perfNavigate(1));
 document.getElementById("perfMetroBtn").addEventListener("click", perfMetroToggle);
+document.getElementById("perfSearchBtn").addEventListener("click", perfSearchOpen);
+document.getElementById("perfSearchClose").addEventListener("click", perfSearchClose);
+document.getElementById("perfSearchInput").addEventListener("input", e => perfSearchQuery(e.target.value));
+// Touch swipe for perf mode
+(function() {
+  let touchX = null;
+  const ov = document.getElementById("perfMode");
+  ov.addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+  ov.addEventListener("touchend",   e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50 && document.getElementById("perfSearchOverlay")?.style.display === "none") {
+      dx < 0 ? perfNavigate(1) : perfNavigate(-1);
+    }
+    touchX = null;
+  });
+})();
+// ▶ Live button in editor header
+document.getElementById("perfFromEditorBtn").addEventListener("click", () => {
+  perfOpenSingle(song);
+});
 document.getElementById("tabEditor").addEventListener("click", () => switchTab("editor"));
 document.getElementById("tabPreview").addEventListener("click",() => switchTab("preview"));
 document.getElementById("tabGrooves").addEventListener("click",() => switchTab("grooves"));
@@ -7039,23 +7267,47 @@ renderFormBuilder();
 </div>
 
 <!-- ── PERFORMANCE MODE ───────────────────────────────────────── -->
-<div id="perfMode" class="perf-overlay" style="display:none;">
+<div id="perfMode" class="perf-overlay" style="display:none;position:relative;">
+
+  <!-- Song-Search overlay (inside perf-mode) -->
+  <div id="perfSearchOverlay" class="perf-search-overlay" style="display:none;">
+    <div class="perf-search-topbar">
+      <input id="perfSearchInput" class="perf-search-input" type="search" placeholder="Song suchen…" autocomplete="off" />
+      <button class="perf-search-close" id="perfSearchClose">✕</button>
+    </div>
+    <div class="perf-search-results" id="perfSearchResults"></div>
+  </div>
+
   <div class="perf-topbar">
-    <span class="perf-counter" id="perfCounter">1 / 1</span>
+    <div class="perf-topbar-left">
+      <span class="perf-counter" id="perfCounter">1 / 1</span>
+      <button class="perf-search-btn" id="perfSearchBtn" title="Song suchen">🔍 Suchen</button>
+    </div>
     <button class="perf-exit" id="perfExit">✕ Beenden</button>
   </div>
-  <div class="perf-main">
+
+  <div class="perf-main" id="perfMainScroll">
     <div class="perf-title"  id="perfTitle">—</div>
     <div class="perf-artist" id="perfArtist">—</div>
     <div class="perf-pills"  id="perfPills"></div>
     <div class="perf-ablauf" id="perfAblauf"></div>
+    <!-- Notation -->
+    <div class="perf-notation" id="perfNotation"></div>
     <div class="perf-sections" id="perfSections"></div>
   </div>
-  <div class="perf-metro">
+
+  <!-- BPM / Metro row -->
+  <div class="perf-bpm-row">
+    <button class="perf-bpm-adj lg" onclick="perfBpmAdjust(-5)">−5</button>
+    <button class="perf-bpm-adj"    onclick="perfBpmAdjust(-1)">−1</button>
+    <div id="perfBpmDisplay" class="perf-bpm-display" title="BPM anpassen">♩ — BPM</div>
+    <button class="perf-bpm-adj"    onclick="perfBpmAdjust(+1)">+1</button>
+    <button class="perf-bpm-adj lg" onclick="perfBpmAdjust(+5)">+5</button>
+    <button class="perf-tap-btn" id="perfTapBtn" onclick="perfTap()">TAP</button>
     <button id="perfMetroBtn" class="perf-metro-btn" type="button">▶ Metro</button>
-    <div id="perfMetroBpm" class="perf-metro-bpm">— BPM</div>
     <div id="perfMetroDot" class="perf-metro-dot"></div>
   </div>
+
   <div class="perf-navrow">
     <button class="perf-nav-btn" id="perfPrev" title="Vorheriger Song (←)">◀</button>
     <span class="perf-song-num" id="perfSongNum">1 / 1</span>
