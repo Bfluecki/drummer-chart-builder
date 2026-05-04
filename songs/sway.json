@@ -1,6 +1,6 @@
 {
   "name": "Sway",
-  "savedAt": "4.5.2026, 14:31:11",
+  "savedAt": "4.5.2026, 15:19:25",
   "data": {
     "title": "Sway",
     "artist": "Ruiz-Gimbel",
@@ -134,15 +134,15 @@
             "a",
             "a",
             "a",
+            "n4",
             false,
-            false,
-            false,
+            "n4",
             true,
             false,
             false,
-            false,
-            true,
-            false,
+            "n4",
+            "n4",
+            "n4",
             false,
             false,
             true,
@@ -332,7 +332,6 @@
             false,
             false,
             false,
-            true,
             false,
             false,
             false,
@@ -340,7 +339,6 @@
             false,
             false,
             false,
-            true,
             false,
             false,
             false,
@@ -348,7 +346,9 @@
             false,
             false,
             false,
-            true,
+            false,
+            false,
+            false,
             false,
             false,
             false,
@@ -844,7 +844,16 @@
             false
           ]
         },
-        "ablaufInstrument": "Voc"
+        "ablaufInstrument": "Voc",
+        "barRepeats": [
+          null,
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1"
+        ]
       },
       {
         "id": "1776184277266-vvrljt0",
