@@ -15,19 +15,58 @@
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230f1117'/><text y='135' x='18' font-size='130'>🥁</text></svg>" />
   <link rel="apple-touch-startup-image" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1366'><rect width='1024' height='1366' fill='%230f1117'/><text y='760' x='112' font-size='800'>🥁</text></svg>" />
   <script>
-    // Register Service Worker for offline support
+    // ── Service Worker registrieren ──────────────────────────────────
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          // Neues SW sofort aktivieren wenn vorhanden
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker?.addEventListener('statechange', () => {
+              if (newWorker.statechange === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        }).catch(() => {});
+      });
+
+      // Nachrichten vom SW empfangen
+      navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data?.type === 'BACKGROUND_SYNC') {
+          // SW hat einen Sync angestossen — wir triggern unsere Queue
+          if (typeof syncProcessQueue === 'function') {
+            syncProcessQueue().catch(() => {});
+          }
+        }
       });
     }
-    // Register for background sync when online
+
+    // ── Online: GitHub-Sync anstossen ────────────────────────────────
     window.addEventListener('online', () => {
+      // Hintergrund-Sync via SW (Background Sync API)
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         navigator.serviceWorker.ready.then(reg => {
           if (reg.sync) reg.sync.register('dcb-github-sync').catch(() => {});
         });
       }
+      // Direkt: Sync-Queue abarbeiten
+      if (typeof syncProcessQueue === 'function') {
+        setTimeout(() => syncProcessQueue().catch(() => {}), 1000);
+      }
+    });
+
+    // ── Offline-Banner ───────────────────────────────────────────────
+    window.addEventListener('offline', () => {
+      const el = document.getElementById('statusText');
+      if (el) el.textContent = '📵 Offline — alle Daten lokal gespeichert';
+    });
+    window.addEventListener('online', () => {
+      const el = document.getElementById('statusText');
+      if (el) el.textContent = '🌐 Wieder online';
+      setTimeout(() => {
+        if (el && el.textContent === '🌐 Wieder online') el.textContent = 'Bereit.';
+      }, 3000);
     });
   </script>
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f1117'/><text y='.9em' font-size='80' x='10'>🥁</text></svg>" />
@@ -8755,12 +8794,7 @@ renderFormBuilder();
 })();
 </script>
 
-<script>
-  // Register Service Worker for offline use
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
-  }
-</script>
+<!-- SW bereits im <head> registriert -->
 
 <!-- ── SETLIST MODAL ──────────────────────────────────────────── -->
 <div id="setlistModal" class="sl-overlay" style="display:none;">
