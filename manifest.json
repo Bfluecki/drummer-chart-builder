@@ -1,0 +1,37 @@
+{
+  "name": "Drummer Chart Builder",
+  "short_name": "DrumChart",
+  "description": "Drum Charts erstellen, verwalten und live spielen – für Drummer",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1117",
+  "theme_color": "#0f1117",
+  "lang": "de-CH",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230f1117'/><text y='380' x='60' font-size='380'>🥁</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "categories": ["music", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Neuer Song",
+      "short_name": "Neu",
+      "description": "Einen neuen Drum Chart erstellen",
+      "url": "./index.html#new",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>➕</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Songs Library",
+      "short_name": "Songs",
+      "description": "Song-Bibliothek öffnen",
+      "url": "./index.html#songs",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='80' font-size='80'>🎵</text></svg>", "sizes": "96x96" }]
+    }
+  ]
+}

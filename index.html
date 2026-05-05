@@ -2,13 +2,34 @@
 <html lang="de-CH">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Drum Chart" />
+  <meta name="apple-mobile-web-app-title" content="DrumChart" />
   <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="HandheldFriendly" content="true" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0f1117" />
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230f1117'/><text y='135' x='18' font-size='130'>🥁</text></svg>" />
+  <link rel="apple-touch-startup-image" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1366'><rect width='1024' height='1366' fill='%230f1117'/><text y='760' x='112' font-size='800'>🥁</text></svg>" />
+  <script>
+    // Register Service Worker for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+    // Register for background sync when online
+    window.addEventListener('online', () => {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(reg => {
+          if (reg.sync) reg.sync.register('dcb-github-sync').catch(() => {});
+        });
+      }
+    });
+  </script>
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f1117'/><text y='.9em' font-size='80' x='10'>🥁</text></svg>" />
   <title>Drummer Chart Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1778,6 +1799,244 @@
     .perf-sync-dot.syncing  { background:#3b82f6;animation:syncPulse 1s ease-in-out infinite; }
     .perf-sync-dot.conflict { background:#ef4444; }
 
+    /* ═══════════════════════════════════════════════════
+       iPad / Touch Optimierungen
+    ═══════════════════════════════════════════════════ */
+
+    /* ── Touch targets: minimum 44×44pt ──────────────── */
+    @media (pointer: coarse) {
+      .btn, .pill-btn, .btn-tab, .songs-filter-btn, .conflict-btn,
+      .perf-bpm-adj, .perf-tap-btn, .perf-exit, .perf-search-btn,
+      .gl-level-btn, .gl-style-btn, .prev-subtab,
+      select, input[type="text"], input[type="number"], input[type="search"] {
+        min-height: 44px;
+      }
+      .btn-sm { min-height: 40px; padding: 8px 14px; }
+      .songs-filter-btn { padding: 8px 14px; font-size: 13px; }
+      .songs-item { padding: 14px 16px; }
+      .songs-item-title { font-size: 16px; }
+      .lib-song-row { padding: 12px 14px; }
+      input, select, textarea {
+        font-size: 16px !important; /* prevent iOS zoom on focus */
+      }
+    }
+
+    /* ── Bottom Navigation Bar (iPad / Mobile) ─────── */
+    #bottomNav {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 64px;
+      background: rgba(15,17,23,0.97);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      z-index: 900;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .bnav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 1;
+      height: 64px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7280;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      transition: color .15s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .bnav-btn .bnav-icon { font-size: 22px; line-height: 1; }
+    .bnav-btn.active { color: var(--accent); }
+    .bnav-btn.active .bnav-icon { filter: drop-shadow(0 0 6px rgba(212,82,42,.5)); }
+    .bnav-live-btn { color: #22c55e !important; }
+    .bnav-live-btn.running { color: #f59e0b !important; }
+
+    /* ── Compact header on iPad ──────────────────────── */
+    @media (max-width: 1023px) {
+      /* Show bottom nav */
+      #bottomNav { display: flex; }
+      /* Add padding so content doesn't hide behind bottom nav */
+      .app { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+      /* Compact hero */
+      .hero { padding: 14px 18px; border-radius: var(--r-lg); margin-bottom: 10px; }
+      .hero h1 { font-size: 1.1rem; }
+      .hero p { display: none; }
+      /* Hide desktop-only actions in hero (shown in bottom nav or elsewhere) */
+      .hero-actions .btn-accent:not(#perfFromEditorBtn) { display: none; }
+      /* Hide old tab row — replaced by bottom nav */
+      .tabs.no-print { display: none; }
+      /* Full-width layout */
+      .layout { grid-template-columns: 1fr !important; gap: 12px; }
+      .panel { border-radius: var(--r-lg); }
+      .statusbar { border-radius: var(--r-lg); padding: 8px 14px; gap: 6px; }
+      /* Bigger section cards */
+      .section-card { border-radius: var(--r-lg); }
+    }
+
+    /* ── iPad portrait (768–1024px) ─────────────────── */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .hero-actions { gap: 6px; }
+      .hero-actions .btn { font-size: 12px; padding: 8px 12px; }
+      .form-grid.cols-5 { grid-template-columns: repeat(3, 1fr); }
+      .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      #songsView { padding: 16px 12px; }
+    }
+
+    /* ── iPad landscape / small desktop (1024–1280px) ── */
+    @media (min-width: 1024px) and (max-width: 1280px) {
+      .app { padding: 16px 18px 60px; }
+      .hero { padding: 16px 20px; }
+    }
+
+    /* ── Mobile phone (<768px) ──────────────────────── */
+    @media (max-width: 767px) {
+      .app { padding: 10px 10px calc(80px + env(safe-area-inset-bottom, 0px)); }
+      .hero { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+      .hero-actions { width: 100%; }
+      .hero-actions .btn { flex: 1; justify-content: center; }
+      .hero-icon { width: 36px; height: 36px; font-size: 18px; }
+      .hero h1 { font-size: 1rem; }
+      .form-grid.cols-5, .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+      .form-grid.cols-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Live Mode: no distractions ─────────────────── */
+    body.live-mode-active { overflow: hidden; }
+    body.live-mode-active .app { pointer-events: none; }
+    body.live-mode-active #perfMode { pointer-events: all; }
+
+    /* Touch zones in Live Mode */
+    .perf-touch-prev {
+      position: absolute;
+      top: 60px; left: 0; bottom: 80px;
+      width: 30%;
+      z-index: 10;
+      cursor: pointer;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.05);
+    }
+    .perf-touch-next {
+      position: absolute;
+      top: 60px; right: 0; bottom: 80px;
+      width: 30%;
+      z-index: 10;
+      cursor: pointer;
+      -webkit-tap-highlight-color: rgba(255,255,255,0.05);
+    }
+    /* Visual hint on tap */
+    .perf-touch-prev:active { background: rgba(255,255,255,0.05); border-radius: 0 12px 12px 0; }
+    .perf-touch-next:active { background: rgba(255,255,255,0.05); border-radius: 12px 0 0 12px; }
+
+    /* Next-song preview bar at bottom of live mode */
+    .perf-next-bar {
+      background: rgba(31,41,55,0.9);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .perf-next-label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; }
+    .perf-next-title { font-size: 14px; color: #9ca3af; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .perf-fullscreen-btn {
+      background: #1f2937; border: none; color: #6b7280;
+      border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .perf-fullscreen-btn:hover { color: #fff; }
+
+    /* ── Wake Lock indicator ────────────────────────── */
+    .perf-wakelock-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #6b7280; flex-shrink: 0;
+      transition: background .3s;
+    }
+    .perf-wakelock-dot.active { background: #22c55e; }
+
+    /* ── Bluetooth Page Turner indicator ────────────── */
+    .perf-bt-btn {
+      background: #1f2937; border: none; color: #6b7280;
+      border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 11px;
+      cursor: pointer;
+    }
+    .perf-bt-btn.connected { color: #22c55e; }
+
+    /* ── iPad-optimized Songs list ──────────────────── */
+    @media (pointer: coarse) {
+      .songs-item { border-radius: var(--r-lg); gap: 12px; }
+      .songs-item-actions .btn { min-width: 44px; display: flex; align-items: center; justify-content: center; }
+      .songs-search { font-size: 16px; padding: 12px 16px; border-radius: var(--r-lg); }
+    }
+
+    /* ── Pinch-zoom container for chart viewer ─────── */
+    #viewerZoomWrap {
+      transform-origin: top left;
+      transition: transform .2s;
+      will-change: transform;
+    }
+
+    /* ── Safe area insets (iPhone X notch etc.) ─────── */
+    .app {
+      padding-left: max(24px, env(safe-area-inset-left));
+      padding-right: max(24px, env(safe-area-inset-right));
+    }
+    @media (max-width: 1023px) {
+      .app {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+      }
+    }
+
+    /* ── Performance Mode: iPad fullscreen adjustments ─ */
+    .perf-overlay:fullscreen,
+    .perf-overlay:-webkit-full-screen {
+      background: #0f1117;
+    }
+
+    /* ── Tap feedback for interactive elements ─────── */
+    @media (pointer: coarse) {
+      .btn:active, .pill-btn:active, .songs-item:active {
+        transform: scale(.97);
+        transition: transform .05s;
+      }
+      /* Prevent text selection on tap */
+      .perf-overlay, .perf-topbar, .perf-navrow, .perf-bpm-row {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+    }
+
+    /* ── Auto-hide UI hint for Live Mode ────────────── */
+    .perf-ui-hint {
+      position: absolute;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,.6);
+      color: #9ca3af;
+      font-size: 11px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .5s;
+      white-space: nowrap;
+    }
+    .perf-ui-hint.show { opacity: 1; }
+
   </style>
 </head>
 <body>
@@ -2256,6 +2515,25 @@
     </div>
   </div>
 </div>
+
+<!-- ── BOTTOM NAVIGATION (iPad / Mobile) ─────────────── -->
+<nav id="bottomNav" aria-label="Navigation">
+  <button class="bnav-btn" id="bnavSongs" type="button">
+    <span class="bnav-icon">🎵</span>Songs
+  </button>
+  <button class="bnav-btn active" id="bnavEditor" type="button">
+    <span class="bnav-icon">✏️</span>Editor
+  </button>
+  <button class="bnav-btn" id="bnavPreview" type="button">
+    <span class="bnav-icon">👁</span>Chart
+  </button>
+  <button class="bnav-btn" id="bnavGrooves" type="button">
+    <span class="bnav-icon">🥁</span>Grooves
+  </button>
+  <button class="bnav-btn bnav-live-btn" id="bnavLive" type="button">
+    <span class="bnav-icon">▶</span>Live
+  </button>
+</nav>
 
 <!-- ── CONFLICT DIALOG ─────────────────────────────── -->
 <div id="conflictDialog">
@@ -5191,6 +5469,26 @@ function libraryDeleteSong(name) {
   const songs = libraryLoad().filter(s => s.name !== name);
   librarySave(songs);
   libraryRenderList();
+  syncUpdatePill();
+}
+
+function libraryDuplicateSong(name) {
+  const songs = libraryLoad();
+  const entry = songs.find(s => s.name === name);
+  if (!entry) return;
+  const copyName = name + " (Kopie)";
+  const copy = JSON.parse(JSON.stringify(entry));
+  copy.name = copyName;
+  copy.id   = uid();
+  copy.syncStatus = SYNC_STATUS.LOCAL_ONLY;
+  copy.localModifiedAt = new Date().toISOString();
+  copy.githubSyncedAt  = null;
+  if (copy.data) { copy.data.title = copyName; }
+  songs.unshift(copy);
+  librarySave(songs);
+  libraryRenderList();
+  renderSongsTab();
+  status(`"${copyName}" erstellt ✓`);
 }
 
 function libraryLoadSong(name) {
@@ -5307,9 +5605,11 @@ function renderSongsTab() {
         <div class="songs-item-meta">${escapeHtml(meta)} · <span class="sync-badge ${st}">${syncLabels[st]||st}</span></div>
       </div>
       <div class="songs-item-actions">
+        <button class="btn btn-accent btn-sm songs-live-btn" data-songname="${escapeHtml(s.name)}" title="Im Live-Modus öffnen" type="button">▶</button>
         ${ghCfg.repo && ghCfg.token && st !== SYNC_STATUS.SYNCED ? `<button class="btn btn-outline btn-sm songs-sync-btn" data-songname="${escapeHtml(s.name)}" title="Zu GitHub syncen" type="button">☁</button>` : ""}
-        <button class="btn btn-dark btn-sm songs-load-btn" data-songname="${escapeHtml(s.name)}" type="button">Laden</button>
-        <button class="btn btn-danger btn-sm songs-del-btn" data-songname="${escapeHtml(s.name)}" type="button">✕</button>
+        <button class="btn btn-dark btn-sm songs-load-btn" data-songname="${escapeHtml(s.name)}" title="Laden und bearbeiten" type="button">✏</button>
+        <button class="btn btn-outline btn-sm songs-dup-btn" data-songname="${escapeHtml(s.name)}" title="Duplizieren" type="button">⎘</button>
+        <button class="btn btn-danger btn-sm songs-del-btn" data-songname="${escapeHtml(s.name)}" title="Löschen" type="button">✕</button>
       </div>
     </div>`;
   }).join("");
@@ -5317,12 +5617,21 @@ function renderSongsTab() {
   // Bind events
   listEl.querySelectorAll(".songs-item").forEach(row => {
     row.addEventListener("click", e => {
-      if (e.target.classList.contains("songs-load-btn") || e.target.classList.contains("songs-del-btn") || e.target.classList.contains("songs-sync-btn")) return;
+      if (["songs-load-btn","songs-del-btn","songs-sync-btn","songs-dup-btn","songs-live-btn"].some(c => e.target.classList.contains(c))) return;
       libraryLoadSong(row.dataset.songname);
+    });
+  });
+  listEl.querySelectorAll(".songs-live-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const entry = libraryLoad().find(s => s.name === btn.dataset.songname);
+      if (entry?.data) perfOpenSingle(entry.data);
     });
   });
   listEl.querySelectorAll(".songs-load-btn").forEach(btn => {
     btn.addEventListener("click", () => libraryLoadSong(btn.dataset.songname));
+  });
+  listEl.querySelectorAll(".songs-dup-btn").forEach(btn => {
+    btn.addEventListener("click", () => libraryDuplicateSong(btn.dataset.songname));
   });
   listEl.querySelectorAll(".songs-del-btn").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -5846,6 +6155,7 @@ function perfOpen() {
   perfIndex = 0;
   setlistClose();
   _perfActivate();
+  if (typeof _ipadLiveOpen === "function") _ipadLiveOpen();
 }
 
 // Open directly with a single song (e.g. from editor)
@@ -5855,12 +6165,16 @@ function perfOpenSingle(data) {
   perfSongList = [{ name, data: JSON.parse(JSON.stringify(data)) }];
   perfIndex = 0;
   _perfActivate();
+  // iPad live mode extras (safe — function defined later in module, called at runtime)
+  if (typeof _ipadLiveOpen === "function") _ipadLiveOpen();
 }
 
 function _perfActivate() {
   document.getElementById("perfMode").style.display = "flex";
   perfShow();
   document.addEventListener("keydown", perfKeyHandler);
+  // Prevent body scroll in live mode
+  document.body.style.overflow = "hidden";
 }
 
 function perfClose() {
@@ -5870,6 +6184,9 @@ function perfClose() {
   perfSongList = null;
   const btn = document.getElementById("perfMetroBtn");
   if (btn) { btn.textContent = "▶ Metro"; btn.classList.remove("running"); }
+  // Restore scroll
+  document.body.style.overflow = "";
+  document.body.classList.remove("live-mode-active");
 }
 
 function _perfCurrentData() {
@@ -6043,6 +6360,8 @@ function perfShow() {
   document.getElementById("perfSongNum").textContent  = `${perfIndex + 1} / ${len}`;
   document.getElementById("perfPrev").disabled = perfIndex === 0;
   document.getElementById("perfNext").disabled = perfIndex === len - 1;
+  // Update next-song preview bar (iPad)
+  if (typeof perfUpdateNextBar === "function") perfUpdateNextBar();
 
   // BPM display + sync
   const perfTempo = Number(data?.tempo) || 0;
@@ -6592,7 +6911,14 @@ try {
   bpmInp.addEventListener("blur",    moBPMInputCommit);
   bpmInp.addEventListener("keydown", e => { if (e.key === "Enter") bpmInp.blur(); });
 } catch(e) { console.warn("Button binding error:", e); }
-document.getElementById("songsBtn").addEventListener("click", libraryOpen);
+document.getElementById("songsBtn").addEventListener("click", () => {
+  // On iPad: switch to Songs tab. On desktop: open library modal.
+  if (window.matchMedia("(max-width: 1023px)").matches) {
+    switchTab("songs"); updateBottomNav("songs");
+  } else {
+    libraryOpen();
+  }
+});
 document.getElementById("libraryClose").addEventListener("click", libraryClose);
 document.getElementById("libraryModal").addEventListener("click", e => {
   if (e.target === document.getElementById("libraryModal")) libraryClose();
@@ -6747,6 +7073,351 @@ function conflictCheckAndPrompt() {
   const conflicted = songs.find(s => syncGetStatus(s) === SYNC_STATUS.CONFLICT);
   if (conflicted) conflictOpen(conflicted.name);
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ── iPAD / TOUCH OPTIMIERUNGEN ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+
+// ── Bottom Navigation Bar ────────────────────────────────────────────
+(function initBottomNav() {
+  const map = {
+    bnavSongs:   "songs",
+    bnavEditor:  "editor",
+    bnavPreview: "preview",
+    bnavGrooves: "grooves"
+  };
+  Object.entries(map).forEach(([id, tab]) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener("click", () => {
+      switchTab(tab);
+      updateBottomNav(tab);
+    });
+  });
+  // Live button
+  const bnavLive = document.getElementById("bnavLive");
+  if (bnavLive) bnavLive.addEventListener("click", () => {
+    perfOpenSingle(song);
+    bnavLive.classList.add("running");
+  });
+})();
+
+function updateBottomNav(activeTab) {
+  const map = { songs:"bnavSongs", editor:"bnavEditor", preview:"bnavPreview", grooves:"bnavGrooves" };
+  Object.entries(map).forEach(([tab, id]) => {
+    document.getElementById(id)?.classList.toggle("active", tab === activeTab);
+  });
+}
+
+// Patch switchTab to also update bottom nav
+const _origSwitchTab = switchTab;
+window._switchTabWrapped = function(name) {
+  _origSwitchTab(name);
+  updateBottomNav(name);
+};
+// Override tab button listeners to use wrapped version
+["tabSongs","tabEditor","tabPreview","tabGrooves"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const tab = id.replace("tab","").toLowerCase();
+  el.onclick = null;
+  el.addEventListener("click", () => { switchTab(tab); updateBottomNav(tab); }, true);
+});
+
+// ── Wake Lock API (Bildschirm aktiv halten) ─────────────────────────
+let _wakeLock = null;
+async function wakeLockAcquire() {
+  if (!("wakeLock" in navigator)) return;
+  try {
+    _wakeLock = await navigator.wakeLock.request("screen");
+    document.getElementById("perfWakelockDot")?.classList.add("active");
+    _wakeLock.addEventListener("release", () => {
+      document.getElementById("perfWakelockDot")?.classList.remove("active");
+      _wakeLock = null;
+    });
+  } catch {}
+}
+async function wakeLockRelease() {
+  try { await _wakeLock?.release(); } catch {}
+  _wakeLock = null;
+  document.getElementById("perfWakelockDot")?.classList.remove("active");
+}
+// Re-acquire Wake Lock after visibility change (iOS Safari releases it when tab hidden)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && document.getElementById("perfMode")?.style.display !== "none") {
+    wakeLockAcquire();
+  }
+});
+
+// ── Fullscreen API ───────────────────────────────────────────────────
+function perfToggleFullscreen() {
+  const el  = document.getElementById("perfMode");
+  const btn = document.getElementById("perfFullscreenBtn");
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) req.call(el).catch(() => {});
+    if (btn) btn.textContent = "⛿";
+  } else {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document).catch(() => {});
+    if (btn) btn.textContent = "⛶";
+  }
+}
+document.getElementById("perfFullscreenBtn")?.addEventListener("click", perfToggleFullscreen);
+document.addEventListener("fullscreenchange",        () => { const btn = document.getElementById("perfFullscreenBtn"); if (btn) btn.textContent = document.fullscreenElement ? "⛿" : "⛶"; });
+document.addEventListener("webkitfullscreenchange",  () => { const btn = document.getElementById("perfFullscreenBtn"); if (btn) btn.textContent = document.webkitFullscreenElement ? "⛿" : "⛶"; });
+
+// ── Touch Zones: Tippe Links / Tippe Rechts ──────────────────────────
+(function initTouchZones() {
+  const prev = document.getElementById("perfTouchPrev");
+  const next = document.getElementById("perfTouchNext");
+  if (prev) prev.addEventListener("click", () => {
+    perfNavigate(-1);
+    _perfFlash("prev");
+  });
+  if (next) next.addEventListener("click", () => {
+    perfNavigate(1);
+    _perfFlash("next");
+  });
+})();
+
+function _perfFlash(dir) {
+  const id = dir === "prev" ? "perfTouchPrev" : "perfTouchNext";
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.background = "rgba(255,255,255,0.08)";
+  setTimeout(() => { el.style.background = ""; }, 180);
+}
+
+// ── Erweiterte Touch-Gesten im Live-Modus ────────────────────────────
+(function initPerfGestures() {
+  const ov = document.getElementById("perfMode");
+  if (!ov) return;
+
+  // --- Swipe horizontal: Song wechseln ---
+  let touchStartX = null, touchStartY = null, touchStartTime = null;
+  let touchCount = 0;
+
+  ov.addEventListener("touchstart", e => {
+    touchCount = e.touches.length;
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    }
+  }, { passive: true });
+
+  ov.addEventListener("touchend", e => {
+    if (document.getElementById("perfSearchOverlay")?.style.display !== "none") return;
+    const tc = touchCount;
+    touchCount = 0;
+
+    // --- 2-Finger-Tap: Suchmenü öffnen ---
+    if (tc === 2) {
+      perfSearchOpen();
+      return;
+    }
+
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    const dt = Date.now() - touchStartTime;
+
+    // Swipe: mindestens 60px horizontal, weniger als 400ms
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 400) {
+      dx < 0 ? perfNavigate(1) : perfNavigate(-1);
+    }
+    touchStartX = touchStartY = touchStartTime = null;
+  }, { passive: true });
+
+  // --- Pinch Zoom auf Content-Bereich ---
+  let _pinchDist = null, _zoomScale = 1;
+  const zoomWrap = document.getElementById("viewerZoomWrap");
+
+  ov.addEventListener("touchstart", e => {
+    if (e.touches.length === 2) {
+      _pinchDist = Math.hypot(
+        e.touches[1].clientX - e.touches[0].clientX,
+        e.touches[1].clientY - e.touches[0].clientY
+      );
+    }
+  }, { passive: true });
+
+  ov.addEventListener("touchmove", e => {
+    if (e.touches.length !== 2 || _pinchDist === null || !zoomWrap) return;
+    const dist = Math.hypot(
+      e.touches[1].clientX - e.touches[0].clientX,
+      e.touches[1].clientY - e.touches[0].clientY
+    );
+    const delta = dist / _pinchDist;
+    _zoomScale = Math.min(3, Math.max(0.7, _zoomScale * delta));
+    zoomWrap.style.transform = `scale(${_zoomScale})`;
+    _pinchDist = dist;
+  }, { passive: true });
+
+  ov.addEventListener("touchend", e => {
+    if (e.touches.length < 2) _pinchDist = null;
+    // Double-tap reset zoom
+    if (_zoomScale !== 1 && e.touches.length === 0) {
+      // Keep zoom — user can double-tap to reset
+    }
+  }, { passive: true });
+
+  // Double-tap to reset zoom
+  let _lastTap = 0;
+  const mainScroll = document.getElementById("perfMainScroll");
+  if (mainScroll) mainScroll.addEventListener("touchend", e => {
+    if (e.touches.length !== 0) return;
+    const now = Date.now();
+    if (now - _lastTap < 280) {
+      _zoomScale = 1;
+      if (zoomWrap) zoomWrap.style.transform = "scale(1)";
+    }
+    _lastTap = now;
+  }, { passive: true });
+})();
+
+// ── Live Mode: iPad-Hooks werden direkt in die bestehenden Funktionen
+//    eingehängt über Post-Activation-Side-Effects ─────────────────────
+document.getElementById("perfExit")?.addEventListener("click", () => {
+  // iPad teardown on exit (perfClose already called via original listener)
+  document.body.classList.remove("live-mode-active");
+  wakeLockRelease();
+  document.getElementById("bnavLive")?.classList.remove("running");
+  if (document.fullscreenElement || document.webkitFullscreenElement) {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (exit) exit.call(document).catch(() => {});
+  }
+  const zw = document.getElementById("viewerZoomWrap");
+  if (zw) zw.style.transform = "scale(1)";
+});
+
+// iPad-specific live mode activation (called from perfOpenSingle)
+function _ipadLiveOpen() {
+  document.body.classList.add("live-mode-active");
+  wakeLockAcquire();
+  document.getElementById("bnavLive")?.classList.add("running");
+  const hint = document.getElementById("perfUiHint");
+  if (hint) {
+    hint.classList.add("show");
+    setTimeout(() => hint.classList.remove("show"), 3500);
+  }
+  perfUpdateNextBar();
+}
+
+// ── Nächster Song Preview im Live-Modus ─────────────────────────────
+function perfUpdateNextBar() {
+  const len  = _perfListLength ? _perfListLength() : (perfSongList?.length || 0);
+  const next = perfIndex + 1 < len ? perfSongList?.[perfIndex + 1] : null;
+  const title = document.getElementById("perfNextTitle");
+  if (!title) return;
+  title.textContent = next ? (next.name || next.data?.title || "—") : "Ende der Setliste";
+}
+
+// ── Bluetooth Page Turner (MIDI / Keyboard) ──────────────────────────
+(function initBluetoothPageTurner() {
+  // Many Bluetooth page turners send keyboard events:
+  // PageDown / ArrowRight / Space → nächste Seite
+  // PageUp  / ArrowLeft          → vorherige Seite
+  // F1                           → Metro Start/Stop
+  const BT_ACTIONS = {
+    "PageDown":   () => perfNavigate(1),
+    "ArrowRight": () => perfNavigate(1),
+    " ":          () => perfNavigate(1),
+    "PageUp":     () => perfNavigate(-1),
+    "ArrowLeft":  () => perfNavigate(-1),
+    "F1":         () => { const m = document.getElementById("perfMetroBtn"); if (m) m.click(); },
+    "F2":         () => { const t = document.getElementById("perfTapBtn");   if (t) t.click(); },
+  };
+  document.addEventListener("keydown", e => {
+    const perfActive = document.getElementById("perfMode")?.style.display !== "none";
+    if (!perfActive) return;
+    // Don't steal from input fields
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    const action = BT_ACTIONS[e.key];
+    if (action) { e.preventDefault(); action(); }
+  });
+
+  // Bluetooth Page Turner Status Button
+  const btBtn = document.getElementById("perfBtBtn");
+  if (btBtn) {
+    btBtn.title = "Bluetooth Page Turner — Keyboard-Kurzbefehle aktiv";
+    btBtn.addEventListener("click", () => {
+      const connected = btBtn.classList.toggle("connected");
+      btBtn.textContent = connected ? "🎚 BT ✓" : "🎚";
+      if (connected) {
+        status("Bluetooth Page Turner: Tastatur-Modus aktiv (← → Space = Blättern, F1 = Metro)");
+      }
+    });
+  }
+})();
+
+// ── Auto-Save: Änderungen sofort lokal speichern ─────────────────────
+let _autoSaveTimer = null;
+function scheduleAutoSave() {
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(() => {
+    if (song.title) {
+      saveLocal();
+      // Update library entry sync status to modified
+      const songs = libraryLoad();
+      const idx = songs.findIndex(s => s.name === song.title);
+      if (idx >= 0 && songs[idx].syncStatus === SYNC_STATUS.SYNCED) {
+        songs[idx].syncStatus = SYNC_STATUS.MODIFIED;
+        songs[idx].localModifiedAt = new Date().toISOString();
+        librarySave(songs);
+        syncUpdatePill();
+      }
+    }
+  }, 1200); // 1.2s nach letzter Änderung
+}
+
+// Patche alle Input-Felder für Auto-Save
+(function bindAutoSave() {
+  const fields = ["title","artist","tempo","style","feel","countIn","version","timeSignature","notes","keyCue","form","formAblauf"];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", scheduleAutoSave);
+    if (el && el.tagName === "SELECT") el.addEventListener("change", scheduleAutoSave);
+  });
+})();
+
+// ── iOS: "Zum Home-Bildschirm" Hint ─────────────────────────────────
+(function initIOSHint() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+  const welcomed = store.getItem("dcb_welcomed");
+  if (isIOS && !isStandalone && !welcomed) {
+    const helper = document.getElementById("iosHelper");
+    if (helper) {
+      helper.style.display = "flex";
+      // Button handler
+      helper.querySelector("button")?.addEventListener("click", () => {
+        helper.style.display = "none";
+        store.setItem("dcb_welcomed", "1");
+      });
+    }
+  }
+})();
+
+// ── Apple Pencil / Pointer: Annotationen (vorbereitet) ───────────────
+// Architecture prepared for Apple Pencil support
+// Annotations are stored in song.annotations[] per section
+// Full implementation in Phase 2
+(function initAnnotationLayer() {
+  // Annotation data model per song section:
+  // { id, sectionId, type: "ink"|"highlight"|"text", color, points[], text, createdAt }
+  // Apple Pencil detected via pointerType === "pen"
+  document.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "pen") return;
+    // Apple Pencil detected — annotation mode could be activated here
+    // For now: just log that pencil is available
+    if (!window._pencilDetected) {
+      window._pencilDetected = true;
+      console.log("[DrumChart] Apple Pencil detected — annotation layer ready");
+    }
+  }, { passive: true });
+})();
+
 // ── Groove Library UI bindings ─────────────────────────────────────
 (function() {
   // Sub-tabs
@@ -7771,7 +8442,7 @@ renderFormBuilder();
   </div>
 </div>
 
-<!-- ── PERFORMANCE MODE ───────────────────────────────────────── -->
+<!-- ── PERFORMANCE MODE (iPad-optimiert) ─────────────────────── -->
 <div id="perfMode" class="perf-overlay" style="display:none;">
 
   <!-- Song-Search overlay (inside perf-mode) -->
@@ -7783,45 +8454,63 @@ renderFormBuilder();
     <div class="perf-search-results" id="perfSearchResults"></div>
   </div>
 
+  <!-- TOPBAR -->
   <div class="perf-topbar">
     <div class="perf-topbar-left">
       <span class="perf-counter" id="perfCounter">1 / 1</span>
-      <button class="perf-search-btn" id="perfSearchBtn" title="Song suchen">🔍 Suchen</button>
+      <button class="perf-search-btn" id="perfSearchBtn" title="Song suchen (2-Finger-Tap)">🔍</button>
       <div class="perf-sync-wrap" title="Sync-Status">
         <div class="perf-sync-dot" id="perfSyncDot"></div>
-        <span id="perfSyncLabel" style="font-size:11px;color:#6b7280;"></span>
+        <div class="perf-wakelock-dot" id="perfWakelockDot" title="Bildschirm aktiv halten"></div>
       </div>
     </div>
-    <button class="perf-exit" id="perfExit">✕ Beenden</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="perf-bt-btn" id="perfBtBtn" title="Bluetooth Page Turner">🎚</button>
+      <button class="perf-fullscreen-btn" id="perfFullscreenBtn" title="Vollbild">⛶</button>
+      <button class="perf-exit" id="perfExit">✕</button>
+    </div>
   </div>
 
+  <!-- TOUCH ZONES: unsichtbare Tippe-Links / Tippe-Rechts Bereiche -->
+  <div class="perf-touch-prev" id="perfTouchPrev" title="← Vorheriger Song"></div>
+  <div class="perf-touch-next" id="perfTouchNext" title="→ Nächster Song"></div>
+
+  <!-- MAIN CONTENT AREA (scrollbar) -->
   <div class="perf-main" id="perfMainScroll">
-    <div class="perf-title"  id="perfTitle">—</div>
-    <div class="perf-artist" id="perfArtist">—</div>
-    <div class="perf-pills"  id="perfPills"></div>
-    <div class="perf-ablauf" id="perfAblauf"></div>
-    <!-- Notation -->
-    <div class="perf-notation" id="perfNotation"></div>
-    <div class="perf-sections" id="perfSections"></div>
+    <!-- Pinch-Zoom Wrapper -->
+    <div id="viewerZoomWrap">
+      <div class="perf-title"  id="perfTitle">—</div>
+      <div class="perf-artist" id="perfArtist">—</div>
+      <div class="perf-pills"  id="perfPills"></div>
+      <div class="perf-ablauf" id="perfAblauf"></div>
+      <div class="perf-notation" id="perfNotation"></div>
+      <div class="perf-sections" id="perfSections"></div>
+    </div>
+  </div>
+
+  <!-- NEXT SONG PREVIEW BAR -->
+  <div class="perf-next-bar" id="perfNextBar">
+    <span class="perf-next-label">Nächster →</span>
+    <span class="perf-next-title" id="perfNextTitle">—</span>
+    <button class="perf-nav-btn" id="perfPrev" title="Vorheriger Song (← oder Tippe links)">◀</button>
+    <span class="perf-song-num" id="perfSongNum">1 / 1</span>
+    <button class="perf-nav-btn" id="perfNext" title="Nächster Song (→ oder Tippe rechts)">▶</button>
   </div>
 
   <!-- BPM / Metro row -->
   <div class="perf-bpm-row">
     <button class="perf-bpm-adj lg" id="perfBpmM5">−5</button>
     <button class="perf-bpm-adj"    id="perfBpmM1">−1</button>
-    <div id="perfBpmDisplay" class="perf-bpm-display" title="BPM anpassen">♩ — BPM</div>
+    <div id="perfBpmDisplay" class="perf-bpm-display" title="BPM">♩ — BPM</div>
     <button class="perf-bpm-adj"    id="perfBpmP1">+1</button>
     <button class="perf-bpm-adj lg" id="perfBpmP5">+5</button>
-    <button class="perf-tap-btn" id="perfTapBtn">TAP</button>
+    <button class="perf-tap-btn"    id="perfTapBtn">TAP</button>
     <button id="perfMetroBtn" class="perf-metro-btn" type="button">▶ Metro</button>
     <div id="perfMetroDot" class="perf-metro-dot"></div>
   </div>
 
-  <div class="perf-navrow">
-    <button class="perf-nav-btn" id="perfPrev" title="Vorheriger Song (←)">◀</button>
-    <span class="perf-song-num" id="perfSongNum">1 / 1</span>
-    <button class="perf-nav-btn" id="perfNext" title="Nächster Song (→)">▶</button>
-  </div>
+  <!-- UI Hint (shows briefly on open) -->
+  <div class="perf-ui-hint" id="perfUiHint">← Tippe links/rechts zum Blättern · 2 Finger = Menü →</div>
 </div>
 
 <!-- ── METRONOM MODAL ─────────────────────────────────────────── -->
