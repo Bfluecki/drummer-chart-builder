@@ -73,8 +73,8 @@
   <title>Drummer Chart Builder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
 
   <style>
@@ -2842,11 +2842,28 @@ const PRESET_TO_GROOVE = {
 
 // ── HELPERS ─────────────────────────────────────────
 window.onerror = function(msg, src, line, col, err) {
-  alert("JS FEHLER:\n" + msg + "\nZeile: " + line + "\n" + (err ? err.stack : ""));
-  return true;
+  // Zeige Fehler nur in der Statuszeile (kein Alert — blockiert auf iPad!)
+  // "Script error." = cross-origin Fehler von externem CDN → harmlos ignorieren
+  if (!msg || msg === "Script error.") return true;
+  console.error("[DCB Error]", msg, "line:", line, src, err);
+  try {
+    const el = document.getElementById("statusText");
+    if (el) el.textContent = "⚠ Fehler: " + msg.substring(0, 80);
+  } catch {}
+  return true; // verhindert Standard-Browser-Fehlerdialog
 };
 window.addEventListener("unhandledrejection", function(e) {
-  alert("PROMISE FEHLER: " + e.reason);
+  // Stille Promise-Fehler (z.B. GitHub offline) — kein alert
+  if (!e.reason) return;
+  const msg = e.reason?.message || String(e.reason);
+  // Netzwerkfehler beim Offline-Betrieb ignorieren
+  if (msg.includes("NetworkError") || msg.includes("Failed to fetch") ||
+      msg.includes("Load failed") || msg.includes("offline")) return;
+  console.warn("[DCB Promise]", msg);
+  try {
+    const el = document.getElementById("statusText");
+    if (el) el.textContent = "⚠ " + msg.substring(0, 80);
+  } catch {}
 });
 
 function uid() {
