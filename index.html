@@ -3556,18 +3556,22 @@ function renderDrumNotationSVG(options) {
   var barW     = spb * stepW;
   var svgW     = leftPad + bars * barW + (bars - 1) * barGap + 8;
   var dynH     = 20; // extra height at bottom for dynamics line (cresc/decresc)
-  var svgH     = 130 + dynH;
+  var svgH     = 142 + dynH; // 142 = 130 (original) + 12 (beam zone shift)
   var rowH     = 18; // height of each interactive row area
 
   // 6 display rows: CY (crash), HH, TT, SN, FT, BD
+  // Rows shifted 12px down from original to create beam zone at top
   var DISP = [
-    { key:"cr",  y:14,  label:"CY", sym:"x"      },
-    { key:"hh",  y:32,  label:"HH", sym:"x"      },
-    { key:"tom", y:50,  label:"TT", sym:"circle"  },
-    { key:"sn",  y:68,  label:"SN", sym:"circle"  },
-    { key:"ft",  y:86,  label:"FT", sym:"circle"  },
-    { key:"bd",  y:104, label:"BD", sym:"circle"  }
+    { key:"cr",  y:26,  label:"CY", sym:"x"      },
+    { key:"hh",  y:44,  label:"HH", sym:"x"      },
+    { key:"tom", y:62,  label:"TT", sym:"circle"  },
+    { key:"sn",  y:80,  label:"SN", sym:"circle"  },
+    { key:"ft",  y:98,  label:"FT", sym:"circle"  },
+    { key:"bd",  y:116, label:"BD", sym:"circle"  }
   ];
+  // Beam zone: stems for CY/HH notes go up to beamY; BD stems go down
+  var beamY    = 8;   // y of the beam line above CY row
+  var beamRows = ["cr","hh"]; // rows that participate in the upper beam
 
   var staffTop    = DISP[0].y - 8;
   var staffBottom = DISP[DISP.length - 1].y + 8;
@@ -3709,6 +3713,77 @@ function renderDrumNotationSVG(options) {
   var hasDyn = barAnnos.some(function(a) { return a === 'cresc' || a === 'decresc'; });
   if (hasDyn) {
     s += '<line x1="'+leftPad+'" y1="'+dynY+'" x2="'+(svgW-4)+'" y2="'+dynY+'" stroke="'+C.staff+'" stroke-width="0.5" stroke-dasharray="3,4" opacity="0.5"/>';
+  }
+
+  // ── Stems and beams ─────────────────────────────────────────────────
+  // stepsPerBeat determines beam groups (e.g. 4/4 with 8 steps → 2 steps/beat)
+  var tsNum  = parseInt(ts.split('/')[0]) || 4;
+  var spBeat = Math.max(1, Math.round(spb / tsNum)); // steps per beat
+  var bdRow  = DISP[DISP.length - 1]; // BD is always last
+
+  for (var bar = 0; bar < bars; bar++) {
+    if (barReps[bar]) continue; // skip repeat bars — no stems needed
+    var bx = leftPad + bar * (barW + barGap);
+
+    // Collect per-step info for beam rows (CR + HH)
+    var beamSteps = []; // [{step, cx}]
+    for (var step = 0; step < spb; step++) {
+      var idx  = bar * spb + step;
+      var cxS  = bx + step * stepW + stepW / 2;
+      var hasBeamNote = beamRows.some(function(rk) {
+        var v = patVal(rk, idx); return v && v !== false;
+      });
+      if (hasBeamNote) beamSteps.push({ step: step, cx: cxS });
+
+      // Short upward stems for non-beam middle rows (TT, SN, FT)
+      var midRows = ["tom","sn","ft"];
+      midRows.forEach(function(rk) {
+        var row = DISP.find(function(d){ return d.key === rk; });
+        if (!row) return;
+        var v = patVal(rk, idx);
+        if (!v || v === false) return;
+        var noteTop = row.y - 4; // top of note head approx
+        s += '<line x1="'+cxS+'" y1="'+noteTop+'" x2="'+cxS+'" y2="'+(noteTop-12)+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+      });
+
+      // Short downward stem for BD
+      var vBD = patVal(bdRow.key, idx);
+      if (vBD && vBD !== false) {
+        s += '<line x1="'+cxS+'" y1="'+(bdRow.y+5)+'" x2="'+cxS+'" y2="'+(bdRow.y+16)+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+      }
+
+      // Upward stems for beam rows (CR and HH) to beamY
+      beamRows.forEach(function(rk) {
+        var row = DISP.find(function(d){ return d.key === rk; });
+        if (!row) return;
+        var v = patVal(rk, idx);
+        if (!v || v === false) return;
+        s += '<line x1="'+cxS+'" y1="'+(row.y-5)+'" x2="'+cxS+'" y2="'+beamY+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+      });
+    }
+
+    // Draw beams connecting stems in each beat group
+    for (var grp = 0; grp < Math.ceil(spb / spBeat); grp++) {
+      var gStart = grp * spBeat, gEnd = gStart + spBeat;
+      var inGrp  = beamSteps.filter(function(bs){ return bs.step >= gStart && bs.step < gEnd; });
+      if (inGrp.length < 2) continue; // need at least 2 notes to beam
+      var x0 = inGrp[0].cx, x1 = inGrp[inGrp.length - 1].cx;
+      // Primary beam (always)
+      s += '<line x1="'+x0+'" y1="'+beamY+'" x2="'+x1+'" y2="'+beamY+'" stroke="'+C.note+'" stroke-width="3.5" stroke-linecap="butt"/>';
+      // Secondary beam for 16th notes (when spBeat >= 4 or explicitly 16th steps)
+      if (spBeat >= 4) {
+        s += '<line x1="'+x0+'" y1="'+(beamY+5)+'" x2="'+x1+'" y2="'+(beamY+5)+'" stroke="'+C.note+'" stroke-width="3.5" stroke-linecap="butt"/>';
+      }
+    }
+    // Isolated notes (not in a group of 2+) get a flag instead of a beam
+    for (var grp2 = 0; grp2 < Math.ceil(spb / spBeat); grp2++) {
+      var gs2 = grp2 * spBeat, ge2 = gs2 + spBeat;
+      var inG2 = beamSteps.filter(function(bs){ return bs.step >= gs2 && bs.step < ge2; });
+      if (inG2.length !== 1) continue;
+      var fcx = inG2[0].cx;
+      // Eighth-note flag: curved arc to the right
+      s += '<path d="M '+fcx+','+beamY+' C '+(fcx+8)+','+(beamY+2)+' '+(fcx+9)+','+(beamY+7)+' '+(fcx+3)+','+(beamY+10)+'" stroke="'+C.note+'" stroke-width="1.8" fill="none" stroke-linecap="round"/>';
+    }
   }
 
   // Final bar line
@@ -4130,7 +4205,12 @@ function bindSectionNotationCells(container, section) {
   }
   container.querySelectorAll('.bar-anno-zone').forEach(zone => {
     zone.addEventListener('dragover', e => {
-      if (!e.dataTransfer.types.includes('anno-type')) return;
+      // DOMStringList.includes() not available in all Safari versions — use Array.from
+      const types = Array.from(e.dataTransfer.types || []);
+      if (!types.includes('anno-type') && !types.some(t => t === 'text/plain' && window._annoTouchDragType)) {
+        // also allow if a touch drag is in progress
+        if (!window._annoTouchDragType && !window._gpAnnoDragType) return;
+      }
       e.preventDefault();
       zone.classList.add('anno-drag-over');
     });
@@ -4182,7 +4262,10 @@ function bindSectionNotationCells(container, section) {
   });
 
   // Section-level annotation palette items: drag start
-  container.querySelectorAll('.anno-pal-item[data-anno-type]').forEach(item => {
+  // NOTE: anno-pal items are in .note-palette, a sibling of notation-wrap — search in parent card
+  const _palCard = container.closest('.section-card') || container.closest('[data-section-id]') || container.parentElement;
+  const _annoItems = _palCard ? _palCard.querySelectorAll('.anno-pal-item[data-anno-type]') : [];
+  _annoItems.forEach(item => {
     item.addEventListener('dragstart', e => {
       e.dataTransfer.setData('anno-type', item.dataset.annoType);
       e.dataTransfer.setData('text/plain', 'anno:' + item.dataset.annoType);
@@ -9230,6 +9313,8 @@ renderFormBuilder();
 (function bindGlobalPalette() {
   let _gpDragVal = null, _gpGhost = null;
   let _gpAnnoDragType = null;
+  // Expose for dragover detection in bindSectionNotationCells
+  Object.defineProperty(window, '_gpAnnoDragType', { get: () => _gpAnnoDragType, configurable: true });
 
   // ── Note/duration/rest items ─────────────────────────────────────
   document.querySelectorAll(".global-pal-item[data-gpval]").forEach(item => {
