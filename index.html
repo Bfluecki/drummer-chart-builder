@@ -500,6 +500,8 @@
     .notation-wrap { overflow-x:auto;padding:8px 0 4px; }
     .notation-toggle { font-size:12px;font-weight:600;color:var(--accent);background:none;border:1.5px solid var(--accent);border-radius:20px;padding:4px 12px;cursor:pointer;transition:all .15s; }
     .notation-toggle:hover,.notation-toggle.active { background:var(--accent);color:#fff; }
+    .sec-note-cell { cursor:pointer; transition:fill .1s; }
+    .notation-wrap .sec-edit-hint { font-size:9px;color:var(--ink3);padding:0 2px 2px;font-style:italic; }
 
     /* ── METRONOM MODAL ─────────────────────────────────── */
     .mo-overlay {
@@ -3476,7 +3478,9 @@ function cellValFromPalette(raw) {
 // rows: array of { key, y, label, style } where style is "x"|"circle"
 // patVal(k, idx): returns the cell value for row k at step idx
 // interactive: if true, add invisible rect hit areas for click/drop
-// ti: template index (for interactive mode)
+// ti: template index (for groove interactive mode)
+// sectionId: section id (for section interactive mode)
+// stepOffset: step index offset (for multi-row rendering)
 function renderDrumNotationSVG(options) {
   var ts       = options.ts || "4/4";
   var bars     = options.bars || 2;
@@ -3484,6 +3488,8 @@ function renderDrumNotationSVG(options) {
   var patVal   = options.patVal; // function(rowKey, stepIndex) → value
   var barReps  = options.barRepeats || []; // array of null|'1'|'2' per bar
   var ti       = options.ti !== undefined ? options.ti : -1;
+  var sid      = options.sectionId || null; // section id for section-interactive mode
+  var stepOff  = options.stepOffset || 0;  // absolute step offset for section mode
   var interactive = !!options.interactive;
   var dark     = !!options.dark; // dark-mode colours (performance mode)
 
@@ -3521,9 +3527,11 @@ function renderDrumNotationSVG(options) {
   var staffBottom = DISP[DISP.length - 1].y + 8;
   var staffMid    = (staffTop + staffBottom) / 2;
 
+  var svgClass = interactive ? (sid ? 'sec-notation-svg' : 'gv-notation-svg') : '';
+  var svgData  = interactive ? (sid ? ' data-sid="'+sid+'"' : ' data-ti="'+ti+'"') : '';
   var s = '<svg viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg"'
         + ' style="display:block;width:100%;max-width:'+svgW+'px;overflow:visible;"'
-        + (interactive ? ' class="gv-notation-svg" data-ti="'+ti+'"' : '')
+        + (interactive ? ' class="'+svgClass+'"'+svgData : '')
         + '>';
 
   // Staff lines
@@ -3583,9 +3591,16 @@ function renderDrumNotationSVG(options) {
           if (interactive) {
             var rx3 = bx + step * stepW;
             var ry  = row.y - rowH / 2;
-            s += '<rect class="gv-note-cell" data-ti="'+ti+'" data-row="'+row.key+'" data-step="'+idx+'"'
-               + ' x="'+rx3+'" y="'+ry+'" width="'+stepW+'" height="'+rowH+'"'
-               + ' fill="transparent" style="cursor:pointer;" rx="3"/>';
+            var absStep = stepOff + idx; // absolute step for section mode
+            if (sid) {
+              s += '<rect class="sec-note-cell" data-sid="'+sid+'" data-row="'+row.key+'" data-step="'+absStep+'"'
+                 + ' x="'+rx3+'" y="'+ry+'" width="'+stepW+'" height="'+rowH+'"'
+                 + ' fill="transparent" style="cursor:pointer;" rx="3"/>';
+            } else {
+              s += '<rect class="gv-note-cell" data-ti="'+ti+'" data-row="'+row.key+'" data-step="'+idx+'"'
+                 + ' x="'+rx3+'" y="'+ry+'" width="'+stepW+'" height="'+rowH+'"'
+                 + ' fill="transparent" style="cursor:pointer;" rx="3"/>';
+            }
           }
         });
       }
@@ -3708,12 +3723,11 @@ function renderGrooveNotationInteractive(tpl, ti) {
 }
 
 // ── MINI-NOTATION (SVG) — 4 Takte pro Zeile ───────────────────────
-function renderMiniNotation(section, barsPerRow) {
+function renderMiniNotation(section, barsPerRow, interactive) {
   const ts       = section.timeSignature || "4/4";
   const bars     = parseBars(section.bars || "1");
   const stepsPer = getStepsPerBar(ts);
-  const BPR      = barsPerRow || 4; // Takte pro Zeile
-  // Use effective pattern (grooveRef or own)
+  const BPR      = barsPerRow || 4;
   let pat = section.pattern;
   if (section.grooveRef) {
     const ref = song.sections.find(s => s.name === section.grooveRef && s.id !== section.id);
@@ -3722,20 +3736,54 @@ function renderMiniNotation(section, barsPerRow) {
   ensurePatternLength(section, true);
   const barReps = section.barRepeats || [];
 
-  // Split bars into rows of BPR
   let html = '<div style="display:flex;flex-direction:column;gap:2px;width:100%;overflow:hidden;">';
   for (let rowStart = 0; rowStart < bars; rowStart += BPR) {
-    const rowBars = Math.min(BPR, bars - rowStart);
+    const rowBars  = Math.min(BPR, bars - rowStart);
+    const stepOff  = rowStart * stepsPer;
     html += renderDrumNotationSVG({
       ts, bars: rowBars, spb: stepsPer,
       barRepeats: barReps.slice(rowStart, rowStart + rowBars),
+      interactive: !!interactive,
+      sectionId:   interactive ? section.id : null,
+      stepOffset:  stepOff,
       patVal: function(k, idx) {
-        return (pat[k] || [])[rowStart * stepsPer + idx] || false;
+        return (pat[k] || [])[stepOff + idx] || false;
       }
     });
   }
   html += '</div>';
   return html;
+}
+
+// ── SECTION NOTATION CELL BINDING ─────────────────────────────────
+function bindSectionNotationCells(container, section) {
+  container.querySelectorAll('.sec-note-cell').forEach(rect => {
+    rect.addEventListener('click', () => {
+      const row  = rect.dataset.row;
+      const step = parseInt(rect.dataset.step);
+      const sid  = rect.dataset.sid;
+      const s    = song.sections.find(x => x.id === sid);
+      if (!s) return;
+      ensurePatternLength(s, true);
+      const cur = (s.pattern[row] || [])[step];
+      // get current paint mode (uses palette selection)
+      const paint = getPaintMode(sid);
+      // toggle: if same value already set → clear, else apply
+      s.pattern[row][step] = (cur === paint) ? false : paint;
+      // re-render notation in place (keep interactive)
+      const wrap = rect.closest('.notation-wrap');
+      if (wrap) {
+        wrap.innerHTML = renderMiniNotation(s, 4, true);
+        bindSectionNotationCells(wrap, s);
+      }
+      renderPreview();
+      saveLocal();
+    });
+
+    // Hover highlight
+    rect.addEventListener('mouseenter', () => { rect.style.fill = 'rgba(99,102,241,0.18)'; });
+    rect.addEventListener('mouseleave', () => { rect.style.fill = 'transparent'; });
+  });
 }
 
 // ── GROOVE-REF DETACH ──────────────────────────────────────────────
@@ -4600,11 +4648,13 @@ function renderSections() {
       gridEl.style.display   = showing ? "" : "none";
       noteEl.style.display   = showing ? "none" : "";
       btn.classList.toggle("active", !showing);
-      // Re-render notation when toggled on (picks up latest pattern)
       if (!showing) {
         const sid = btn.dataset.notation;
         const s   = song.sections.find(x => x.id === sid);
-        if (s) noteEl.innerHTML = renderMiniNotation(s);
+        if (s) {
+          noteEl.innerHTML = renderMiniNotation(s, 4, true);
+          bindSectionNotationCells(noteEl, s);
+        }
       }
     });
   });
