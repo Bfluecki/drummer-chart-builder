@@ -502,6 +502,24 @@
     .notation-toggle:hover,.notation-toggle.active { background:var(--accent);color:#fff; }
     .sec-note-cell { cursor:pointer; transition:fill .1s; }
     .notation-wrap .sec-edit-hint { font-size:9px;color:var(--ink3);padding:0 2px 2px;font-style:italic; }
+    /* ── NOTE POPUP ── */
+    #notePopup {
+      position:fixed;z-index:9000;background:var(--white);border:1.5px solid var(--line);
+      border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:8px;
+      display:none;flex-wrap:wrap;gap:4px;max-width:260px;
+    }
+    #notePopup.open { display:flex; }
+    .np-btn {
+      display:flex;flex-direction:column;align-items:center;gap:1px;
+      padding:5px 7px;border-radius:7px;border:1.5px solid var(--line);
+      background:var(--white);cursor:pointer;min-width:36px;transition:all .12s;
+    }
+    .np-btn:hover { border-color:var(--accent);background:#f0f4ff; }
+    .np-btn .np-sym { font-size:15px;line-height:1.1;font-weight:700; }
+    .np-btn .np-lbl { font-size:8px;font-weight:600;color:var(--ink3);text-transform:uppercase;white-space:nowrap; }
+    .np-btn[data-nval="false"] { border-color:#ef4444; }
+    .np-btn[data-nval="false"]:hover { background:#ef4444;color:#fff; }
+    .np-sep { width:100%;height:1px;background:var(--line);margin:2px 0; }
 
     /* ── METRONOM MODAL ─────────────────────────────────── */
     .mo-overlay {
@@ -3755,32 +3773,117 @@ function renderMiniNotation(section, barsPerRow, interactive) {
   return html;
 }
 
+// ── NOTE POPUP ─────────────────────────────────────────────────────
+(function() {
+  const HH_VALS = [
+    { v:'true', sym:'×',  lbl:'Hit'    },
+    { v:'>',    sym:'›',  lbl:'Akzent' },
+    { v:'g',    sym:'(·)',lbl:'Ghost'  },
+    { v:'o',    sym:'○',  lbl:'Open'   },
+    { v:'r',    sym:'+',  lbl:'Rim'    },
+    { v:'x',    sym:'/',  lbl:'X-Stick'},
+    { v:'false',sym:'✕',  lbl:'Löschen'},
+  ];
+  const NOTE_VALS = [
+    { v:'true', sym:'♩',  lbl:'Hit'    },
+    { v:'>',    sym:'›',  lbl:'Akzent' },
+    { v:'g',    sym:'(·)',lbl:'Ghost'  },
+    { v:'a',    sym:'A',  lbl:'Auftakt'},
+    { v:'b',    sym:'B',  lbl:'Break'  },
+  ];
+  const PAUSE_VALS = [
+    { v:'p1',   sym:'𝄻',  lbl:'Ganze'  },
+    { v:'p2',   sym:'𝄼',  lbl:'Halbe'  },
+    { v:'p4',   sym:'𝄽',  lbl:'Viertel'},
+    { v:'p8',   sym:'𝄾',  lbl:'Achtel' },
+    { v:'p16',  sym:'𝄿',  lbl:'16tel'  },
+  ];
+  const DEL_VAL = { v:'false', sym:'✕', lbl:'Löschen' };
+
+  let _popTarget = null; // { s, row, step, wrap }
+
+  function closePopup() {
+    const p = document.getElementById('notePopup');
+    if (p) p.className = '';
+    _popTarget = null;
+  }
+
+  function openPopup(e, s, row, step, wrap) {
+    const popup = document.getElementById('notePopup');
+    if (!popup) return;
+    _popTarget = { s, row, step, wrap };
+
+    const isHH   = row === 'hh';
+    const mains  = isHH ? HH_VALS : NOTE_VALS;
+
+    let html = mains.map(o =>
+      `<button class="np-btn" data-nval="${o.v}"><span class="np-sym">${o.sym}</span><span class="np-lbl">${o.lbl}</span></button>`
+    ).join('');
+    html += '<div class="np-sep"></div>';
+    html += PAUSE_VALS.map(o =>
+      `<button class="np-btn" data-nval="${o.v}"><span class="np-sym">${o.sym}</span><span class="np-lbl">${o.lbl}</span></button>`
+    ).join('');
+    if (!isHH) {
+      html += '<div class="np-sep"></div>';
+      html += `<button class="np-btn" data-nval="false"><span class="np-sym">✕</span><span class="np-lbl">Löschen</span></button>`;
+    }
+
+    popup.innerHTML = html;
+    popup.className = 'open';
+
+    // Position near click, keep in viewport
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let x = e.clientX + 6, y = e.clientY + 6;
+    popup.style.left = '0'; popup.style.top = '0';
+    requestAnimationFrame(() => {
+      const pw = popup.offsetWidth, ph = popup.offsetHeight;
+      if (x + pw > vw - 8) x = e.clientX - pw - 6;
+      if (y + ph > vh - 8) y = e.clientY - ph - 6;
+      popup.style.left = x + 'px';
+      popup.style.top  = y + 'px';
+    });
+
+    // Bind buttons
+    popup.querySelectorAll('.np-btn').forEach(btn => {
+      btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        if (!_popTarget) return;
+        const { s: sec, row: r, step: st, wrap: w } = _popTarget;
+        ensurePatternLength(sec, true);
+        let val = btn.dataset.nval;
+        if (val === 'true') val = true;
+        if (val === 'false') val = false;
+        sec.pattern[r][st] = val;
+        closePopup();
+        if (w) { w.innerHTML = renderMiniNotation(sec, 4, true); bindSectionNotationCells(w, sec); }
+        renderPreview(); saveLocal();
+      });
+    });
+  }
+
+  // Close on outside click
+  document.addEventListener('click', e => {
+    const popup = document.getElementById('notePopup');
+    if (popup && popup.className === 'open' && !popup.contains(e.target)) closePopup();
+  });
+
+  window._openNotePopup = openPopup;
+  window._closeNotePopup = closePopup;
+})();
+
 // ── SECTION NOTATION CELL BINDING ─────────────────────────────────
 function bindSectionNotationCells(container, section) {
   container.querySelectorAll('.sec-note-cell').forEach(rect => {
-    rect.addEventListener('click', () => {
+    rect.addEventListener('click', e => {
+      e.stopPropagation();
       const row  = rect.dataset.row;
       const step = parseInt(rect.dataset.step);
       const sid  = rect.dataset.sid;
       const s    = song.sections.find(x => x.id === sid);
       if (!s) return;
-      ensurePatternLength(s, true);
-      const cur = (s.pattern[row] || [])[step];
-      // get current paint mode (uses palette selection)
-      const paint = getPaintMode(sid);
-      // toggle: if same value already set → clear, else apply
-      s.pattern[row][step] = (cur === paint) ? false : paint;
-      // re-render notation in place (keep interactive)
       const wrap = rect.closest('.notation-wrap');
-      if (wrap) {
-        wrap.innerHTML = renderMiniNotation(s, 4, true);
-        bindSectionNotationCells(wrap, s);
-      }
-      renderPreview();
-      saveLocal();
+      window._openNotePopup(e, s, row, step, wrap);
     });
-
-    // Hover highlight
     rect.addEventListener('mouseenter', () => { rect.style.fill = 'rgba(99,102,241,0.18)'; });
     rect.addEventListener('mouseleave', () => { rect.style.fill = 'transparent'; });
   });
@@ -9087,6 +9190,9 @@ renderFormBuilder();
     </div>
   </div>
 </div>
+
+<!-- ── NOTE POPUP ── -->
+<div id="notePopup"></div>
 
 </body>
 </html>
