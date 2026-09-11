@@ -452,8 +452,8 @@
     .pal-item[data-anno-type="decresc"]:hover,.pal-item[data-anno-type="decresc"].active,
     .global-pal-item[data-anno-type="decresc"]:hover,.global-pal-item[data-anno-type="decresc"].active { background:#0ea5e9;border-color:#0ea5e9;color:#fff; }
     /* bar annotation drop zones */
-    .bar-anno-zone { display:flex;align-items:center;justify-content:center;border:1.5px dashed transparent;border-radius:4px;cursor:pointer;transition:border-color .15s,background .15s;box-sizing:border-box;height:22px;flex-shrink:0; }
-    .bar-anno-zone:hover { border-color:var(--line);background:rgba(99,102,241,.05); }
+    .bar-anno-zone { display:flex;align-items:center;justify-content:center;border:1.5px dashed var(--line);border-radius:4px;cursor:pointer;transition:border-color .15s,background .15s;box-sizing:border-box;height:22px;flex-shrink:0;opacity:0.5; }
+    .bar-anno-zone:hover,.bar-anno-zone:has(.anno-badge) { border-color:var(--accent);background:rgba(99,102,241,.05);opacity:1; }
     .bar-anno-zone.anno-drag-over { border-color:var(--accent);background:rgba(99,102,241,.12);border-style:solid; }
     .bar-anno-zone .anno-badge { display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;line-height:1.2; }
     .bar-anno-zone .anno-badge.anno-break { background:#fce7f3;color:#db2777;border:1px solid #fbcfe8; }
@@ -527,9 +527,22 @@
     #notePopup {
       position:fixed;z-index:9000;background:var(--white);border:1.5px solid var(--line);
       border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:8px;
-      display:none;flex-wrap:wrap;gap:4px;max-width:260px;
+      display:none;flex-wrap:wrap;gap:4px;max-width:280px;
     }
     #notePopup.open { display:flex; }
+    #annoPopup {
+      position:fixed;z-index:9001;background:var(--white);border:1.5px solid var(--line);
+      border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:8px;
+      display:none;flex-direction:column;gap:4px;min-width:140px;
+    }
+    #annoPopup .ap-btn {
+      display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;
+      border:1.5px solid var(--line);background:var(--white);cursor:pointer;
+      font-size:12px;font-weight:600;transition:all .12s;text-align:left;
+    }
+    #annoPopup .ap-btn:hover { border-color:var(--accent);background:#f0f4ff; }
+    #annoPopup .ap-btn.ap-remove { border-color:#ef4444;color:#ef4444; }
+    #annoPopup .ap-btn.ap-remove:hover { background:#fef2f2; }
     .np-btn {
       display:flex;flex-direction:column;align-items:center;gap:1px;
       padding:5px 7px;border-radius:7px;border:1.5px solid var(--line);
@@ -2499,36 +2512,14 @@
         <button id="addSectionBtn" class="btn btn-dark btn-sm no-print" type="button">+ Section</button>
       </div>
 
-      <!-- ── GLOBALE NOTEN-PALETTE ─────────────────────────────── -->
-      <div class="global-palette no-print" id="globalPalette">
-        <span class="global-palette-label">🎼 Noten-Palette</span>
-        <div class="pal-item global-pal-item" data-gpval="true"  draggable="true" title="Hit (●)"><span class="pal-sym">●</span><span class="pal-lbl">Hit</span></div>
-        <div class="pal-item global-pal-item" data-gpval=">"     draggable="true" title="Akzent"><span class="pal-sym">></span><span class="pal-lbl">Akzent</span></div>
-        <div class="pal-item global-pal-item" data-gpval="g"     draggable="true" title="Ghost Note"><span class="pal-sym">(·)</span><span class="pal-lbl">Ghost</span></div>
-        <div class="pal-item global-pal-item" data-gpval="o"     draggable="true" title="Open Hi-Hat"><span class="pal-sym">○</span><span class="pal-lbl">Open HH</span></div>
-        <div class="pal-item global-pal-item" data-gpval="r"     draggable="true" title="Rimshot"><span class="pal-sym">+</span><span class="pal-lbl">Rimshot</span></div>
-        <div class="pal-item global-pal-item" data-gpval="x"     draggable="true" title="Cross Stick"><span class="pal-sym">×</span><span class="pal-lbl">X-Stick</span></div>
-        <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-anno-type="auftakt" draggable="true" title="Auftakt / Pickup — auf Takt ziehen"><span class="pal-sym"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg></span><span class="pal-lbl">Auftakt</span></div>
-        <div class="pal-item global-pal-item" data-anno-type="break" draggable="true" title="Break — auf Takt ziehen"><span class="pal-sym"><svg width="20" height="18" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="pal-lbl">Break</span></div>
-        <div class="pal-item global-pal-item" data-anno-type="cresc" draggable="true" title="Crescendo — auf Takt ziehen"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Cresc.</span></div>
-        <div class="pal-item global-pal-item" data-anno-type="decresc" draggable="true" title="Decrescendo — auf Takt ziehen"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Decresc.</span></div>
-        <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-gpval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
-        <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-gpval="n1"  draggable="true" title="Ganze Note"><span class="pal-sym"><svg width="14" height="14" viewBox="0 0 14 14"><ellipse cx="7" cy="9" rx="6" ry="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span class="pal-lbl">Ganze</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n2"  draggable="true" title="Halbe Note"><span class="pal-sym"><svg width="14" height="20" viewBox="0 0 14 20"><ellipse cx="6" cy="15" rx="5" ry="3.5" fill="none" stroke="currentColor" stroke-width="1.8" transform="rotate(-15 6 15)"/><line x1="11" y1="15" x2="11" y2="2" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="pal-lbl">Halbe</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n4"  draggable="true" title="Viertelnote"><span class="pal-sym">♩</span><span class="pal-lbl">Viertel</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n8"  draggable="true" title="Achtelnote"><span class="pal-sym">♪</span><span class="pal-lbl">Achtel</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n16" draggable="true" title="Sechzehntelnote"><span class="pal-sym">♬</span><span class="pal-lbl">16tel</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
-        <div class="pal-item global-pal-item" data-gpval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
-        <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym"><svg width="16" height="14" viewBox="0 0 16 14"><rect x="2" y="8" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2"/></svg></span><span class="pal-lbl">P.Ganz</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym"><svg width="16" height="14" viewBox="0 0 16 14"><rect x="2" y="2" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="1" y1="6" x2="15" y2="6" stroke="currentColor" stroke-width="1.2"/></svg></span><span class="pal-lbl">P.Halb</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym"><svg width="12" height="20" viewBox="0 0 12 20"><path d="M8,1 C11,4 5,7 9,10 C12,12 4,15 2,18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pal-lbl">P.Vier</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym"><svg width="14" height="18" viewBox="0 0 14 18"><line x1="5" y1="17" x2="9" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="4" r="2.8" fill="currentColor"/></svg></span><span class="pal-lbl">P.Acht</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym"><svg width="14" height="20" viewBox="0 0 14 20"><line x1="4" y1="19" x2="10" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="11" cy="4" r="2.4" fill="currentColor"/><circle cx="8" cy="10" r="2.4" fill="currentColor"/></svg></span><span class="pal-lbl">P.16tel</span></div>
+      <!-- ── GLOBALE TAKT-ANNOTATIONEN — Klick auf Taktzone zum Setzen ── -->
+      <div class="global-palette no-print" id="globalPalette" style="align-items:center;gap:6px 10px;">
+        <span class="global-palette-label" style="font-size:10px;color:var(--ink3);">Takt-Markierungen → auf Taktzone klicken:</span>
+        <div class="pal-item global-pal-item" data-anno-type="auftakt" draggable="true" title="Auftakt / Pickup"><span class="pal-sym"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg></span><span class="pal-lbl">Auftakt</span></div>
+        <div class="pal-item global-pal-item" data-anno-type="break" draggable="true" title="Break"><span class="pal-sym"><svg width="20" height="18" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="pal-lbl">Break</span></div>
+        <div class="pal-item global-pal-item" data-anno-type="cresc" draggable="true" title="Crescendo"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Cresc.</span></div>
+        <div class="pal-item global-pal-item" data-anno-type="decresc" draggable="true" title="Decrescendo"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Decresc.</span></div>
+        <span style="font-size:10px;color:var(--ink3);margin-left:8px;">Noten/Pausen → Zelle anklicken</span>
       </div>
 
       <div id="sections"></div>
@@ -4032,32 +4023,66 @@ function renderMiniNotation(section, barsPerRow, interactive) {
 
 // ── NOTE POPUP ─────────────────────────────────────────────────────
 (function() {
-  // ── Artikulationen (HH) ──
+  // SVG symbol helpers for popup buttons
+  const S = {
+    // Filled tilted oval (standard hit notehead)
+    oval: (c) => `<svg width="18" height="14" viewBox="0 0 18 14"><ellipse cx="9" cy="8" rx="6" ry="4" fill="${c||'currentColor'}" transform="rotate(-20 9 8)"/></svg>`,
+    // Open oval (half/whole notehead)
+    oOval: (c) => `<svg width="18" height="14" viewBox="0 0 18 14"><ellipse cx="9" cy="8" rx="6" ry="4" fill="none" stroke="${c||'currentColor'}" stroke-width="1.8" transform="rotate(-20 9 8)"/></svg>`,
+    // Oval + stem up
+    oOvalStem: () => `<svg width="18" height="20" viewBox="0 0 18 20"><ellipse cx="7" cy="15" rx="5" ry="3.5" fill="none" stroke="currentColor" stroke-width="1.8" transform="rotate(-20 7 15)"/><line x1="12" y1="15" x2="12" y2="2" stroke="currentColor" stroke-width="1.6"/></svg>`,
+    // Oval + stem + beam (8th)
+    ovalStem8: () => `<svg width="18" height="20" viewBox="0 0 18 20"><ellipse cx="7" cy="15" rx="5" ry="3.5" fill="currentColor" transform="rotate(-20 7 15)"/><line x1="12" y1="15" x2="12" y2="2" stroke="currentColor" stroke-width="1.6"/><path d="M12,2 Q18,5 16,9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+    // Oval + stem + two beams (16th)
+    ovalStem16: () => `<svg width="18" height="20" viewBox="0 0 18 20"><ellipse cx="7" cy="15" rx="5" ry="3.5" fill="currentColor" transform="rotate(-20 7 15)"/><line x1="12" y1="15" x2="12" y2="2" stroke="currentColor" stroke-width="1.6"/><path d="M12,2 Q18,5 16,9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M12,5 Q18,8 16,12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+    // Dotted oval + stem (dotted quarter)
+    ovalStemDot: () => `<svg width="22" height="20" viewBox="0 0 22 20"><ellipse cx="7" cy="15" rx="5" ry="3.5" fill="currentColor" transform="rotate(-20 7 15)"/><line x1="12" y1="15" x2="12" y2="2" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="15" r="2" fill="currentColor"/></svg>`,
+    // Dotted oval + stem + beam (dotted 8th)
+    ovalStem8Dot: () => `<svg width="22" height="20" viewBox="0 0 22 20"><ellipse cx="7" cy="15" rx="5" ry="3.5" fill="currentColor" transform="rotate(-20 7 15)"/><line x1="12" y1="15" x2="12" y2="2" stroke="currentColor" stroke-width="1.6"/><path d="M12,2 Q18,5 16,9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="16" cy="15" r="2" fill="currentColor"/></svg>`,
+    // × cross (HH closed)
+    xHead: (c) => `<svg width="16" height="16" viewBox="0 0 16 16"><line x1="3" y1="3" x2="13" y2="13" stroke="${c||'currentColor'}" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="13" x2="13" y2="3" stroke="${c||'currentColor'}" stroke-width="2" stroke-linecap="round"/></svg>`,
+    // Open circle (open HH)
+    circle: () => `<svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.8"/><text x="8" y="2" text-anchor="middle" font-size="7" fill="currentColor" font-weight="700">o</text></svg>`,
+    // + (rimshot)
+    plus: () => `<svg width="16" height="16" viewBox="0 0 16 16"><line x1="8" y1="3" x2="8" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="8" x2="13" y2="8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+    // Boxed × (cross-stick)
+    boxX: () => `<svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4" rx="1"/><line x1="5" y1="5" x2="11" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="5" y1="11" x2="11" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+    // Ghost (oval in parens)
+    ghost: () => `<svg width="22" height="14" viewBox="0 0 22 14"><text x="1" y="11" font-size="12" fill="currentColor" opacity="0.5">(</text><ellipse cx="11" cy="8" rx="4.5" ry="3" fill="none" stroke="currentColor" stroke-width="1.4" transform="rotate(-20 11 8)" opacity="0.7"/><text x="15" y="11" font-size="12" fill="currentColor" opacity="0.5">)</text></svg>`,
+    // Accent oval + >
+    accent: () => `<svg width="24" height="14" viewBox="0 0 24 14"><text x="1" y="11" font-size="10" fill="currentColor" font-weight="900">&gt;</text><ellipse cx="16" cy="8" rx="6" ry="4" fill="currentColor" transform="rotate(-20 16 8)"/></svg>`,
+    // Accent ×
+    accentX: () => `<svg width="24" height="16" viewBox="0 0 24 16"><text x="1" y="12" font-size="10" fill="currentColor" font-weight="900">&gt;</text><line x1="13" y1="4" x2="23" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="13" y1="14" x2="23" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+    // Ghost ×
+    ghostX: () => `<svg width="16" height="16" viewBox="0 0 16 16"><line x1="3" y1="3" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.5"/><line x1="3" y1="13" x2="13" y2="3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.5"/></svg>`,
+  };
+
+  // Per-cell articulation values for HH/CR rows
   const HH_VALS = [
-    { v:'true', sym:'×',   lbl:'Hit'     },
-    { v:'>',    sym:'›',   lbl:'Akzent'  },
-    { v:'g',    sym:'(·)', lbl:'Ghost'   },
-    { v:'o',    sym:'○',   lbl:'Open HH' },
-    { v:'r',    sym:'+',   lbl:'Rimshot' },
-    { v:'x',    sym:'/',   lbl:'X-Stick' },
+    { v:'true', sym: S.xHead(),  lbl:'HH geschl.' },
+    { v:'>',    sym: S.accentX(), lbl:'Akzent'  },
+    { v:'g',    sym: S.ghostX(), lbl:'Ghost'   },
+    { v:'o',    sym: S.circle(), lbl:'Open HH' },
+    { v:'r',    sym: S.plus(),   lbl:'Rimshot' },
+    { v:'x',    sym: S.boxX(),   lbl:'X-Stick' },
   ];
-  // ── Artikulationen (TT/SN/ST/BD) ──
+  // Per-cell articulation values for TT/SN/FT/BD rows
   const NOTE_VALS = [
-    { v:'true', sym:'♩',   lbl:'Hit'    },
-    { v:'>',    sym:'›',   lbl:'Akzent' },
-    { v:'g',    sym:'(·)', lbl:'Ghost'  },
+    { v:'true', sym: S.oval(),   lbl:'Hit'    },
+    { v:'>',    sym: S.accent(), lbl:'Akzent' },
+    { v:'g',    sym: S.ghost(),  lbl:'Ghost'  },
   ];
-  // ── Noten (Dauern) ──
+  // Note durations (all rows)
   const NOTE_DUR = [
-    { v:'n1',  sym:'<svg width="16" height="14" viewBox="0 0 16 14"><ellipse cx="8" cy="10" rx="7" ry="4.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>', lbl:'Ganze' },
-    { v:'n2',  sym:'<svg width="14" height="20" viewBox="0 0 14 20"><ellipse cx="6" cy="15" rx="5" ry="3.5" fill="none" stroke="currentColor" stroke-width="1.8" transform="rotate(-15 6 15)"/><line x1="11" y1="15" x2="11" y2="2" stroke="currentColor" stroke-width="1.8"/></svg>', lbl:'Halbe' },
-    { v:'n4',  sym:'♩',  lbl:'Viertel' },
-    { v:'n8',  sym:'♪',  lbl:'Achtel'  },
-    { v:'n16', sym:'♬',  lbl:'16tel'   },
-    { v:'n4.', sym:'♩.', lbl:'Pkt.♩'  },
-    { v:'n8.', sym:'♪.', lbl:'Pkt.♪'  },
+    { v:'n1',  sym:`<svg width="18" height="14" viewBox="0 0 18 14"><ellipse cx="9" cy="9" rx="7" ry="4.5" fill="none" stroke="currentColor" stroke-width="2" transform="rotate(-15 9 9)"/></svg>`, lbl:'Ganze' },
+    { v:'n2',  sym: S.oOvalStem(), lbl:'Halbe' },
+    { v:'n4',  sym: S.oval(),   lbl:'Viertel' },
+    { v:'n8',  sym: S.ovalStem8(), lbl:'Achtel' },
+    { v:'n16', sym: S.ovalStem16(), lbl:'16tel' },
+    { v:'n4.', sym: S.ovalStemDot(), lbl:'Pkt.♩' },
+    { v:'n8.', sym: S.ovalStem8Dot(), lbl:'Pkt.♪' },
   ];
-  // ── Pausen (SVG shapes — Unicode Musiksymbole rendern inkonsistent) ──
+  // Rests
   const PAUSE_VALS = [
     { v:'p1',  sym:'<svg width="18" height="14" viewBox="0 0 18 14"><rect x="3" y="8" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="2" y1="8" x2="16" y2="8" stroke="currentColor" stroke-width="1.2"/></svg>', lbl:'P.Ganz' },
     { v:'p2',  sym:'<svg width="18" height="14" viewBox="0 0 18 14"><rect x="3" y="2" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="2" y1="6" x2="16" y2="6" stroke="currentColor" stroke-width="1.2"/></svg>', lbl:'P.Halb' },
@@ -4088,13 +4113,13 @@ function renderMiniNotation(section, barsPerRow, interactive) {
 
     const isHH = row === 'hh' || row === 'cr';
     let html = '';
-    html += _row('Artikulation', isHH ? HH_VALS : NOTE_VALS);
+    html += _row(isHH ? 'Becken / HH' : 'Artikulation', isHH ? HH_VALS : NOTE_VALS);
     html += '<div class="np-sep"></div>';
     html += _row('Noten', NOTE_DUR);
     html += '<div class="np-sep"></div>';
     html += _row('Pausen', PAUSE_VALS);
     html += '<div class="np-sep"></div>';
-    html += `<button class="np-btn" data-nval="false"><span class="np-sym">✕</span><span class="np-lbl">Löschen</span></button>`;
+    html += `<button class="np-btn" data-nval="false"><span class="np-sym" style="color:#ef4444;">✕</span><span class="np-lbl">Löschen</span></button>`;
 
     popup.innerHTML = html;
     popup.className = 'open';
@@ -4133,6 +4158,8 @@ function renderMiniNotation(section, barsPerRow, interactive) {
   document.addEventListener('click', e => {
     const popup = document.getElementById('notePopup');
     if (popup && popup.className === 'open' && !popup.contains(e.target)) closePopup();
+    const ap = document.getElementById('annoPopup');
+    if (ap && ap.style.display !== 'none' && !ap.contains(e.target)) ap.style.display = 'none';
   });
 
   window._openNotePopup = openPopup;
@@ -4223,16 +4250,58 @@ function bindSectionNotationCells(container, section) {
       if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
       renderPreview(); saveLocal();
     });
-    // Click badge to remove annotation
+    // Click zone → show anno selection popup
     zone.addEventListener('click', e => {
-      const bar = Number(zone.dataset.bar);
-      const sid = zone.dataset.sectionId;
-      const s   = song.sections.find(x => x.id === sid);
-      if (!s || !s.barAnnotations || !s.barAnnotations[bar]) return;
-      s.barAnnotations[bar] = null;
-      const wrap = zone.closest('.notation-wrap');
-      if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
-      renderPreview(); saveLocal();
+      e.stopPropagation();
+      const bar    = Number(zone.dataset.bar);
+      const sid    = zone.dataset.sectionId;
+      const filter = zone.dataset.annoFilter; // 'structural' or 'dynamic'
+      const s = song.sections.find(x => x.id === sid);
+      if (!s) return;
+      const current = (s.barAnnotations || [])[bar] || null;
+      const popup = document.getElementById('annoPopup');
+      if (!popup) return;
+
+      const opts = filter === 'structural'
+        ? [
+            { type:'auftakt', svg:'<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg>', lbl:'Auftakt', col:'#6366f1' },
+            { type:'break',   svg:'<svg width="16" height="16" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg>', lbl:'Break', col:'#db2777' },
+          ]
+        : [
+            { type:'cresc',   svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Crescendo', col:'#0ea5e9' },
+            { type:'decresc', svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Decrescendo', col:'#0ea5e9' },
+          ];
+
+      let html = opts.map(o =>
+        `<button class="ap-btn${current===o.type?' ap-active':''}" data-atype="${o.type}">${o.svg} <span style="color:${o.col}">${o.lbl}</span></button>`
+      ).join('');
+      if (current) html += `<button class="ap-btn ap-remove" data-atype="">✕ Entfernen</button>`;
+      popup.innerHTML = html;
+      popup.style.display = 'flex';
+
+      // Position near click
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let px = e.clientX + 6, py = e.clientY + 6;
+      popup.style.left = '0'; popup.style.top = '0';
+      requestAnimationFrame(() => {
+        const pw = popup.offsetWidth, ph = popup.offsetHeight;
+        if (px + pw > vw - 8) px = e.clientX - pw - 6;
+        if (py + ph > vh - 8) py = e.clientY - ph - 6;
+        popup.style.left = px + 'px'; popup.style.top = py + 'px';
+      });
+
+      popup.querySelectorAll('.ap-btn').forEach(btn => {
+        btn.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const atype = btn.dataset.atype;
+          if (!s.barAnnotations) s.barAnnotations = [];
+          s.barAnnotations[bar] = atype || null;
+          popup.style.display = 'none';
+          const wrap = zone.closest('.notation-wrap');
+          if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
+          renderPreview(); saveLocal();
+        });
+      });
     });
     // Touch drag support for iPad
     zone.addEventListener('touchend', e => {
@@ -4861,66 +4930,24 @@ function renderSections() {
         </div>` : `
         <div class="note-palette" data-palette-sid="${section.id}">
           <div class="palette-group">
-            <div class="pal-item paint-btn" data-paint="hit" data-section-id="${section.id}" data-pval="true" draggable="true" title="Hit"><span class="pal-sym">●</span><span class="pal-lbl">Hit</span></div>
-            <div class="pal-item paint-btn" data-paint=">" data-section-id="${section.id}" data-pval=">" draggable="true" title="Akzent"><span class="pal-sym">></span><span class="pal-lbl">Akzent</span></div>
+            <div class="pal-item paint-btn" data-paint="hit" data-section-id="${section.id}" data-pval="true" draggable="true" title="Hit — oder Zelle anklicken für Popup"><span class="pal-sym">●</span><span class="pal-lbl">Hit</span></div>
+            <div class="pal-item paint-btn" data-paint=">" data-section-id="${section.id}" data-pval=">" draggable="true" title="Akzent"><span class="pal-sym">&gt;</span><span class="pal-lbl">Akzent</span></div>
             <div class="pal-item paint-btn" data-paint="g" data-section-id="${section.id}" data-pval="g" draggable="true" title="Ghost Note"><span class="pal-sym">(·)</span><span class="pal-lbl">Ghost</span></div>
-            <div class="pal-item paint-btn" data-paint="o" data-section-id="${section.id}" data-pval="o" draggable="true" title="Open Hi-Hat"><span class="pal-sym">○</span><span class="pal-lbl">Open HH</span></div>
-            <div class="pal-item paint-btn" data-paint="r" data-section-id="${section.id}" data-pval="r" draggable="true" title="Rimshot"><span class="pal-sym">+</span><span class="pal-lbl">Rimshot</span></div>
-            <div class="pal-item paint-btn" data-paint="x" data-section-id="${section.id}" data-pval="x" draggable="true" title="Cross Stick"><span class="pal-sym">×</span><span class="pal-lbl">X-Stick</span></div>
-          </div>
-          <div class="palette-sep"></div>
-          <div class="palette-group">
-            <div class="pal-item anno-pal-item" data-anno-type="auftakt" data-section-id="${section.id}" draggable="true" title="Auftakt — auf Takt ziehen"><span class="pal-sym"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg></span><span class="pal-lbl">Auftakt</span></div>
-            <div class="pal-item anno-pal-item" data-anno-type="break" data-section-id="${section.id}" draggable="true" title="Break — auf Takt ziehen"><span class="pal-sym"><svg width="20" height="18" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg></span><span class="pal-lbl">Break</span></div>
-            <div class="pal-item anno-pal-item" data-anno-type="cresc" data-section-id="${section.id}" draggable="true" title="Crescendo — auf Takt ziehen"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Cresc.</span></div>
-            <div class="pal-item anno-pal-item" data-anno-type="decresc" data-section-id="${section.id}" draggable="true" title="Decrescendo — auf Takt ziehen"><span class="pal-sym"><svg width="26" height="14" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg></span><span class="pal-lbl">Decresc.</span></div>
-          </div>
-          <div class="palette-sep"></div>
-          <div class="palette-group">
             <div class="pal-item paint-btn" data-paint="off" data-section-id="${section.id}" data-pval="false" draggable="true" title="Löschen"><span class="pal-sym" style="color:#ef4444;">✕</span><span class="pal-lbl">Löschen</span></div>
           </div>
           <div class="palette-sep"></div>
           <div class="palette-group">
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n1"  draggable="true" title="Ganze Note"><span class="pal-sym"><svg width="14" height="14" viewBox="0 0 14 14"><ellipse cx="7" cy="9" rx="6" ry="4" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span class="pal-lbl">Ganze</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n2"  draggable="true" title="Halbe Note"><span class="pal-sym"><svg width="14" height="20" viewBox="0 0 14 20"><ellipse cx="6" cy="15" rx="5" ry="3.5" fill="none" stroke="currentColor" stroke-width="1.8" transform="rotate(-15 6 15)"/><line x1="11" y1="15" x2="11" y2="2" stroke="currentColor" stroke-width="1.8"/></svg></span><span class="pal-lbl">Halbe</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n4"  draggable="true" title="Viertelnote"><span class="pal-sym">♩</span><span class="pal-lbl">Viertel</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n8"  draggable="true" title="Achtelnote"><span class="pal-sym">♪</span><span class="pal-lbl">Achtel</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n16" draggable="true" title="Sechzehntelnote"><span class="pal-sym">♬</span><span class="pal-lbl">16tel</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
-          </div>
-          <div class="palette-sep"></div>
-          <div class="palette-group">
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym"><svg width="16" height="14" viewBox="0 0 16 14"><rect x="2" y="8" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2"/></svg></span><span class="pal-lbl">P.Ganz</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p2"  draggable="true" title="Halbepause"><span class="pal-sym"><svg width="16" height="14" viewBox="0 0 16 14"><rect x="2" y="2" width="12" height="4" fill="currentColor" rx="0.5"/><line x1="1" y1="6" x2="15" y2="6" stroke="currentColor" stroke-width="1.2"/></svg></span><span class="pal-lbl">P.Halb</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym"><svg width="12" height="20" viewBox="0 0 12 20"><path d="M8,1 C11,4 5,7 9,10 C12,12 4,15 2,18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="pal-lbl">P.Vier</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym"><svg width="14" height="18" viewBox="0 0 14 18"><line x1="5" y1="17" x2="9" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="4" r="2.8" fill="currentColor"/></svg></span><span class="pal-lbl">P.Acht</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym"><svg width="14" height="20" viewBox="0 0 14 20"><line x1="4" y1="19" x2="10" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="11" cy="4" r="2.4" fill="currentColor"/><circle cx="8" cy="10" r="2.4" fill="currentColor"/></svg></span><span class="pal-lbl">P.16tel</span></div>
-          </div>
-          <div class="palette-sep"></div>
-          <div class="palette-group">
-            <div class="pal-item paint-btn" data-paint="barRep1" data-section-id="${section.id}" title="1 Takt wiederholen — auswählen, dann Takt anklicken" style="min-width:52px;">
-              <span class="pal-sym" style="line-height:1;">
-                <svg width="24" height="20" viewBox="0 0 24 20" fill="currentColor">
-                  <circle cx="4" cy="5" r="2.5"/><circle cx="20" cy="15" r="2.5"/>
-                  <line x1="5" y1="17" x2="19" y2="3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
-                </svg>
-              </span>
+            <div class="pal-item paint-btn" data-paint="barRep1" data-section-id="${section.id}" title="1 Takt wiederholen" style="min-width:52px;">
+              <span class="pal-sym" style="line-height:1;"><svg width="24" height="20" viewBox="0 0 24 20" fill="currentColor"><circle cx="4" cy="5" r="2.5"/><circle cx="20" cy="15" r="2.5"/><line x1="5" y1="17" x2="19" y2="3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
               <span class="pal-lbl">1 Takt</span>
             </div>
-            <div class="pal-item paint-btn" data-paint="barRep2" data-section-id="${section.id}" title="2 Takte wiederholen — auswählen, dann Takt anklicken" style="min-width:52px;">
-              <span class="pal-sym" style="line-height:1;">
-                <svg width="30" height="20" viewBox="0 0 30 20" fill="currentColor">
-                  <circle cx="3" cy="5" r="2.2"/><circle cx="13" cy="15" r="2.2"/>
-                  <line x1="4" y1="17" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  <line x1="15" y1="1" x2="15" y2="19" stroke="currentColor" stroke-width="1.5"/>
-                  <circle cx="17" cy="5" r="2.2"/><circle cx="27" cy="15" r="2.2"/>
-                  <line x1="18" y1="17" x2="26" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-              </span>
+            <div class="pal-item paint-btn" data-paint="barRep2" data-section-id="${section.id}" title="2 Takte wiederholen" style="min-width:52px;">
+              <span class="pal-sym" style="line-height:1;"><svg width="30" height="20" viewBox="0 0 30 20" fill="currentColor"><circle cx="3" cy="5" r="2.2"/><circle cx="13" cy="15" r="2.2"/><line x1="4" y1="17" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="1" x2="15" y2="19" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="5" r="2.2"/><circle cx="27" cy="15" r="2.2"/><line x1="18" y1="17" x2="26" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
               <span class="pal-lbl">2 Takte</span>
             </div>
           </div>
+          <div class="palette-sep"></div>
+          <span style="font-size:9px;color:var(--ink3);align-self:center;">Noten/Pausen/Taktmarkierungen → Zelle/Taktzone anklicken</span>
         </div>`}
         <div class="grid-scroll notation-wrap">${renderMiniNotation(section, 4, true)}</div>
       </div>
@@ -9665,6 +9692,7 @@ renderFormBuilder();
 
 <!-- ── NOTE POPUP ── -->
 <div id="notePopup"></div>
+<div id="annoPopup"></div>
 
 </body>
 </html>
