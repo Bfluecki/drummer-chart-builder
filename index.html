@@ -3919,7 +3919,7 @@ function detachGrooveRef(sectionId) {
   const card = document.querySelector(`[data-section-id="${sectionId}"]`);
   if (card) {
     const scrollEl = card.querySelector(".grid-scroll");
-    if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+    if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
     bindGridEvents(card, s);
     // Update the grooveRef input field
     const inp = card.querySelector(`input[data-field="grooveRef"]`);
@@ -4163,7 +4163,7 @@ function _applyPaintToCell(el) {
     const card = el.closest("[data-section-id]");
     if (card) {
       const scrollEl = card.querySelector(".grid-scroll");
-      if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+      if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
       bindGridEvents(card, s);
     }
     renderPreview(); saveLocal();
@@ -4309,7 +4309,7 @@ function bindGridEvents(container, s) {
       const card = btn.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(sec);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(sec, 4, true); bindSectionNotationCells(scrollEl, sec); }
         bindGridEvents(card, sec);
       }
       renderPreview();
@@ -4338,7 +4338,7 @@ function bindGridEvents(container, s) {
       const card = overlay.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(sec);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(sec, 4, true); bindSectionNotationCells(scrollEl, sec); }
         bindGridEvents(card, sec);
       }
       renderPreview();
@@ -4436,9 +4436,8 @@ function renderSections() {
 
       <div class="grid-box">
         <div class="grid-header">
-          <div class="grid-title">Groove Grid · ${section.timeSignature||"4/4"} · ${section.bars} Takt${parseBars(section.bars)!==1?"e":""}</div>
+          <div class="grid-title">Notation · ${section.timeSignature||"4/4"} · ${section.bars} Takt${parseBars(section.bars)!==1?"e":""}</div>
           <div class="grid-controls">
-            <button class="notation-toggle" data-notation="${section.id}" type="button">𝅘𝅥 Notation</button>
             ${section.grooveRef ? "" : `
             <select data-preset="${section.id}" class="btn btn-outline btn-sm" style="padding:6px 10px;width:auto;">
               <option value="">Preset laden…</option>
@@ -4513,8 +4512,7 @@ function renderSections() {
             </div>
           </div>
         </div>`}
-        <div class="grid-scroll">${renderGrid(section)}</div>
-        <div class="notation-wrap" style="display:none;">${renderMiniNotation(section)}</div>
+        <div class="grid-scroll notation-wrap">${renderMiniNotation(section, 4, true)}</div>
       </div>
     `;
     host.appendChild(card);
@@ -4635,7 +4633,7 @@ function renderSections() {
       const card = e.target.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
         bindGridEvents(card, s);
       }
       // Reset select so the same preset can be re-selected (change event needs value to differ)
@@ -4655,7 +4653,7 @@ function renderSections() {
       const card = e.target.closest("[data-section-id]");
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
         bindGridEvents(card, s);
         const sel = card.querySelector("[data-preset]");
         if (sel) sel.value = "";
@@ -4755,26 +4753,7 @@ function renderSections() {
   });
 
   // Notation toggle
-  host.querySelectorAll("[data-notation]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const card    = btn.closest("[data-section-id]");
-      const gridEl  = card?.querySelector(".grid-scroll");
-      const noteEl  = card?.querySelector(".notation-wrap");
-      if (!gridEl || !noteEl) return;
-      const showing = noteEl.style.display !== "none";
-      gridEl.style.display   = showing ? "" : "none";
-      noteEl.style.display   = showing ? "none" : "";
-      btn.classList.toggle("active", !showing);
-      if (!showing) {
-        const sid = btn.dataset.notation;
-        const s   = song.sections.find(x => x.id === sid);
-        if (s) {
-          noteEl.innerHTML = renderMiniNotation(s, 4, true);
-          bindSectionNotationCells(noteEl, s);
-        }
-      }
-    });
-  });
+  // notation-toggle removed — notation is always visible
 
   // Groove-Ref Detach
   host.querySelectorAll("[data-detach]").forEach(btn => {
@@ -4799,13 +4778,14 @@ function renderSections() {
     });
   });
 
-  host.querySelectorAll(".mini-cell").forEach(cell => bindMiniCell(cell));
-
-  // bind bar-rep-btn and other grid-level events for every section card
+  // bind notation cells and grid-level events for every section card
   host.querySelectorAll(".section-card[data-section-id]").forEach(card => {
     const sid = card.dataset.sectionId;
     const sec = song.sections.find(x => x.id === sid);
-    if (sec) bindGridEvents(card, sec);
+    if (!sec) return;
+    bindGridEvents(card, sec);
+    const wrap = card.querySelector(".notation-wrap");
+    if (wrap) bindSectionNotationCells(wrap, sec);
   });
 
   renderAblauf();
@@ -4829,7 +4809,7 @@ function handleSectionFieldChange(e) {
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
         const titleEl  = card.querySelector(".grid-title");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
         if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
         bindGridEvents(card, s);
       }
@@ -4839,7 +4819,7 @@ function handleSectionFieldChange(e) {
       if (card) {
         const scrollEl = card.querySelector(".grid-scroll");
         const titleEl  = card.querySelector(".grid-title");
-        if (scrollEl) scrollEl.innerHTML = renderGrid(s);
+        if (scrollEl) { scrollEl.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(scrollEl, s); }
         if (titleEl)  titleEl.textContent = `Groove Grid · ${s.timeSignature||"4/4"} · ${s.bars} Takt${parseBars(s.bars)!==1?"e":""}`;
         bindGridEvents(card, s);
       }
