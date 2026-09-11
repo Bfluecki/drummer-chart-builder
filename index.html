@@ -520,6 +520,7 @@
     .np-btn[data-nval="false"] { border-color:#ef4444; }
     .np-btn[data-nval="false"]:hover { background:#ef4444;color:#fff; }
     .np-sep { width:100%;height:1px;background:var(--line);margin:2px 0; }
+    .np-group-lbl { width:100%;font-size:8px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.06em;padding:2px 2px 0; }
 
     /* ── METRONOM MODAL ─────────────────────────────────── */
     .mo-overlay {
@@ -3775,32 +3776,50 @@ function renderMiniNotation(section, barsPerRow, interactive) {
 
 // ── NOTE POPUP ─────────────────────────────────────────────────────
 (function() {
+  // ── Artikulationen (HH) ──
   const HH_VALS = [
-    { v:'true', sym:'×',  lbl:'Hit'    },
-    { v:'>',    sym:'›',  lbl:'Akzent' },
-    { v:'g',    sym:'(·)',lbl:'Ghost'  },
-    { v:'o',    sym:'○',  lbl:'Open'   },
-    { v:'r',    sym:'+',  lbl:'Rim'    },
-    { v:'x',    sym:'/',  lbl:'X-Stick'},
-    { v:'false',sym:'✕',  lbl:'Löschen'},
+    { v:'true', sym:'×',   lbl:'Hit'     },
+    { v:'>',    sym:'›',   lbl:'Akzent'  },
+    { v:'g',    sym:'(·)', lbl:'Ghost'   },
+    { v:'o',    sym:'○',   lbl:'Open HH' },
+    { v:'r',    sym:'+',   lbl:'Rimshot' },
+    { v:'x',    sym:'/',   lbl:'X-Stick' },
   ];
+  // ── Artikulationen (TT/SN/ST/BD) ──
   const NOTE_VALS = [
-    { v:'true', sym:'♩',  lbl:'Hit'    },
-    { v:'>',    sym:'›',  lbl:'Akzent' },
-    { v:'g',    sym:'(·)',lbl:'Ghost'  },
-    { v:'a',    sym:'A',  lbl:'Auftakt'},
-    { v:'b',    sym:'B',  lbl:'Break'  },
+    { v:'true', sym:'♩',   lbl:'Hit'     },
+    { v:'>',    sym:'›',   lbl:'Akzent'  },
+    { v:'g',    sym:'(·)', lbl:'Ghost'   },
+    { v:'a',    sym:'A',   lbl:'Auftakt' },
+    { v:'b',    sym:'B',   lbl:'Break'   },
   ];
+  // ── Noten (Dauern) ──
+  const NOTE_DUR = [
+    { v:'n1',   sym:'𝅝',   lbl:'Ganze'   },
+    { v:'n2',   sym:'𝅗𝅥',  lbl:'Halbe'   },
+    { v:'n4',   sym:'♩',   lbl:'Viertel' },
+    { v:'n8',   sym:'♪',   lbl:'Achtel'  },
+    { v:'n16',  sym:'♬',   lbl:'16tel'   },
+    { v:'n4.',  sym:'♩.',  lbl:'Pkt.♩'   },
+    { v:'n8.',  sym:'♪.',  lbl:'Pkt.♪'   },
+  ];
+  // ── Pausen ──
   const PAUSE_VALS = [
-    { v:'p1',   sym:'𝄻',  lbl:'Ganze'  },
-    { v:'p2',   sym:'𝄼',  lbl:'Halbe'  },
-    { v:'p4',   sym:'𝄽',  lbl:'Viertel'},
-    { v:'p8',   sym:'𝄾',  lbl:'Achtel' },
-    { v:'p16',  sym:'𝄿',  lbl:'16tel'  },
+    { v:'p1',   sym:'𝄻',   lbl:'Ganze'   },
+    { v:'p2',   sym:'𝄼',   lbl:'Halbe'   },
+    { v:'p4',   sym:'𝄽',   lbl:'Viertel' },
+    { v:'p8',   sym:'𝄾',   lbl:'Achtel'  },
+    { v:'p16',  sym:'𝄿',   lbl:'16tel'   },
   ];
-  const DEL_VAL = { v:'false', sym:'✕', lbl:'Löschen' };
 
-  let _popTarget = null; // { s, row, step, wrap }
+  function _row(label, items) {
+    return `<div class="np-group-lbl">${label}</div>`
+      + items.map(o =>
+          `<button class="np-btn" data-nval="${o.v}"><span class="np-sym">${o.sym}</span><span class="np-lbl">${o.lbl}</span></button>`
+        ).join('');
+  }
+
+  let _popTarget = null;
 
   function closePopup() {
     const p = document.getElementById('notePopup');
@@ -3813,20 +3832,15 @@ function renderMiniNotation(section, barsPerRow, interactive) {
     if (!popup) return;
     _popTarget = { s, row, step, wrap };
 
-    const isHH   = row === 'hh';
-    const mains  = isHH ? HH_VALS : NOTE_VALS;
-
-    let html = mains.map(o =>
-      `<button class="np-btn" data-nval="${o.v}"><span class="np-sym">${o.sym}</span><span class="np-lbl">${o.lbl}</span></button>`
-    ).join('');
+    const isHH = row === 'hh';
+    let html = '';
+    html += _row('Artikulation', isHH ? HH_VALS : NOTE_VALS);
     html += '<div class="np-sep"></div>';
-    html += PAUSE_VALS.map(o =>
-      `<button class="np-btn" data-nval="${o.v}"><span class="np-sym">${o.sym}</span><span class="np-lbl">${o.lbl}</span></button>`
-    ).join('');
-    if (!isHH) {
-      html += '<div class="np-sep"></div>';
-      html += `<button class="np-btn" data-nval="false"><span class="np-sym">✕</span><span class="np-lbl">Löschen</span></button>`;
-    }
+    html += _row('Noten', NOTE_DUR);
+    html += '<div class="np-sep"></div>';
+    html += _row('Pausen', PAUSE_VALS);
+    html += '<div class="np-sep"></div>';
+    html += `<button class="np-btn" data-nval="false"><span class="np-sym">✕</span><span class="np-lbl">Löschen</span></button>`;
 
     popup.innerHTML = html;
     popup.className = 'open';
