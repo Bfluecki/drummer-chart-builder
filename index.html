@@ -3733,32 +3733,32 @@ function renderDrumNotationSVG(options) {
       var hasBeamNote = beamRows.some(function(rk) {
         var v = patVal(rk, idx); return v && v !== false;
       });
-      if (hasBeamNote) beamSteps.push({ step: step, cx: cxS });
+      if (hasBeamNote) beamSteps.push({ step: step, cx: cxS + 5 }); // stem at cx+5 (right of notehead)
 
       // Short upward stems for non-beam middle rows (TT, SN, FT)
+      // Stem attaches to right side of oval notehead (cx+5), goes up 14px
       var midRows = ["tom","sn","ft"];
       midRows.forEach(function(rk) {
         var row = DISP.find(function(d){ return d.key === rk; });
         if (!row) return;
         var v = patVal(rk, idx);
-        if (!v || v === false) return;
-        var noteTop = row.y - 4; // top of note head approx
-        s += '<line x1="'+cxS+'" y1="'+noteTop+'" x2="'+cxS+'" y2="'+(noteTop-12)+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+        if (!v || v === false || v === 'n1') return; // no stem for whole notes
+        s += '<line x1="'+(cxS+5)+'" y1="'+row.y+'" x2="'+(cxS+5)+'" y2="'+(row.y-14)+'" stroke="'+C.note+'" stroke-width="1.4"/>';
       });
 
-      // Short downward stem for BD
+      // Downward stem for BD — attaches to left side of oval, goes down 14px
       var vBD = patVal(bdRow.key, idx);
       if (vBD && vBD !== false) {
-        s += '<line x1="'+cxS+'" y1="'+(bdRow.y+5)+'" x2="'+cxS+'" y2="'+(bdRow.y+16)+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+        s += '<line x1="'+(cxS-5)+'" y1="'+bdRow.y+'" x2="'+(cxS-5)+'" y2="'+(bdRow.y+14)+'" stroke="'+C.note+'" stroke-width="1.4"/>';
       }
 
-      // Upward stems for beam rows (CR and HH) to beamY
+      // Upward stems for beam rows (CR and HH): connect from × notehead up to beamY
       beamRows.forEach(function(rk) {
         var row = DISP.find(function(d){ return d.key === rk; });
         if (!row) return;
         var v = patVal(rk, idx);
         if (!v || v === false) return;
-        s += '<line x1="'+cxS+'" y1="'+(row.y-5)+'" x2="'+cxS+'" y2="'+beamY+'" stroke="'+C.note+'" stroke-width="1.3"/>';
+        s += '<line x1="'+(cxS+5)+'" y1="'+row.y+'" x2="'+(cxS+5)+'" y2="'+beamY+'" stroke="'+C.note+'" stroke-width="1.4"/>';
       });
     }
 
@@ -3794,103 +3794,97 @@ function renderDrumNotationSVG(options) {
 }
 
 // ── SVG NOTE SYMBOL helper ─────────────────────────────────────────
+// Returns NOTEHEAD only (no stem) for rows where the beam system adds stems.
+// Stems are drawn by renderDrumNotationSVG after this call.
 function svgNoteSymbol(val, cx, cy, defaultSym, C) {
   if (!val || val === false) return "";
-  // Fallback colours when called without palette (e.g. old call sites)
   if (!C) C = { note:"#111827", accent:"#1d4ed8", ghost:"#9ca3af", brk:"#db2777", auftakt:"#7c3aed", restCol:"#d97706" };
   var col = val === "b" ? C.brk : val === "a" ? C.auftakt : C.note;
-  // Rests — drawn as SVG shapes (Unicode musical symbols render inconsistently)
-  var rc = C.restCol;
-  if (val === "p1") // Whole rest: filled rectangle hanging below a line
-    return '<rect x="'+(cx-6)+'" y="'+(cy)+'" width="12" height="5" fill="'+rc+'" rx="1"/>'
-         + '<line x1="'+(cx-7)+'" y1="'+(cy)+'" x2="'+(cx+7)+'" y2="'+(cy)+'" stroke="'+rc+'" stroke-width="1.2"/>';
-  if (val === "p2") // Half rest: filled rectangle sitting on top of a line
+  var rc  = C.restCol;
+
+  // Helper: tilted filled oval notehead (standard drum notation)
+  function ovalHead(x, y, c, rx, ry) {
+    rx = rx || 5.5; ry = ry || 3.5;
+    return '<ellipse cx="'+x+'" cy="'+y+'" rx="'+rx+'" ry="'+ry
+         + '" fill="'+c+'" transform="rotate(-20 '+x+' '+y+')" />';
+  }
+  // Helper: SVG × (two crossing lines) for HH/cymbal noteheads
+  function xHead(x, y, c, sz) {
+    sz = sz || 4.5;
+    return '<line x1="'+(x-sz)+'" y1="'+(y-sz)+'" x2="'+(x+sz)+'" y2="'+(y+sz)+'" stroke="'+c+'" stroke-width="1.8" stroke-linecap="round"/>'
+         + '<line x1="'+(x-sz)+'" y1="'+(y+sz)+'" x2="'+(x+sz)+'" y2="'+(y-sz)+'" stroke="'+c+'" stroke-width="1.8" stroke-linecap="round"/>';
+  }
+
+  // Rests
+  if (val === "p1")
+    return '<rect x="'+(cx-6)+'" y="'+cy+'" width="12" height="5" fill="'+rc+'" rx="1"/>'
+         + '<line x1="'+(cx-7)+'" y1="'+cy+'" x2="'+(cx+7)+'" y2="'+cy+'" stroke="'+rc+'" stroke-width="1.2"/>';
+  if (val === "p2")
     return '<rect x="'+(cx-6)+'" y="'+(cy-5)+'" width="12" height="5" fill="'+rc+'" rx="1"/>'
-         + '<line x1="'+(cx-7)+'" y1="'+(cy)+'" x2="'+(cx+7)+'" y2="'+(cy)+'" stroke="'+rc+'" stroke-width="1.2"/>';
-  if (val === "p4") // Quarter rest: classic zigzag
+         + '<line x1="'+(cx-7)+'" y1="'+cy+'" x2="'+(cx+7)+'" y2="'+cy+'" stroke="'+rc+'" stroke-width="1.2"/>';
+  if (val === "p4")
     return '<path d="M '+(cx+4)+','+(cy-7)+' C '+(cx+7)+','+(cy-4)+' '+(cx-1)+','+(cy-1)+' '+(cx+3)+','+(cy+2)
          + ' C '+(cx+6)+','+(cy+4)+' '+(cx-2)+','+(cy+6)+' '+(cx-4)+','+(cy+8)+
            '" stroke="'+rc+'" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
-  if (val === "p8") // 8th rest: diagonal stem + filled ball
+  if (val === "p8")
     return '<line x1="'+(cx-2)+'" y1="'+(cy+6)+'" x2="'+(cx+2)+'" y2="'+(cy-6)+'" stroke="'+rc+'" stroke-width="1.8" stroke-linecap="round"/>'
          + '<circle cx="'+(cx+3)+'" cy="'+(cy-5)+'" r="2.8" fill="'+rc+'"/>';
-  if (val === "p16") // 16th rest: two diagonal stems + two balls
+  if (val === "p16")
     return '<line x1="'+(cx-2)+'" y1="'+(cy+7)+'" x2="'+(cx+3)+'" y2="'+(cy-7)+'" stroke="'+rc+'" stroke-width="1.8" stroke-linecap="round"/>'
          + '<circle cx="'+(cx+4)+'" cy="'+(cy-6)+'" r="2.4" fill="'+rc+'"/>'
          + '<circle cx="'+(cx+1)+'" cy="'+(cy-1)+'" r="2.4" fill="'+rc+'"/>';
-  // HH / Cymbal row: X-noteheads with per-value variants
+
+  // ── HH / Cymbal rows: × and open-circle noteheads ─────────────────
   if (defaultSym === "x") {
     if (val === "o") {
-      // Open hi-hat: open circle + stem up
-      return '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="none" stroke="'+C.note+'" stroke-width="2"/>'
-           + '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="'+C.note+'" stroke-width="1.5"/>'
-           + '<line x1="'+(cx-4)+'" y1="'+(cy-19)+'" x2="'+(cx+10)+'" y2="'+(cy-19)+'" stroke="'+C.note+'" stroke-width="1.5"/>'; // open mark
+      // Open hi-hat: open circle + "o" above
+      return '<circle cx="'+cx+'" cy="'+cy+'" r="4.5" fill="none" stroke="'+C.note+'" stroke-width="1.8"/>'
+           + '<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="8" fill="'+C.note+'" font-weight="700">o</text>';
     }
     if (val === "r") {
-      // Half-open / rimshot on cymbal: + symbol
-      return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="15" fill="'+C.note+'" font-weight="700">+</text>';
+      // Half-open: + notehead
+      return '<line x1="'+cx+'" y1="'+(cy-5)+'" x2="'+cx+'" y2="'+(cy+5)+'" stroke="'+C.note+'" stroke-width="1.8" stroke-linecap="round"/>'
+           + '<line x1="'+(cx-5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+cy+'" stroke="'+C.note+'" stroke-width="1.8" stroke-linecap="round"/>';
     }
     if (val === "x") {
-      // Cross-stick: square × notehead
-      return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="13" fill="'+C.note+'" font-weight="700">⊠</text>';
+      // Cross-stick: ⊠ — use a square box with × inside
+      return '<rect x="'+(cx-5)+'" y="'+(cy-5)+'" width="10" height="10" fill="none" stroke="'+C.note+'" stroke-width="1.5" rx="1"/>'
+           + xHead(cx, cy, C.note, 3.5);
     }
     if (val === "g") {
-      // Ghost on cymbal: smaller × in muted colour
-      return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="11" fill="'+C.ghost+'" font-weight="700">×</text>';
+      // Ghost: smaller × in muted colour
+      return xHead(cx, cy, C.ghost, 3.5);
     }
     if (val === ">") {
-      // Accent: bold × + accent mark above
-      return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="14" fill="'+C.accent+'" font-weight="900">×</text>'
+      // Accent: × + accent mark above
+      return xHead(cx, cy, C.accent, 5)
            + '<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="9" fill="'+C.accent+'" font-weight="900">&gt;</text>';
     }
-    // Default: standard closed × hit
-    return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="14" fill="'+C.note+'" font-weight="700">×</text>';
+    // Default: standard × hit
+    return xHead(cx, cy, C.note, 4.5);
   }
-  // Half note: open circle + stem
-  if (val === "n2") {
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="none" stroke="'+col+'" stroke-width="2"/>'
-         + '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="'+col+'" stroke-width="1.5"/>';
-  }
-  // Whole note
-  if (val === "n1") {
-    return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="7" ry="5" fill="none" stroke="'+col+'" stroke-width="2"/>';
-  }
-  var stem = '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="'+col+'" stroke-width="1.5"/>';
-  var head = '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="'+col+'"/>';
-  // Eighth note
-  if (val === "n8") {
-    return head + stem + '<path d="M'+(cx+5)+','+(cy-14)+' Q'+(cx+11)+','+(cy-9)+' '+(cx+8)+','+(cy-5)+'" stroke="'+col+'" stroke-width="1.5" fill="none"/>';
-  }
-  // Sixteenth
-  if (val === "n16") {
-    return head + stem
-      + '<path d="M'+(cx+5)+','+(cy-14)+' Q'+(cx+11)+','+(cy-9)+' '+(cx+8)+','+(cy-5)+'" stroke="'+col+'" stroke-width="1.5" fill="none"/>'
-      + '<path d="M'+(cx+5)+','+(cy-10)+' Q'+(cx+11)+','+(cy-5)+' '+(cx+8)+','+(cy-1)+'" stroke="'+col+'" stroke-width="1.5" fill="none"/>';
-  }
-  // Dotted quarter
-  if (val === "n4.") return head + stem + '<circle cx="'+(cx+9)+'" cy="'+(cy+1)+'" r="2" fill="'+col+'"/>';
-  // Dotted eighth
-  if (val === "n8.") {
-    return head + stem
-      + '<path d="M'+(cx+5)+','+(cy-14)+' Q'+(cx+11)+','+(cy-9)+' '+(cx+8)+','+(cy-5)+'" stroke="'+col+'" stroke-width="1.5" fill="none"/>'
-      + '<circle cx="'+(cx+9)+'" cy="'+(cy+1)+'" r="2" fill="'+col+'"/>';
-  }
-  // Ghost note: small open circle
-  if (val === "g") {
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="none" stroke="'+C.ghost+'" stroke-width="1.5"/>'
-         + '<line x1="'+(cx+4)+'" y1="'+cy+'" x2="'+(cx+4)+'" y2="'+(cy-14)+'" stroke="'+C.ghost+'" stroke-width="1"/>';
-  }
-  // Accent
-  if (val === ">") {
-    return head + stem + '<text x="'+(cx-8)+'" y="'+(cy+4)+'" font-size="9" fill="'+C.accent+'" font-weight="900">&gt;</text>';
-  }
-  // Break marker
-  if (val === "b") {
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="5" fill="none" stroke="'+C.brk+'" stroke-width="1.5"/>'
-         + '<line x1="'+(cx+5)+'" y1="'+cy+'" x2="'+(cx+5)+'" y2="'+(cy-14)+'" stroke="'+C.brk+'" stroke-width="1.5"/>';
-  }
-  // Default: filled circle + stem (standard quarter/hit)
-  return head + stem;
+
+  // ── Circle-sym rows: oval noteheads ───────────────────────────────
+  // Whole note: open oval, no stem needed
+  if (val === "n1")
+    return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="7" ry="4.5" fill="none" stroke="'+col+'" stroke-width="2" transform="rotate(-15 '+cx+' '+cy+')"/>';
+  // Half note: open oval (stem drawn by beam system or standalone stem below)
+  if (val === "n2")
+    return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="5.5" ry="3.5" fill="none" stroke="'+col+'" stroke-width="1.8" transform="rotate(-20 '+cx+' '+cy+')"/>';
+  // Ghost note: small open oval + parentheses marks
+  if (val === "g")
+    return '<text x="'+(cx-7)+'" y="'+(cy+4)+'" font-size="11" fill="'+C.ghost+'" font-weight="400">(</text>'
+         + '<ellipse cx="'+cx+'" cy="'+cy+'" rx="4" ry="2.5" fill="none" stroke="'+C.ghost+'" stroke-width="1.5" transform="rotate(-20 '+cx+' '+cy+')"/>'
+         + '<text x="'+(cx+3)+'" y="'+(cy+4)+'" font-size="11" fill="'+C.ghost+'" font-weight="400">)</text>';
+  // Accent: filled oval + > mark to the left
+  if (val === ">")
+    return ovalHead(cx, cy, C.accent)
+         + '<text x="'+(cx-10)+'" y="'+(cy+4)+'" font-size="9" fill="'+C.accent+'" font-weight="900">&gt;</text>';
+  // Break (legacy per-cell): open oval in break color
+  if (val === "b")
+    return '<ellipse cx="'+cx+'" cy="'+cy+'" rx="5.5" ry="3.5" fill="none" stroke="'+C.brk+'" stroke-width="1.8" transform="rotate(-20 '+cx+' '+cy+')"/>';
+  // Default: filled oval notehead (quarter / standard hit)
+  return ovalHead(cx, cy, col);
 }
 
 // ── GROOVE NOTATION (uses 1-based pattern arrays) ─────────────────
@@ -4205,12 +4199,10 @@ function bindSectionNotationCells(container, section) {
   }
   container.querySelectorAll('.bar-anno-zone').forEach(zone => {
     zone.addEventListener('dragover', e => {
-      // DOMStringList.includes() not available in all Safari versions — use Array.from
-      const types = Array.from(e.dataTransfer.types || []);
-      if (!types.includes('anno-type') && !types.some(t => t === 'text/plain' && window._annoTouchDragType)) {
-        // also allow if a touch drag is in progress
-        if (!window._annoTouchDragType && !window._gpAnnoDragType) return;
-      }
+      // Accept if any annotation drag is in progress (global var is most reliable across browsers)
+      const isAnnoDrag = window._currentAnnoDrag || window._gpAnnoDragType ||
+        Array.from(e.dataTransfer.types || []).includes('anno-type');
+      if (!isAnnoDrag) return;
       e.preventDefault();
       zone.classList.add('anno-drag-over');
     });
@@ -4218,7 +4210,8 @@ function bindSectionNotationCells(container, section) {
     zone.addEventListener('drop', e => {
       e.preventDefault();
       zone.classList.remove('anno-drag-over');
-      const annoType = e.dataTransfer.getData('anno-type');
+      const annoType = e.dataTransfer.getData('anno-type') || window._currentAnnoDrag || window._gpAnnoDragType;
+      window._currentAnnoDrag = null;
       if (!annoType || !_annoZoneAccepts(zone, annoType)) return;
       const bar = Number(zone.dataset.bar);
       const sid = zone.dataset.sectionId;
@@ -4267,11 +4260,13 @@ function bindSectionNotationCells(container, section) {
   const _annoItems = _palCard ? _palCard.querySelectorAll('.anno-pal-item[data-anno-type]') : [];
   _annoItems.forEach(item => {
     item.addEventListener('dragstart', e => {
+      window._currentAnnoDrag = item.dataset.annoType;
       e.dataTransfer.setData('anno-type', item.dataset.annoType);
       e.dataTransfer.setData('text/plain', 'anno:' + item.dataset.annoType);
       e.dataTransfer.effectAllowed = 'copy';
       window._annoTouchDragType = null;
     });
+    item.addEventListener('dragend', () => { window._currentAnnoDrag = null; });
     item.addEventListener('touchstart', e => {
       window._annoTouchDragType = item.dataset.annoType;
       const touch = e.touches[0];
@@ -9379,6 +9374,7 @@ renderFormBuilder();
   document.querySelectorAll(".global-pal-item[data-anno-type]").forEach(item => {
     item.addEventListener("dragstart", e => {
       _gpAnnoDragType = item.dataset.annoType;
+      window._currentAnnoDrag = _gpAnnoDragType;
       e.dataTransfer.setData("anno-type", _gpAnnoDragType);
       e.dataTransfer.setData("text/plain", "anno:" + _gpAnnoDragType);
       e.dataTransfer.effectAllowed = "copy";
@@ -9389,7 +9385,7 @@ renderFormBuilder();
       e.dataTransfer.setDragImage(ghost, 20, 20);
       setTimeout(() => ghost.remove(), 0);
     });
-    item.addEventListener("dragend", () => { _gpAnnoDragType = null; });
+    item.addEventListener("dragend", () => { _gpAnnoDragType = null; window._currentAnnoDrag = null; });
 
     // Touch-drag (iPad)
     item.addEventListener("touchstart", e => {
