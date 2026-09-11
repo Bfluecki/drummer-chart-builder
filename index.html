@@ -3612,6 +3612,13 @@ function renderDrumNotationSVG(options) {
         s += '<circle cx="'+(rx2+8)+'"  cy="'+(staffMid+14)+'" r="'+r+'" fill="'+col+'"/>';
         s += '<line x1="'+(rx2-10)+'" y1="'+(staffMid+18)+'" x2="'+(rx2+10)+'" y2="'+(staffMid-18)+'" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round"/>';
       }
+      // Clickable transparent overlay so the bar repeat can be toggled/removed
+      if (interactive && sid) {
+        var absBarStep = stepOff + bar * spb;
+        s += '<rect class="sec-note-cell" data-sid="'+sid+'" data-row="hh" data-step="'+absBarStep+'"'
+           + ' x="'+bx+'" y="'+staffTop+'" width="'+barW+'" height="'+(staffBottom-staffTop)+'"'
+           + ' fill="transparent" style="cursor:pointer;" title="Klicken zum Ändern / Entfernen"/>';
+      }
 
     } else {
       // ── Normal notes ──────────────────────────────────────────
@@ -3655,12 +3662,25 @@ function svgNoteSymbol(val, cx, cy, defaultSym, C) {
   // Fallback colours when called without palette (e.g. old call sites)
   if (!C) C = { note:"#111827", accent:"#1d4ed8", ghost:"#9ca3af", brk:"#db2777", auftakt:"#7c3aed", restCol:"#d97706" };
   var col = val === "b" ? C.brk : val === "a" ? C.auftakt : C.note;
-  // Rests
-  if (val === "p16") return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="11" fill="'+C.restCol+'">𝄿</text>';
-  if (val === "p8")  return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="12" fill="'+C.restCol+'">𝄾</text>';
-  if (val === "p4")  return '<text x="'+cx+'" y="'+(cy+5)+'" text-anchor="middle" font-size="13" fill="'+C.restCol+'">𝄽</text>';
-  if (val === "p2")  return '<rect x="'+(cx-5)+'" y="'+(cy-3)+'" width="10" height="4" fill="'+C.restCol+'" rx="1"/>';
-  if (val === "p1")  return '<rect x="'+(cx-6)+'" y="'+(cy+2)+'" width="12" height="4" fill="'+C.restCol+'" rx="1"/>';
+  // Rests — drawn as SVG shapes (Unicode musical symbols render inconsistently)
+  var rc = C.restCol;
+  if (val === "p1") // Whole rest: filled rectangle hanging below a line
+    return '<rect x="'+(cx-6)+'" y="'+(cy)+'" width="12" height="5" fill="'+rc+'" rx="1"/>'
+         + '<line x1="'+(cx-7)+'" y1="'+(cy)+'" x2="'+(cx+7)+'" y2="'+(cy)+'" stroke="'+rc+'" stroke-width="1.2"/>';
+  if (val === "p2") // Half rest: filled rectangle sitting on top of a line
+    return '<rect x="'+(cx-6)+'" y="'+(cy-5)+'" width="12" height="5" fill="'+rc+'" rx="1"/>'
+         + '<line x1="'+(cx-7)+'" y1="'+(cy)+'" x2="'+(cx+7)+'" y2="'+(cy)+'" stroke="'+rc+'" stroke-width="1.2"/>';
+  if (val === "p4") // Quarter rest: classic zigzag
+    return '<path d="M '+(cx+4)+','+(cy-7)+' C '+(cx+7)+','+(cy-4)+' '+(cx-1)+','+(cy-1)+' '+(cx+3)+','+(cy+2)
+         + ' C '+(cx+6)+','+(cy+4)+' '+(cx-2)+','+(cy+6)+' '+(cx-4)+','+(cy+8)+
+           '" stroke="'+rc+'" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+  if (val === "p8") // 8th rest: diagonal stem + filled ball
+    return '<line x1="'+(cx-2)+'" y1="'+(cy+6)+'" x2="'+(cx+2)+'" y2="'+(cy-6)+'" stroke="'+rc+'" stroke-width="1.8" stroke-linecap="round"/>'
+         + '<circle cx="'+(cx+3)+'" cy="'+(cy-5)+'" r="2.8" fill="'+rc+'"/>';
+  if (val === "p16") // 16th rest: two diagonal stems + two balls
+    return '<line x1="'+(cx-2)+'" y1="'+(cy+7)+'" x2="'+(cx+3)+'" y2="'+(cy-7)+'" stroke="'+rc+'" stroke-width="1.8" stroke-linecap="round"/>'
+         + '<circle cx="'+(cx+4)+'" cy="'+(cy-6)+'" r="2.4" fill="'+rc+'"/>'
+         + '<circle cx="'+(cx+1)+'" cy="'+(cy-1)+'" r="2.4" fill="'+rc+'"/>';
   // HH / Cymbal row: X-noteheads with per-value variants
   if (defaultSym === "x") {
     if (val === "o") {
@@ -3957,12 +3977,21 @@ function bindSectionNotationCells(container, section) {
       if (!s) return;
       // Bar repeat paint mode: apply to whole bar instead of opening popup
       const mode = getPaintMode(sid);
+      const spb2 = getStepsPerBar(s.timeSignature || '4/4');
+      const bar2 = Math.floor(step / spb2);
+      const hasRep = s.barRepeats && (s.barRepeats[bar2] === '1' || s.barRepeats[bar2] === '2');
       if (mode === 'barRep1' || mode === 'barRep2') {
-        const spb = getStepsPerBar(s.timeSignature || '4/4');
-        const bar = Math.floor(step / spb);
         if (!s.barRepeats) s.barRepeats = [];
         const repVal = mode === 'barRep1' ? '1' : '2';
-        s.barRepeats[bar] = (s.barRepeats[bar] === repVal) ? null : repVal;
+        s.barRepeats[bar2] = (s.barRepeats[bar2] === repVal) ? null : repVal;
+        const wrap = rect.closest('.notation-wrap');
+        if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
+        renderPreview(); saveLocal();
+        return;
+      }
+      // In any other mode, clicking a repeat bar removes the repeat
+      if (hasRep) {
+        s.barRepeats[bar2] = null;
         const wrap = rect.closest('.notation-wrap');
         if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
         renderPreview(); saveLocal();
