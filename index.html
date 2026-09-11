@@ -2501,11 +2501,11 @@
         <div class="pal-item global-pal-item" data-gpval="n4." draggable="true" title="Punktierte Viertelnote"><span class="pal-sym">♩.</span><span class="pal-lbl">Pkt.♩</span></div>
         <div class="pal-item global-pal-item" data-gpval="n8." draggable="true" title="Punktierte Achtelnote"><span class="pal-sym">♪.</span><span class="pal-lbl">Pkt.♪</span></div>
         <div class="palette-sep"></div>
-        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">Ganze</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">Halbe</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">Viertel</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">Achtel</span></div>
-        <div class="pal-item global-pal-item" data-gpval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">16tel</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">P.Ganz</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">P.Halb</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">P.Vier</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">P.Acht</span></div>
+        <div class="pal-item global-pal-item" data-gpval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">P.16tel</span></div>
       </div>
 
       <div id="sections"></div>
@@ -3795,6 +3795,11 @@ function renderMiniNotation(section, barsPerRow, interactive) {
   ensurePatternLength(section, true);
   const barReps = section.barRepeats || [];
 
+  const stepW  = 22;
+  const barGap = 10;
+  const barW   = stepsPer * stepW;
+  const lPad   = 58; // must match leftPad in renderDrumNotationSVG
+
   let html = '<div style="display:flex;flex-direction:column;gap:2px;width:100%;overflow:hidden;">';
   for (let rowStart = 0; rowStart < bars; rowStart += BPR) {
     const rowBars  = Math.min(BPR, bars - rowStart);
@@ -3810,6 +3815,20 @@ function renderMiniNotation(section, barsPerRow, interactive) {
         return (pat[k] || [])[stepOff + idx] || false;
       }
     });
+    // Per-bar chord/remark inputs aligned with SVG bars
+    if (interactive) {
+      let inpRow = `<div style="display:flex;align-items:center;padding-left:${lPad}px;margin-bottom:4px;">`;
+      for (let b = 0; b < rowBars; b++) {
+        const barIdx = rowStart + b;
+        const val = (section.chordBars && section.chordBars[barIdx]) || '';
+        inpRow += `<input class="bar-note-input" data-section-id="${section.id}" data-bar="${barIdx}"
+          value="${val.replace(/"/g,'&quot;')}" placeholder="T.${barIdx+1}…"
+          style="width:${barW}px;min-width:0;font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid var(--line);background:var(--soft);box-sizing:border-box;color:var(--ink);font-family:inherit;"/>`;
+        if (b < rowBars - 1) inpRow += `<div style="min-width:${barGap}px;"></div>`;
+      }
+      inpRow += '</div>';
+      html += inpRow;
+    }
   }
   html += '</div>';
   return html;
@@ -3846,11 +3865,11 @@ function renderMiniNotation(section, barsPerRow, interactive) {
   ];
   // ── Pausen ──
   const PAUSE_VALS = [
-    { v:'p1',   sym:'𝄻',   lbl:'Ganze'   },
-    { v:'p2',   sym:'𝄼',   lbl:'Halbe'   },
-    { v:'p4',   sym:'𝄽',   lbl:'Viertel' },
-    { v:'p8',   sym:'𝄾',   lbl:'Achtel'  },
-    { v:'p16',  sym:'𝄿',   lbl:'16tel'   },
+    { v:'p1',   sym:'𝄻',   lbl:'P.Ganz'  },
+    { v:'p2',   sym:'𝄼',   lbl:'P.Halb'  },
+    { v:'p4',   sym:'𝄽',   lbl:'P.Vier'  },
+    { v:'p8',   sym:'𝄾',   lbl:'P.Acht'  },
+    { v:'p16',  sym:'𝄿',   lbl:'P.16tel' },
   ];
 
   function _row(label, items) {
@@ -3936,11 +3955,36 @@ function bindSectionNotationCells(container, section) {
       const sid  = rect.dataset.sid;
       const s    = song.sections.find(x => x.id === sid);
       if (!s) return;
+      // Bar repeat paint mode: apply to whole bar instead of opening popup
+      const mode = getPaintMode(sid);
+      if (mode === 'barRep1' || mode === 'barRep2') {
+        const spb = getStepsPerBar(s.timeSignature || '4/4');
+        const bar = Math.floor(step / spb);
+        if (!s.barRepeats) s.barRepeats = [];
+        const repVal = mode === 'barRep1' ? '1' : '2';
+        s.barRepeats[bar] = (s.barRepeats[bar] === repVal) ? null : repVal;
+        const wrap = rect.closest('.notation-wrap');
+        if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
+        renderPreview(); saveLocal();
+        return;
+      }
       const wrap = rect.closest('.notation-wrap');
       window._openNotePopup(e, s, row, step, wrap);
     });
     rect.addEventListener('mouseenter', () => { rect.style.fill = 'rgba(99,102,241,0.18)'; });
     rect.addEventListener('mouseleave', () => { rect.style.fill = 'transparent'; });
+  });
+  // Per-bar chord/remarks inputs
+  container.querySelectorAll('.bar-note-input').forEach(input => {
+    input.addEventListener('input', e => {
+      const sid = e.target.dataset.sectionId;
+      const bar = Number(e.target.dataset.bar);
+      const s = song.sections.find(x => x.id === sid);
+      if (!s) return;
+      if (!s.chordBars) s.chordBars = [];
+      s.chordBars[bar] = e.target.value;
+      saveLocal();
+    });
   });
 }
 
@@ -4522,11 +4566,11 @@ function renderSections() {
           </div>
           <div class="palette-sep"></div>
           <div class="palette-group">
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">Ganze</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">Halbe</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">Viertel</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">Achtel</span></div>
-            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">16tel</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p1"  draggable="true" title="Ganzepause"><span class="pal-sym">𝄻</span><span class="pal-lbl">P.Ganz</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p2"  draggable="true" title="Halbepause"><span class="pal-sym">𝄼</span><span class="pal-lbl">P.Halb</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p4"  draggable="true" title="Viertelpause"><span class="pal-sym">𝄽</span><span class="pal-lbl">P.Vier</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p8"  draggable="true" title="Achtelpause"><span class="pal-sym">𝄾</span><span class="pal-lbl">P.Acht</span></div>
+            <div class="pal-item paint-btn" data-section-id="${section.id}" data-pval="p16" draggable="true" title="Sechzehntelpause"><span class="pal-sym">𝄿</span><span class="pal-lbl">P.16tel</span></div>
           </div>
           <div class="palette-sep"></div>
           <div class="palette-group">
