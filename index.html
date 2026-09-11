@@ -543,6 +543,14 @@
     #annoPopup .ap-btn:hover { border-color:var(--accent);background:#f0f4ff; }
     #annoPopup .ap-btn.ap-remove { border-color:#ef4444;color:#ef4444; }
     #annoPopup .ap-btn.ap-remove:hover { background:#fef2f2; }
+    #annoPopup .ap-sep { height:1px;background:var(--line);margin:2px 0; }
+    #annoPopup .ap-lbl { font-size:9px;color:var(--ink3);font-weight:600;text-transform:uppercase;padding:2px 4px; }
+    #annoPopup .ap-preset-row { display:flex;gap:4px;align-items:center; }
+    #annoPopup .ap-preset-sel { flex:1;font-size:11px;padding:4px 6px;border-radius:6px;border:1.5px solid var(--line);background:var(--soft);color:var(--ink);cursor:pointer; }
+    #annoPopup .ap-preset-load { font-size:11px;padding:4px 8px;border-radius:6px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;font-weight:700; }
+    #annoPopup .ap-btn.ap-override-badge { border-color:#8b5cf6;color:#7c3aed;background:#f5f3ff; }
+    #annoPopup .ap-btn.ap-override-badge:hover { background:#ede9fe; }
+    .bar-has-override .bar-anno-zone, .bar-has-override { border-color:#8b5cf6 !important; opacity:1 !important; }
     .np-btn {
       display:flex;flex-direction:column;align-items:center;gap:1px;
       padding:5px 7px;border-radius:7px;border:1.5px solid var(--line);
@@ -3937,6 +3945,26 @@ function barAnnoHTML(type) {
   return `<span class="anno-badge ${a.cls}" title="Klicken zum Entfernen">${a.svg} ${a.label}</span>`;
 }
 
+// Build a bar-level pattern from a groove template (1-based indices → 0-based bool/val arrays)
+function _barPatFromTemplate(tpl, stepsPer) {
+  const ROWS = ['cr','hh','tom','sn','ft','bd'];
+  const pat = {};
+  ROWS.forEach(k => {
+    pat[k] = Array(stepsPer).fill(false);
+    ((tpl.pattern || {})[k] || []).forEach(x => {
+      const i = x - 1; // convert 1-based → 0-based
+      if (i >= 0 && i < stepsPer) pat[k][i] = true;
+    });
+    // also read artMap if present
+    const art = ((tpl.patternArt || {})[k] || {});
+    Object.entries(art).forEach(([si, v]) => {
+      const i = Number(si);
+      if (i >= 0 && i < stepsPer) pat[k][i] = v;
+    });
+  });
+  return pat;
+}
+
 function renderMiniNotation(section, barsPerRow, interactive) {
   const ts       = section.timeSignature || "4/4";
   const bars     = parseBars(section.bars || "1");
@@ -3948,8 +3976,9 @@ function renderMiniNotation(section, barsPerRow, interactive) {
     if (ref) { ensurePatternLength(ref, true); pat = ref.pattern; }
   }
   ensurePatternLength(section, true);
-  const barReps  = section.barRepeats || [];
-  const barAnnos = section.barAnnotations || [];
+  const barReps     = section.barRepeats || [];
+  const barAnnos    = section.barAnnotations || [];
+  const barPatterns = section.barPatterns || []; // per-bar groove overrides
 
   const stepW  = 22;
   const barGap = 10;
@@ -3969,7 +3998,9 @@ function renderMiniNotation(section, barsPerRow, interactive) {
         const anno   = barAnnos[barIdx] || null;
         // Only show structural annotations (break/auftakt) in top row; dynamics go in bottom row
         const topAnno = (anno === 'break' || anno === 'auftakt') ? anno : null;
-        annoRow += `<div class="bar-anno-zone" data-section-id="${section.id}" data-bar="${barIdx}" data-anno-filter="structural" style="width:${barW}px;">${barAnnoHTML(topAnno)}</div>`;
+        const hasOvr  = !!barPatterns[barIdx];
+        const ovrBadge = hasOvr ? `<span class="anno-badge" style="background:#ede9fe;color:#7c3aed;border:1px solid #8b5cf6;font-size:9px;padding:1px 4px;border-radius:4px;gap:2px;" title="Eigenes Groove-Preset">🎚</span>` : '';
+        annoRow += `<div class="bar-anno-zone${hasOvr?' bar-has-override':''}" data-section-id="${section.id}" data-bar="${barIdx}" data-anno-filter="structural" style="width:${barW}px;">${barAnnoHTML(topAnno)}${ovrBadge}</div>`;
         if (b < rowBars - 1) annoRow += `<div style="min-width:${barGap}px;"></div>`;
       }
       annoRow += '</div>';
@@ -3985,6 +4016,10 @@ function renderMiniNotation(section, barsPerRow, interactive) {
       stepOffset:  stepOff,
       showClef:    rowStart === 0,
       patVal: function(k, idx) {
+        const bIdx     = rowStart + Math.floor(idx / stepsPer);
+        const stepInB  = idx % stepsPer;
+        const override = barPatterns[bIdx];
+        if (override) return (override[k] || [])[stepInB] || false;
         return (pat[k] || [])[stepOff + idx] || false;
       }
     });
@@ -4109,7 +4144,10 @@ function renderMiniNotation(section, barsPerRow, interactive) {
   function openPopup(e, s, row, step, wrap) {
     const popup = document.getElementById('notePopup');
     if (!popup) return;
-    _popTarget = { s, row, step, wrap };
+    const spb    = getStepsPerBar(s.timeSignature || '4/4');
+    const barIdx = Math.floor(step / spb);
+    const stepInBar = step % spb;
+    _popTarget = { s, row, step, wrap, barIdx, stepInBar };
 
     const isHH = row === 'hh' || row === 'cr';
     let html = '';
@@ -4141,12 +4179,18 @@ function renderMiniNotation(section, barsPerRow, interactive) {
       btn.addEventListener('click', ev => {
         ev.stopPropagation();
         if (!_popTarget) return;
-        const { s: sec, row: r, step: st, wrap: w } = _popTarget;
+        const { s: sec, row: r, step: st, wrap: w, barIdx: bi, stepInBar: sib } = _popTarget;
         ensurePatternLength(sec, true);
         let val = btn.dataset.nval;
         if (val === 'true') val = true;
         if (val === 'false') val = false;
-        sec.pattern[r][st] = val;
+        // Write to bar override if one exists, otherwise write to section pattern
+        if (sec.barPatterns && sec.barPatterns[bi]) {
+          if (!sec.barPatterns[bi][r]) sec.barPatterns[bi][r] = [];
+          sec.barPatterns[bi][r][sib] = val;
+        } else {
+          sec.pattern[r][st] = val;
+        }
         closePopup();
         if (w) { w.innerHTML = renderMiniNotation(sec, 4, true); bindSectionNotationCells(w, sec); }
         renderPreview(); saveLocal();
@@ -4269,11 +4313,27 @@ function bindSectionNotationCells(container, section) {
         { type:'decresc', svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Decrescendo', col:'#0ea5e9' },
       ];
 
+      const hasOverride = !!(s.barPatterns && s.barPatterns[bar]);
       let html = '<div style="font-size:9px;color:var(--ink3);padding:2px 4px 4px;font-weight:600;text-transform:uppercase;">Takt ' + (bar+1) + ' markieren</div>';
       html += opts.map(o =>
         `<button class="ap-btn${current===o.type?' ap-active':''}" data-atype="${o.type}">${o.svg} <span style="color:${o.col}">${o.lbl}</span></button>`
       ).join('');
       if (current) html += `<button class="ap-btn ap-remove" data-atype="">✕ Entfernen</button>`;
+
+      // Groove preset section
+      html += '<div class="ap-sep"></div>';
+      html += '<div class="ap-lbl">Groove-Preset</div>';
+      const tplOpts = (drumGrooveTemplates || []).map(t =>
+        `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`
+      ).join('');
+      html += `<div class="ap-preset-row">
+        <select class="ap-preset-sel" id="apPresetSel">${tplOpts || '<option value="">—</option>'}</select>
+        <button class="ap-preset-load" id="apPresetLoad">Laden</button>
+      </div>`;
+      if (hasOverride) {
+        html += `<button class="ap-btn ap-override-badge" id="apResetBar">🎚 Reset (Section-Groove)</button>`;
+      }
+
       popup.innerHTML = html;
       popup.style.display = 'flex';
 
@@ -4292,6 +4352,15 @@ function bindSectionNotationCells(container, section) {
         btn.addEventListener('click', ev => {
           ev.stopPropagation();
           const atype = btn.dataset.atype;
+          if (btn.id === 'apResetBar') {
+            if (!s.barPatterns) s.barPatterns = [];
+            s.barPatterns[bar] = null;
+            popup.style.display = 'none';
+            const wrap = zone.closest('.notation-wrap');
+            if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
+            renderPreview(); saveLocal();
+            return;
+          }
           if (!s.barAnnotations) s.barAnnotations = [];
           s.barAnnotations[bar] = atype || null;
           popup.style.display = 'none';
@@ -4300,6 +4369,25 @@ function bindSectionNotationCells(container, section) {
           renderPreview(); saveLocal();
         });
       });
+
+      // Preset load button
+      const loadBtn = popup.querySelector('#apPresetLoad');
+      if (loadBtn) {
+        loadBtn.addEventListener('click', ev => {
+          ev.stopPropagation();
+          const sel  = popup.querySelector('#apPresetSel');
+          const name = sel ? sel.value : '';
+          const tpl  = (drumGrooveTemplates || []).find(t => t.name === name);
+          if (!tpl) return;
+          const spb = getStepsPerBar(s.timeSignature || '4/4');
+          if (!s.barPatterns) s.barPatterns = [];
+          s.barPatterns[bar] = _barPatFromTemplate(tpl, spb);
+          popup.style.display = 'none';
+          const wrap = zone.closest('.notation-wrap');
+          if (wrap) { wrap.innerHTML = renderMiniNotation(s, 4, true); bindSectionNotationCells(wrap, s); }
+          renderPreview(); saveLocal();
+        });
+      }
     });
     // Touch drag support for iPad
     zone.addEventListener('touchend', e => {
