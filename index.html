@@ -4262,17 +4262,15 @@ function bindSectionNotationCells(container, section) {
       const popup = document.getElementById('annoPopup');
       if (!popup) return;
 
-      const opts = filter === 'structural'
-        ? [
-            { type:'auftakt', svg:'<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg>', lbl:'Auftakt', col:'#6366f1' },
-            { type:'break',   svg:'<svg width="16" height="16" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg>', lbl:'Break', col:'#db2777' },
-          ]
-        : [
-            { type:'cresc',   svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Crescendo', col:'#0ea5e9' },
-            { type:'decresc', svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Decrescendo', col:'#0ea5e9' },
-          ];
+      const opts = [
+        { type:'auftakt', svg:'<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M13,2 Q3,9 13,16" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="10" r="3" fill="#6366f1"/></svg>', lbl:'Auftakt', col:'#6366f1' },
+        { type:'break',   svg:'<svg width="16" height="16" viewBox="0 0 20 18" fill="none"><line x1="7" y1="1" x2="5" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/><line x1="13" y1="1" x2="11" y2="17" stroke="#db2777" stroke-width="2.5" stroke-linecap="round"/></svg>', lbl:'Break', col:'#db2777' },
+        { type:'cresc',   svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="7" x2="24" y2="2" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="7" x2="24" y2="12" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Crescendo', col:'#0ea5e9' },
+        { type:'decresc', svg:'<svg width="22" height="12" viewBox="0 0 26 14" fill="none"><line x1="2" y1="2" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/><line x1="2" y1="12" x2="24" y2="7" stroke="#0ea5e9" stroke-width="1.8" stroke-linecap="round"/></svg>', lbl:'Decrescendo', col:'#0ea5e9' },
+      ];
 
-      let html = opts.map(o =>
+      let html = '<div style="font-size:9px;color:var(--ink3);padding:2px 4px 4px;font-weight:600;text-transform:uppercase;">Takt ' + (bar+1) + ' markieren</div>';
+      html += opts.map(o =>
         `<button class="ap-btn${current===o.type?' ap-active':''}" data-atype="${o.type}">${o.svg} <span style="color:${o.col}">${o.lbl}</span></button>`
       ).join('');
       if (current) html += `<button class="ap-btn ap-remove" data-atype="">✕ Entfernen</button>`;
